@@ -1,0 +1,357 @@
+{% extends '_base.html' %}
+
+{% block title %}Jobs{% endblock %}
+
+{% block content %}
+
+<table id="jobs" class="display dataTable" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colID'>ID</th>
+      <th class='colEndDate'>Run end</th>
+      <th class='colHw'>Hw</th>
+      <th class='colVersion'>Version</th>
+      <th class='colRunTitle'>Run title</th>
+      <th class='colDuration'>Duration</th>
+      <th class='colHidden'></th>
+      <th class='colTests'>Tests</th>
+      <th class='colErrors'>Errors</th>
+      <th class='colCompare'></th>
+    </tr>
+  </thead>
+  <tfoot>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colID'>ID</th>
+      <th class='colEndDate'>Run end</th>
+      <th class='colHw'>Hw</th>
+      <th class='colVersion'>Version</th>
+      <th class='colRunTitle'>Run title</th>
+      <th class='colDuration'>Duration</th>
+      <th class='colHidden'></th>
+      <th class='colTests'>Tests</th>
+      <th class='colErrors'>Errors</th>
+      <th class='colCompare'></th>
+    </tr>
+  </tfoot>
+</table>
+
+<footer class="navbar-default navbar-fixed-bottom pt_job_comparison_dialog">
+  <div class="container">
+    <form class='navbar-form'>
+      <div class='row'>
+
+        <div class='col-md-9'>
+          <h4>Comparison</h4>
+          <div class="input-group">
+            <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Title:</span>
+            <input type="text" class="form-control" placeholder="Title">
+          </div>
+          <h4>Jobs to compare</h4>
+          <ul id='pt_jobs_to_compare'>
+          </ul>
+          <div>
+            <button type="cancel" class="btn btn-default">Cancel</button>   
+            <button type="submit" class="btn btn-primary pt_right" id='pt_btn_save'>Save</button>   
+            <button type="submit" class="btn btn-default pt_right" id='pt_btn_preview'>Preview</button>   
+          </div>
+        </div>
+
+        <div class='col-md-3 pt_comparison_options'>
+          <h4>Comparison options</h4>
+          <div class="input-group input-group-sm">
+            <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Charts:</span>
+            <div class="dropdown">
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu1"
+                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Auto
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <li><a href="#">Auto</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#">No charts</a></li>
+                <li><a href="#">XY-line charts</a></li>
+                <li><a href="#">XY-line + trend</a></li>
+                <li><a href="#">Bar charts</a></li>
+                <li><a href="#">Bar + trend</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="input-group input-group-sm">
+            <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Tables:</span>
+            <div class="dropdown">
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu2"
+                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Auto
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <li><a href="#">Auto</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#">Hide all tables</a></li>
+                <li><a href="#">Show all tables</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="input-group input-group-sm">
+            <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Tests:</span>
+            <div class="dropdown">
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu3"
+                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Auto
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <li><a href="#">Auto</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#">Tests w/o errors and warnings</a></li>
+                <li><a href="#">Tests w/o errors</a></li>
+                <li><a href="#">All tests</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="input-group input-group-sm">
+            <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Compare:</span>
+            <div class="dropdown">
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu4"
+                      data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Auto
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <li><a href="#">Auto</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#">Average values</a></li>
+                <li><a href="#">Min values</a></li>
+                <li><a href="#">Max values</a></li>
+              </ul>
+            </div>
+          </div>
+        
+        </div>
+      </div> <!-- form //-->
+    </form>
+  </div>
+</footer>
+
+<script>
+$(document).ready(function() {
+
+    /*
+     * 1. Jobs list table
+     */
+
+    var table = $('#jobs').DataTable( {
+        "processing": true,
+        "serverSide": true,
+        "lengthMenu": [[50, 200, 1000, -1], [50, 200, 1000, "All"]],
+        "ajax": "/api/v{{ api_ver }}/{{ project.id }}/job/",
+        "order": [[ 2, "desc" ]],
+        "columns": [
+            {
+                "className": 'pt_row_details_toggle',
+                "orderable": false,
+                "data":      null,
+                "defaultContent": "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>",
+            },
+            { "data": "id" },
+            { "data": "end" },
+            { "data": "env_node" },
+            { "data": "suite_ver" },
+            { "data": "title" },
+            { "data": "duration" },
+            { "data": "tests_total" },
+            { "data": "tests_completed" },
+            { "data": "tests_failed" },
+            {
+                "className": 'pt_row_compare_toggle',
+                "orderable": false,
+                "data":      null,
+                "defaultContent": "<span class='glyphicon glyphicon-plus' aria-hidden='true'></span>",
+            },
+
+        ],
+        "columnDefs": [
+            {
+                "targets": "colEndDate",
+                "type": "date",
+                "render": function ( data, type, row ) {
+                    return pt_date2str(data);
+                },
+            },
+            {
+                "targets": "colHw",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    var str = '';
+                    if (!data)
+                        return '';
+                    for (var i = 0; i < data.length; i++) {
+                        if (typeof data[i].name == 'undefined')
+                            continue;
+                        if (str)
+                            str += ", ";
+                        str += data[i].name;
+                    }
+                    return str;
+                },
+            },
+            {
+                "targets": "colVersion",
+                "type": "string",
+                "orderData": [ 4, 1 ],
+            },
+
+            {
+                "targets": "colRunTitle",
+                "type": "string",
+                "orderData": [ 5, 1 ],
+                "render": function ( data, type, row ) {
+                    return "<a href='/{{ project.id }}/job/" + row.id + "'>" + data + "</a>";
+                },
+            },
+            {
+                "targets": "colTests",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return data +' (of '+ row.tests_total+')';
+                },
+            },
+            {
+                "targets": "colErrors",
+                "type": "string",
+                "createdCell": function (td, cellData, rowData, row, col) {
+                    if ( cellData > 0 ) {
+                        $(td).addClass('pt_job_test_errors');
+                    }
+                },
+            },
+            {
+                "targets": [ "colHidden" ],
+                "type": "string",
+                "visible": false,
+            }
+        ],
+    });
+
+    /*
+     * 2. Job deails opening / closing
+     */
+
+    $('#jobs').on('click', 'td.pt_row_details_toggle', function () {
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+        var id = row.data().id;
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+            $('#job_details_slider_{0}'.ptFormat(id), row.child()).slideUp(function() {
+                row.child.hide()
+                tr.removeClass('shown');
+            });
+        }
+        else {
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/job/{0}'.ptFormat(id),
+                cache: true,
+                data: null,
+                type: 'GET',
+                timeout: 2000,
+                success: function(data, status) {
+                    row.child(pt_draw_job_details(data, null)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#env_nodes_{0}'.ptFormat(id)).treetable({expandable: true});
+                    $('#job_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                },
+                error: function(data, status, error) {
+                    row.child(pt_draw_job_details(row.data(), error)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#job_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                }
+            });
+        }
+    });
+
+    /*
+     * 3. Add to comparison
+     */
+
+    var jobs_in_comparison = {};
+
+    $("#pt_jobs_to_compare" ).sortable();
+
+    $('#jobs').on('click', 'td.pt_row_compare_toggle', function() {
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+        var id = row.data().id;
+        var title = row.data().title;
+
+        var adjust_body_margin = function() {
+            $("body").css('margin-bottom', '{0}px'.ptFormat($(".pt_job_comparison_dialog").outerHeight() + 20));
+        }
+
+        if (id in jobs_in_comparison) {
+            /* Remove from comparison */
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-plus' aria-hidden='true'></span>";
+            $(tr).removeClass('selected');
+            if (Object.keys(jobs_in_comparison).length == 1) {
+                $(".pt_job_comparison_dialog").slideToggle("slow");
+                $("body").css('margin-bottom: 10px;');
+            }
+            $("#pt_job_{0}".ptFormat(id)).remove();
+            delete jobs_in_comparison[id];
+        } else {
+            /* Add to comparison */
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-check' aria-hidden='true'></span>";
+            if (!$(tr).hasClass('selected'))
+                $(tr).addClass('selected');
+            if (Object.keys(jobs_in_comparison).length == 0)
+                $(".pt_job_comparison_dialog").slideToggle("slow", adjust_body_margin());
+            else
+                adjust_body_margin();
+            $("#pt_jobs_to_compare").append(
+                "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(id, title) +
+                "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
+            jobs_in_comparison[id] = id;
+        }
+    });
+
+    /*
+     * 4. Comparison options selection
+     */
+
+    $('div.input-group ul.dropdown-menu li a').click(function (e) {
+        var $div = $(this).parent().parent().parent(); 
+        var $btn = $div.find('button');
+        $btn.html($(this).text() + ' <span class="caret"></span>');
+        $div.removeClass('open');
+        e.preventDefault();
+        return false;
+    });
+
+    /*
+     * 5. Comparison preview
+     */
+
+    $('#pt_btn_preview').click(function (e) {
+        alert("Sorry, not implemented yet!");
+        return false;
+    });
+
+    $('#pt_btn_save').click(function (e) {
+        alert("Sorry, not implemented yet!");
+        return false;
+    });
+});
+</script>
+
+{% endblock %}

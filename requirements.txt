@@ -1,0 +1,8 @@
+django
+django-echarts
+django-datatables-view
+numpy
+python-dateutil
+djangorestframework
+django-bootstrap3
+django-group-by
