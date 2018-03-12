@@ -4,6 +4,8 @@ Performance regression tracking server for your CI:
 - use client library to upload job results to perftracker
 - manage the jobs and compare tests results on the perftracker
 
+Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) to upload your jobs
+
 # features
 - performance tests jobs uploader
 - jobs list view
