@@ -7,7 +7,7 @@ PerfTracker - performance regression tracking server for your CI:
 Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) to upload your jobs
 
 # Features
-Version 0.1:
+Version 0.1 (current):
 - performance tests jobs uploader
 - jobs list view
 - jobs details view
@@ -23,7 +23,7 @@ Version 0.1:
 - custom screens support
 - regressions AI
 
-# Version conventions
+# Versions convention
 Versions before 1.0 are considered as early alpha and will not guarantee upgrade from each other
 
 Versions after 1.0 will guarantee backward compatibility and upgrade steps
