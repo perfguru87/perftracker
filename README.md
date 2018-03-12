@@ -38,12 +38,9 @@ sudo yum -y install python36u
 sudo yum -y install python36u-pip
 ```
 
-### Installing Django
+### Install Django and other requirements
 
 ```
-sudo pip3.6 install django
-sudo pip3.6 install django-echarts
-sudo pip3.6 install django-datatables-view
 sudo pip3.6 install -r requirements.txt
 ```
 
