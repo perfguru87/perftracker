@@ -1,0 +1,233 @@
+{% extends '_base.html' %}
+
+{% block title %}Job: #{{ obj.id }} / {{ obj.title }}{% endblock %}
+
+{% block content %}
+<h3>Details</h3>
+<div class='container'><div id='job_details'></div></div>
+
+<h3>Results</h3>
+<div class="container">
+  <table id="tests" class="display dataTable" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+        <th class='colExpander'></th>
+        <th class='colId'></th>
+        <th class='colSeqNum'>#</th>
+        <th class='colTag'>Tag</th>
+        <th class='colCategory'></th>
+        <th class='colDuration'>Duration</th>
+        <th class='colScore'>Score</th>
+        <th class='colDeviation'>Deviation</th>
+      </tr>
+    </thead>
+    <tfoot>
+      <tr>
+        <th class='colExpander'></th>
+        <th class='colId'></th>
+        <th class='colSeqNum'>#</th>
+        <th class='colTag'>Tag</th>
+        <th class='colCategory'></th>
+        <th class='colDuration'>Duration</th>
+        <th class='colScore'>Score</th>
+        <th class='colDeviation'>Deviation</th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<script>
+function pt_test_details_draw(d, err_msg)
+{
+    var s = '';
+    var env_node = d.env_node;
+    var vms = d.vms;
+    var clients = d.clients;
+
+    console.log(d);
+
+    s += "<div class='pt_slider' id='test_details_slider_{0}'>".ptFormat(d.id);
+
+    s += "<div class='row'>";
+
+    s += "<div class='col-md-4'>";
+    s += "<h4>Test details</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th>Value</th></thead></tbody>";
+    s += "<tr><td>Raw scores</td><td>{0} {1}</td></tr>".ptFormat(d.scores, d.metrics);
+    s += "<tr><td>Raw devs</td><td>{0}</td></tr>".ptFormat(d.deviations);
+    s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : '');
+    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin), pt_date2str(d.end));
+    s += "<tr><td>Duration</td><td>{0}</td></tr>".ptFormat(d.duration);
+    s += "</tbody></table>";
+    s += "</div>";
+
+    s += "<div class='col-md-8'>";
+    s += "<h4>Test info</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th>Value</th></thead><tbody>";
+    s += "<tr><td>Score</td><td>{0} {1} ({2})</td></tr>".ptFormat(d.avg_score, d.metrics, d.less_better ? 'smaller is better' : 'biger is better');
+    s += "<tr><td>Cmdline</td><td><span class='pt_ellipsis'>{0}</td></tr>".ptFormat(d.cmdline);
+    s += "<tr><td>Description</td><td>{0}</td></tr>".ptFormat(d.description);
+
+    if (d.group && d.category)
+        s += "<tr><td>Group {category}</td><td>" + d.group + " {" + d.category + "}</td></tr>";
+    else if (d.category)
+        s += "<tr><td>Category</td><td>{0}</td></tr>".ptFormat(d.category);
+    else
+        s += "<tr><td>Group</td><td>{0}</td></tr>".ptFormat(d.group);
+
+    s += "<tr><td>Links</td><td>{0}</td></tr>".ptFormat(d.links ? pt_draw_links(d.links) : "");
+    s += "</tbody></table>";
+    s += "</div>";
+
+
+    s += "</div>"; /* row */
+
+    s += "</div>"; /* pt_slider */
+
+    return s;
+}
+
+function pt_tests_repopulate(table, group_id)
+{
+    if (typeof group_id == 'undefined')
+        return;
+
+    var link = "/api/v{{ api_ver }}/{{ project.id }}/job/{{ obj.id }}/group/{0}/test/".ptFormat(group_id);
+
+    table.ajax.url(link).load(null, true);
+}
+
+$(document).ready(function() {
+    var id = {{ obj.id }};
+
+    $.ajax({
+        url: '/api/v{{ api_ver }}/{{ project.id }}/job/{0}'.ptFormat({{ obj.id }}),
+        cache: true,
+        data: null,
+        type: 'GET',
+        timeout: 2000,
+        success: function(data, status) {
+            $('#job_details').html(pt_draw_job_details(data, null));
+            $('#env_nodes_{0}'.ptFormat(id)).treetable({expandable: true});
+            $('#job_details_slider_{0}'.ptFormat(id)).slideDown();
+        },
+        error: function(data, status, error) {
+            $('#job_details').html(pt_draw_ajax_error(error));
+            div.innerHTML = pt_draw_job_details(row.data(), error);
+            $('#job_details_slider_{0}'.ptFormat(id)).slideDown();
+        }
+    });
+
+    var table = $('#tests').DataTable( {
+        "processing": true,
+        "serverSide": true,
+        "lengthMenu": [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]],
+        "ajax": "/api/v{{ api_ver }}/{{ project.id }}/job/{{ obj.id }}/group/0/test/",
+        "order": [[ 2, "asc" ]],
+        "columns": [
+            {
+                "className": 'pt_row_details_toggle',
+                "orderable": false,
+                "data":      null,
+                "defaultContent": "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>",
+            },
+            { "data": "id" },
+            { "data": "seq_num" },
+            { "data": "tag" },
+            { "data": "category" },
+            { "data": "duration" },
+            { "data": "avg_score" },
+            { "data": "avg_dev" },
+        ],
+        "columnDefs": [
+            {
+                "targets": "colTag",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    if (row.category)
+                       return data + " {" + row.category + "}";
+                    return data;
+                }
+            },
+            {
+                "targets": "colDeviation",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return data;
+                }
+            },
+            {
+                "targets": [ "colId", "colCategory" ],
+                "type": "string",
+                "visible": false,
+            }
+        ],
+    });
+
+    // Add event listener for opening and closing details
+    $('#tests').on('click', 'td.pt_row_details_toggle', function () {
+        // FIXME, merge with jobs.html
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+        var id = row.data().id;
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+            $('#test_details_slider_{0}'.ptFormat(id), row.child()).slideUp(function() {
+                row.child.hide()
+                tr.removeClass('shown');
+            });
+        }
+        else {
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/job/{{ obj.id }}/group/0/test/{0}'.ptFormat(id),
+                cache: true,
+                data: null,
+                type: 'GET',
+                timeout: 2000,
+                success: function(data, status) {
+                    row.child(pt_test_details_draw(data, null)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#test_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                },
+                error: function(data, status, error) {
+                    row.child(pt_test_details_draw(row.data(), error)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#test_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                }
+            });
+        }
+    });
+
+    /* Test group switch handler */
+    $.ajax({
+        url: '/api/v{{ api_ver }}/{{ project.id }}/job/{0}/group/'.ptFormat({{ obj.id }}),
+        cache: true,
+        data: null,
+        type: 'GET',
+        timeout: 2000,
+        success: function(data, status) {
+            $('#tests_filter').after("<div id='test_group_selector' class='pt_test_group_selector'>Group filter: <select></select></div>");
+            var selector = $('#test_group_selector').children('select');
+            selector.append($('<option>', {value: 0, text: ''}));
+            $.each(data, function(i, item) {
+                selector.append($('<option>', {value: item.id, text: item.title}));
+            });
+            selector.change(function() {
+                pt_tests_repopulate(table, this.value);
+            });
+        },
+        error: function(data, status, error) {
+            $('#test_group_selector').html(pt_draw_ajax_error(error));
+        }
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,160 @@
+/*
+ * Colors guideline: https://htmlcolorcodes.com/color-chart/
+ */
+
+body {
+    margin-bottom: 10px;
+}
+
+/* Grids */
+tr.odd td.pt_job_test_errors {
+    background-color: #F5B7B1;
+}
+tr.even td.pt_job_test_errors {
+    background-color: #FADBD8;
+}
+td.pt_row_details_toggle {
+    cursor: pointer;
+}
+td.pt_row_compare_toggle {
+    cursor: pointer;
+}
+td.pt_row_details {
+    background-color: #fff;
+    border-top: 1px solid #ccc !important;
+    border-bottom: 1px solid #fff !important;
+    line-height: 1;
+    font-size: 0.9em;
+}
+
+/* An object details table */
+table.pt_obj_details {
+    border-collapse: initial;
+    background-color: #fff;
+    width: 100%;
+}
+table.pt_obj_details th {
+    background-color: #777;
+    color: #fff;
+    border-top: 1px solid #888 !important;
+    padding: 6px 6px !important;
+    font-weight: normal;
+}
+table.pt_obj_details th a {
+    color: #eee;
+    cursor: pointer;
+    text-decoration: underline;
+}
+table.pt_obj_details th a:hover {
+    color: #fff;
+}
+table.pt_obj_details th:first-of-type,
+table.pt_obj_details td:first-of-type
+{
+    padding-left: 15px !important;
+    width: auto !important;
+}
+table.pt_obj_details tr td {
+    padding: 4px 6px !important;
+    color: #000;
+    min-width: 90px;
+}
+/*
+table.pt_obj_details tr td.pt_ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+table.pt_obj_details tr td.pt_ellipsis:hover {
+    white-space: normal;
+    overflow: none;
+    text-overflow: none;
+}
+*/
+
+table.pt_obj_details tr:nth-child(even) td {
+    background-color: #e8e8e8;
+}
+table.pt_obj_details tr:nth-child(odd) td {
+    background-color: #f4f4f4;
+}
+
+/* Slider */
+div.pt_slider {
+    display: none;
+    margin-bottom: 10px;
+}
+
+/* Hr */
+div.pt_hr {
+    min-height: 10px;
+    border-bottom: 1px solid #ddd;
+    line-height: 10px;
+    margin-bottom: 10px;
+}
+
+/* Ajax messages */
+span.pt_ajax_error {
+    color: #f44;
+}
+
+/* Test groups selector */
+div.pt_test_group_selector {
+    float: right;
+    padding-right: 20px;
+}
+div.pt_test_group_selector select {
+    width: 150px;
+}
+
+/* Job comparison dialog */
+.pt_job_comparison_dialog {
+    display: none;
+    background: #f0f0f0;
+    border-top: 1px solid #fff;
+    box-shadow: 0 2px 10px #777;
+}
+.pt_job_comparison_dialog form {
+    margin: 0px 0px 10px 0px;
+}
+.pt_job_comparison_dialog .input-group {
+    width: 100%;
+}
+.pt_job_comparison_dialog button {
+    width: 100px;
+}
+.pt_job_comparison_dialog .pt_comparison_options button {
+    width: 180px;
+}
+.pt_job_comparison_dialog .pt_right {
+    float: right;
+    margin-left: 10px;
+}
+.pt_job_comparison_dialog span.pt_job_comparison_title {
+    width: 70px !important;
+    min-width: 70px !important;
+    padding: 0px !important;
+}
+.pt_job_comparison_dialog .input-group {
+    margin-bottom: 5px;
+}
+.pt_job_comparison_dialog table tr td {
+    padding: 0px 10px 5px 0px;
+}
+#pt_jobs_to_compare {
+    padding: 2px;
+}
+#pt_jobs_to_compare li {
+    list-style-type: none;
+    cursor: pointer;
+    width: 100%;
+    border: 1px solid #eee;
+    padding: 1px 5px 1px 5px;
+    margin: 2px;
+    background: #ddd;
+}
+#pt_jobs_to_compare li:hover {
+    background: #777;
+    border: 1px solid #fff;
+    color: white;
+}
