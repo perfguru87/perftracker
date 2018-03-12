@@ -1,12 +1,13 @@
-# perftracker
-Performance regression tracking server for your CI:
+# The perftracker
+PerfTracker - performance regression tracking server for your CI:
 - Run your tests job in your jenkins/whatever
 - use client library to upload job results to perftracker
 - manage the jobs and compare tests results on the perftracker
 
 Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) to upload your jobs
 
-# features
+# Features
+Version 0.1:
 - performance tests jobs uploader
 - jobs list view
 - jobs details view
@@ -14,14 +15,18 @@ Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) t
 - job tests view
 - job tests details
 
-# todo
-- client library with examples
+# Todo
 - fixtures
-- jobs (tests) comparisons
-- charts (lines/columns/trends)
+- jobs & tests comparisons
+- charts (lines/columns/trends) in comparisons
 - nodes management (lock/unlock/see status)
 - custom screens support
 - regressions AI
+
+# Version conventions
+Versions before 1.0 are considered as early alpha and will not guarantee upgrade from each other
+
+Versions after 1.0 will guarantee backward compatibility and upgrade steps
 
 # Requirements
 
@@ -53,7 +58,12 @@ CentOS-7:
 yum -y install uwsgi uwsgi-plugin-python3
 ```
 
-### Run the server
+### Create DB schema (apply migrations)
+```
+python3.6 ./manage.py migrate
+```
+
+# Running the server
 
 ```
 python3.6 ./perftracker/manage.py runserver 0.0.0.0:8000
