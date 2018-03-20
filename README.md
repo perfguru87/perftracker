@@ -63,8 +63,25 @@ yum -y install uwsgi uwsgi-plugin-python3
 python3.6 ./manage.py migrate
 ```
 
+### Create Django admin panel superuser
+
+```
+python3.6 ./manage.py createsuperuser
+```
+
 # Running the server
 
 ```
-python3.6 ./perftracker/manage.py runserver 0.0.0.0:8000
+python3.6 ./manage.py runserver 0.0.0.0:8000
 ```
+
+# Managing the contents
+
+### Managing the projects
+
+You can add several projects which will be displayed as dropdown list in the menu then. To add/modify/delete the projects go to:
+$PERF_TRACKER_URL/admin/perftracker/projectmodel/
+
+### Managing custom screens
+
+TODO
