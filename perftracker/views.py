@@ -26,6 +26,8 @@ from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetaile
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
 
+from perftracker.forms import ptCmpDialogForm
+
 API_VER = 1.0
 
 
@@ -44,11 +46,11 @@ def ptRedirect(request):
 # HTML views ###
 
 
-def ptBaseHtml(request, project_id, template, cb=None, obj=None):
+def ptBaseHtml(request, project_id, template, params=None, obj=None):
     if request.method == 'POST':
         raise Http404
 
-    params = cb(request) if cb else {}
+    params = params if params else {}
 
     default_params = {'projects': ProjectModel().ptGetAll(),
                       'request': request,
@@ -77,7 +79,8 @@ def ptComparisonIdHtml(request, project_id, id):
 
 # @login_required
 def ptJobAllHtml(request, project_id):
-    return ptBaseHtml(request, project_id, 'job_all.html')
+    params = {'cmp_form': ptCmpDialogForm()}
+    return ptBaseHtml(request, project_id, 'job_all.html', params=params)
 
 
 # @login_required

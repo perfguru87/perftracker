@@ -69,13 +69,12 @@
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                <li><a href="#">Auto</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="#">No charts</a></li>
-                <li><a href="#">XY-line charts</a></li>
-                <li><a href="#">XY-line + trend</a></li>
-                <li><a href="#">Bar charts</a></li>
-                <li><a href="#">Bar + trend</a></li>
+                {% for value, text in cmp_form.charts_type.field.choices %}
+                    <li><a href='#'>{{ text }}</a></li>
+                    {% ifequal value 0 %}
+                        <li role="separator" class="divider"></li>
+                    {% endifequal %}
+                {% endfor %}
               </ul>
             </div>
           </div>
@@ -89,10 +88,12 @@
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                <li><a href="#">Auto</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="#">Hide all tables</a></li>
-                <li><a href="#">Show all tables</a></li>
+                {% for value, text in cmp_form.tables_type.field.choices %}
+                    <li><a href='#'>{{ text }}</a></li>
+                    {% ifequal value 0 %}
+                        <li role="separator" class="divider"></li>
+                    {% endifequal %}
+                {% endfor %}
               </ul>
             </div>
           </div>
@@ -106,11 +107,12 @@
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                <li><a href="#">Auto</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="#">Tests w/o errors and warnings</a></li>
-                <li><a href="#">Tests w/o errors</a></li>
-                <li><a href="#">All tests</a></li>
+                {% for value, text in cmp_form.tests_type.field.choices %}
+                    <li><a href='#'>{{ text }}</a></li>
+                    {% ifequal value 0 %}
+                        <li role="separator" class="divider"></li>
+                    {% endifequal %}
+                {% endfor %}
               </ul>
             </div>
           </div>
@@ -124,11 +126,12 @@
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                <li><a href="#">Auto</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="#">Average values</a></li>
-                <li><a href="#">Min values</a></li>
-                <li><a href="#">Max values</a></li>
+                {% for value, text in cmp_form.values_type.field.choices %}
+                    <li><a href='#'>{{ text }}</a></li>
+                    {% ifequal value 0 %}
+                        <li role="separator" class="divider"></li>
+                    {% endifequal %}
+                {% endfor %}
               </ul>
             </div>
           </div>
