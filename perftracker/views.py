@@ -21,6 +21,7 @@ from django.db.models import Count
 from django.db.models.query import QuerySet
 
 from perftracker.models.project import ProjectModel
+from perftracker.models.comparison import ComparisonModel
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
@@ -109,7 +110,25 @@ def ptHomeJson(request, api_ver, project_id):
     return JsonResponse([], safe=False)
 
 
+@csrf_exempt
 def ptComparisonAllJson(request, api_ver, project_id):
+    if request.method == "POST":
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+
+        try:
+            ComparisonModel.ptValidateJson(body)
+        except SuspiciousOperation as e:
+            return HttpResponseBadRequest(e)
+
+        cmp = ComparisonModel(project=ProjectModel.ptGetById(project_id))
+        try:
+            cmp.ptUpdate(body)
+        except SuspiciousOperation as e:
+            return HttpResponseBadRequest(e)
+
+        return JsonResponse({'id': cmp.id}, safe=False)
+
     return JsonResponse([], safe=False)
 
 

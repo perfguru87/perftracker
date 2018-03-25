@@ -39,14 +39,14 @@
 
 <footer class="navbar-default navbar-fixed-bottom pt_job_comparison_dialog">
   <div class="container">
-    <form class='navbar-form'>
+    <form class='navbar-form' id='pt_comparison_form'>
       <div class='row'>
 
         <div class='col-md-9'>
           <h4>Comparison</h4>
           <div class="input-group">
             <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Title:</span>
-            <input type="text" class="form-control" placeholder="Title">
+            <input type="text" class="form-control" placeholder="Title" id='pt_comparison_title'>
           </div>
           <h4>Jobs to compare</h4>
           <ul id='pt_jobs_to_compare'>
@@ -63,12 +63,12 @@
           <div class="input-group input-group-sm">
             <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Charts:</span>
             <div class="dropdown">
-              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu1"
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="pt_charts_type"
                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                 Auto
                 <span class="caret"></span>
               </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+              <ul class="dropdown-menu" aria-labelledby="pt_charts_type">
                 {% for value, text in cmp_form.charts_type.field.choices %}
                     <li><a href='#'>{{ text }}</a></li>
                     {% ifequal value 0 %}
@@ -82,12 +82,12 @@
           <div class="input-group input-group-sm">
             <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Tables:</span>
             <div class="dropdown">
-              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu2"
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="pt_tables_type"
                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                 Auto
                 <span class="caret"></span>
               </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+              <ul class="dropdown-menu" aria-labelledby="pt_tables_type">
                 {% for value, text in cmp_form.tables_type.field.choices %}
                     <li><a href='#'>{{ text }}</a></li>
                     {% ifequal value 0 %}
@@ -101,12 +101,12 @@
           <div class="input-group input-group-sm">
             <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Tests:</span>
             <div class="dropdown">
-              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu3"
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="pt_tests_type"
                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                 Auto
                 <span class="caret"></span>
               </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+              <ul class="dropdown-menu" aria-labelledby="pt_tests_type">
                 {% for value, text in cmp_form.tests_type.field.choices %}
                     <li><a href='#'>{{ text }}</a></li>
                     {% ifequal value 0 %}
@@ -120,12 +120,12 @@
           <div class="input-group input-group-sm">
             <span class="input-group-addon pt_job_comparison_title" id="basic-addon1">Compare:</span>
             <div class="dropdown">
-              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="dropdownMenu4"
+              <button class="btn btn-default dropdown-toggle btn-sm" type="button" id="pt_values_type"
                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                 Auto
                 <span class="caret"></span>
               </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+              <ul class="dropdown-menu" aria-labelledby="pt_values_type">
                 {% for value, text in cmp_form.values_type.field.choices %}
                     <li><a href='#'>{{ text }}</a></li>
                     {% ifequal value 0 %}
@@ -351,7 +351,35 @@ $(document).ready(function() {
     });
 
     $('#pt_btn_save').click(function (e) {
-        alert("Sorry, not implemented yet!");
+
+        var payload = {}
+
+        payload.title = $("#pt_comparison_title").val();
+        payload.charts_type = $.trim($("#pt_charts_type").text());
+        payload.tables_type = $.trim($("#pt_tables_type").text());
+        payload.tests_type = $.trim($("#pt_tests_type").text());
+        payload.values_type = $.trim($("#pt_values_type").text());
+        payload.jobs = Array();
+
+        var elements = $('#pt_jobs_to_compare').find('input');
+        for (var i = 0; i < elements.length; i++)
+	    payload.jobs.push(parseInt(elements[i].value));
+
+        $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
+                type : "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType : 'json',
+                data : JSON.stringify(payload),
+                success : function(result) {
+                    window.location.replace("/api/v{{ api_ver }}/{{ project.id }}/comparison/" + result.id)
+                },
+                error: function(xhr, resp, text) {
+                    console.log("Form comparison sumbit failed", xhr, resp, text);
+                    alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
+                }
+            })
+
         return false;
     });
 });
