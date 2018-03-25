@@ -57,3 +57,6 @@ table.dataTable.display tbody tr.even:hover > .sorting_1,
 table.dataTable.order-column.stripe tbody tr.even:hover > .sorting_1 {
   background-color: #e8e8e8;
 }
+table.dataTable.display tbody tr.selected td {
+  border-top: 1px solid #fff !important;
+}
