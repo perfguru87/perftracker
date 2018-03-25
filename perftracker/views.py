@@ -149,7 +149,6 @@ def ptComparisonAllJson(request, api_ver, project_id):
         def prepare_results(self, qs):
             return ComparisonSerializer(qs, many=True).data
 
-
     if request.method == "POST":
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
