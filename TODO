@@ -1,0 +1,98 @@
+Authentication:
++ login form
+- sign in
+
+Authorization:
+- hidden screens for non-authorized users
+
+Jobs list:
++ fix sorting
++ fix search
++ fix paging
++ job details: env info
+- job details: json download
+- job details: xls download 
+- job details: job delete
+- job details: which comparisons refer to the job?
+- job details: clear cache(s) (?)
+- job details: re-import (?)
+- job details: suite details
++ add to comparison button
++ comparison dialog
++ comparison dialog: charts types
++ comparison dialog: tables types
++ comparison dialog: tests type
++ comparison dialog: values type
+- comparison dialog: public / hidden
++ comparison dialog: submit button
+- comparison dialog: preview button
++ comparison dialog: cancel button
+
+Job view:
++ job details
++ results table
+- results charts
++ test details
+
+Comparisons
++ table
+- comparison details
+- comparison edit dialog
+
+Comparison view:
+- highlights / thumbnails
+- results table
+- detailed charts
+- results details: jobs
+- results details: grafana link
+- results details: cmdline
+- results details: description
+- results details: start, end, duration
+- results details: iterations data, min, max, avg
+
+Job Upload
++ json upload
++ test results format: group
++ test results format: serie
++ test results format: cmdline
++ test results format: tag
++ test results format: iterations
++ test results format: metrics
++ test results format: time
++ test results format: loops
++ test results format: threads
+- test results format: error messages
+- test results format: warning messages
+- test results format: links key:value (logs, grafana, ...)
++ envs
+- hw chassis
+- products: version
+- products: name
+- links: key:value (login to UI, config blob, grafana) 
+- author
+
+Hosts view
+- hosts status
+- short grafana-like CPU usage
+- manual hosts locking 
+
+Links view
+- custom link group
+- custom link text / url
+
+Custom screens
+- rendered by cmdline
+- rendered as frame
+
+DB access
++ DB query logging
+- DB query optimization (don't fetch the same objects several times)
+
+Regressions
+- ...
+
+--------------
+
+Legend:
+'+' means done
+'-' means Todo
