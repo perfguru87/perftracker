@@ -11,7 +11,7 @@ Jobs list:
 + fix paging
 + job details: env info
 - job details: json download
-- job details: xls download 
+- job details: xls download
 - job details: job delete
 - job details: which comparisons refer to the job?
 - job details: clear cache(s) (?)
@@ -68,13 +68,13 @@ Job Upload
 - hw chassis
 - products: version
 - products: name
-- links: key:value (login to UI, config blob, grafana) 
+- links: key:value (login to UI, config blob, grafana)
 - author
 
 Hosts view
 - hosts status
 - short grafana-like CPU usage
-- manual hosts locking 
+- manual hosts locking
 
 Links view
 - custom link group
