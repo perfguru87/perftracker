@@ -1,6 +1,7 @@
 import uuid
 import itertools
 import json
+import uuid
 
 from datetime import timedelta
 from datetime import datetime
@@ -90,6 +91,50 @@ class ComparisonModel(models.Model):
     values_type = models.IntegerField(help_text="Values type", default=0, choices=CMP_VALUES)
 
     jobs        = models.ManyToManyField(JobModel, help_text="Jobs")
+
+    @staticmethod
+    def ptValidateJson(json_data):
+        if 'title' not in json_data:
+            raise SuspiciousOperation("Comparison title is not specified: it must be 'title': '...'")
+        if 'jobs' not in json_data:
+            raise SuspiciousOperation("Comparison jobs are not specified: it must be 'jobs': [1, 3, ...] ")
+        if type(json_data['jobs']) is not list:
+            raise SuspiciousOperation("Comparison jobs must be a list: 'jobs': [1, 3, ...] ")
+
+    @staticmethod
+    def _ptGetType(types, json_data, key):
+        if key not in json_data:
+            return 0
+
+        type2id = {}
+        for id, type in types:
+            type2id[type] = id
+        id = type2id.get(json_data[key], None)
+        if id is None:
+            raise SuspiciousOperation("Unknown type: %s, acceptable types are: %s" % (json_data[key], ",".join(type2id.keys())))
+        return id
+
+    def ptUpdate(self, json_data):
+        self.title = json_data['title']
+        self.charts_type = self._ptGetType(CMP_CHARTS, json_data, 'charts_type')
+        self.tables_type = self._ptGetType(CMP_TABLES, json_data, 'tables_type')
+        self.tests_type = self._ptGetType(CMP_TESTS, json_data, 'tests_type')
+        self.values_type = self._ptGetType(CMP_VALUES, json_data, 'values_type')
+
+        jobs = []
+
+        for jid in json_data['jobs']:
+            try:
+                job = JobModel.objects.get(id=int(jid))
+            except JobModel.DoesNotExist:
+                raise SuspiciousOperation("Job with id = '%d' doesn't exist" % jid)
+            jobs.append(job)
+
+        self.save()
+        self.jobs.clear()
+        for job in jobs:
+            self.jobs.add(job)
+        self.save()
 
     def __str__(self):
         return "#%d, %s" % (self.id, self.title)
