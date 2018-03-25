@@ -372,7 +372,7 @@ $(document).ready(function() {
                 dataType : 'json',
                 data : JSON.stringify(payload),
                 success : function(result) {
-                    window.location.replace("/api/v{{ api_ver }}/{{ project.id }}/comparison/" + result.id)
+                    window.location.replace("/{{ project.id }}/comparison/" + result.id)
                 },
                 error: function(xhr, resp, text) {
                     console.log("Form comparison sumbit failed", xhr, resp, text);
