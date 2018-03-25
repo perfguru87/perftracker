@@ -1,6 +1,7 @@
 django
 django-echarts
 django-datatables-view
+django-request-logging
 numpy
 python-dateutil
 djangorestframework

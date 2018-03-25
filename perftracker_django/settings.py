@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'request_logging.middleware.LoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'perftracker_django.urls'
@@ -131,3 +132,39 @@ BOOTSTRAP3 = {
     'theme_url': '/static/bootstrap3/css/bootstrap-theme.min.css',
     'javascript_in_head': True,
 }
+
+LOGGING = {
+    'disable_existing_loggers': False,
+    'version': 1,
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+        'logfile': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'perftracker.log',
+        }
+    },
+    'loggers': {
+        '': {
+            'level': 'DEBUG',
+            'handlers': ['logfile'],
+            'propagate': False
+        },
+        'django.request': {
+            'handlers': ['logfile'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['logfile'],
+            'propagate': False,
+        },
+    },
+}
+
+REQUEST_LOGGING_ENABLE_COLORIZE=False
+REQUEST_LOGGING_MAX_BODY_LENGTH=1024
