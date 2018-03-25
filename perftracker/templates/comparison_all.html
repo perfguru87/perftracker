@@ -3,5 +3,161 @@
 {% block title %}Comparisons{% endblock %}
 
 {% block content %}
-    Not <em>implemented</em>, sorry.
+
+<table id="comparisons" class="display dataTable" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colID'>ID</th>
+      <th class='colUpdated'>Updated</th>
+      <th class='colEnv'>Env</th>
+      <th class='colVersion'>Version</th>
+      <th class='colRunTitle'>Run title</th>
+      <th class='colJobs'>Jobs</th>
+      <th class='colHidden'></th>
+      <th class='colTests'>Tests</th>
+      <th class='colErrors'>Errors</th>
+      <th class='colEdit'>Edit</th>
+    </tr>
+  </thead>
+  <tfoot>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colID'>ID</th>
+      <th class='colUpdated'>Updated</th>
+      <th class='colEn'>Env</th>
+      <th class='colVersion'>Version</th>
+      <th class='colRunTitle'>Run title</th>
+      <th class='colJobs'>Jobs</th>
+      <th class='colHidden'></th>
+      <th class='colTests'>Tests</th>
+      <th class='colErrors'>Errors</th>
+      <th class='colEdit'>Edit</th>
+    </tr>
+  </tfoot>
+</table>
+
+
+<script>
+$(document).ready(function() {
+
+    /*
+     * 1. Comparisons list table
+     */
+
+    var table = $('#comparisons').DataTable( {
+        "processing": true,
+        "serverSide": true,
+        "lengthMenu": [[50, 200, 1000, -1], [50, 200, 1000, "All"]],
+        "ajax": "/api/v{{ api_ver }}/{{ project.id }}/comparison/",
+        "order": [[ 2, "desc" ]],
+        "columns": [
+            {
+                "className": 'pt_row_details_toggle',
+                "orderable": false,
+                "data":      null,
+                "defaultContent": "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>",
+            },
+            { "data": "id" },
+            { "data": "updated" },
+            { "data": "env_node" },
+            { "data": "suite_ver" },
+            { "data": "title" },
+            { "data": "jobs" },
+            { "data": "tests_total" },
+            { "data": "tests_completed" },
+            { "data": "tests_failed" },
+            {
+                "className": 'pt_row_compare_toggle',
+                "orderable": false,
+                "data":      null,
+                "defaultContent": "<span class='glyphicon glyphicon-edit' aria-hidden='true'></span>",
+            },
+
+        ],
+        "columnDefs": [
+            {
+                "targets": "colUpdated",
+                "type": "date",
+                "render": function ( data, type, row ) {
+                    return pt_date2str(data);
+                },
+            },
+            {
+                "targets": "colEnv",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    var str = '';
+                    if (!data)
+                        return '';
+                    for (var i = 0; i < data.length; i++) {
+                        if (typeof data[i].name == 'undefined')
+                            continue;
+                        if (str)
+                            str += ", ";
+                        str += data[i].name;
+                    }
+                    return str;
+                },
+            },
+            {
+                "targets": "colVersion",
+                "type": "string",
+                "orderData": [ 4, 1 ],
+            },
+
+            {
+                "targets": "colRunTitle",
+                "type": "string",
+                "orderData": [ 5, 1 ],
+                "render": function ( data, type, row ) {
+                    return "<a href='/{{ project.id }}/comparison/" + row.id + "'>" + data + "</a>";
+                },
+            },
+            {
+                "targets": "colJobs",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    if (!data)
+                        return '';
+                    return data.length;
+                },
+            },
+            {
+                "targets": "colTests",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return data;
+                },
+            },
+            {
+                "targets": "colErrors",
+                "type": "string",
+                "createdCell": function (td, cellData, rowData, row, col) {
+                    if ( cellData > 0 ) {
+                        $(td).addClass('pt_job_test_errors');
+                    }
+                },
+            },
+            {
+                "targets": [ "colHidden" ],
+                "type": "string",
+                "visible": false,
+            }
+        ],
+    });
+
+    /*
+     * 2. Comparison details
+     */
+    $("#comparisons").on('click', 'td.pt_row_details_toggle', function() { alert("Sorry, not implemented"); return false; });
+
+    /*
+     * 3. Comparison options
+     */
+    $("#comparisons").on('click', 'td.pt_row_compare_toggle', function() { alert("Sorry, not implemented"); return false; });
+
+});
+</script>
+
 {% endblock %}

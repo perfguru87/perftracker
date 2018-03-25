@@ -21,7 +21,7 @@ from django.db.models import Count
 from django.db.models.query import QuerySet
 
 from perftracker.models.project import ProjectModel
-from perftracker.models.comparison import ComparisonModel
+from perftracker.models.comparison import ComparisonModel, ComparisonSerializer
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
@@ -112,6 +112,44 @@ def ptHomeJson(request, api_ver, project_id):
 
 @csrf_exempt
 def ptComparisonAllJson(request, api_ver, project_id):
+    class ComparisonJson(BaseDatatableView):
+        # The model we're going to show
+        model = ComparisonModel
+
+        # define the columns that will be returned
+        columns = ['', 'id', 'updated', 'env_node', 'suite_ver', 'title', 'jobs', 'tests_total', 'tests_completed', 'tests_failed']
+
+        # define column names that will be used in sorting
+        # order is important and should be same as order of columns
+        # displayed by datatables. For non sortable columns use empty
+        # value like ''
+        order_columns = ['', 'id', 'updated', 'env_node', 'suite_ver', 'title', 'jobs', 'tests_total', 'tests_completed', 'tests_failed']
+
+        # set max limit of records returned, this is used to protect our site if someone tries to attack our site
+        # and make it return huge amount of data
+        max_display_length = 5000
+
+        def render_column(self, row, column):
+            # We want to render user as a custom column
+            if column == 'tests_total':
+                return '{0} {1}'.format(row.tests_total, row.tests_completed)
+            else:
+                return super(JobJson, self).render_column(row, column)
+
+        def filter_queryset(self, qs):
+            # use parameters passed in GET request to filter queryset
+
+            # simple example:
+            search = self.request.GET.get(u'search[value]', None)
+            if search:
+                qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
+
+            return qs
+
+        def prepare_results(self, qs):
+            return ComparisonSerializer(qs, many=True).data
+
+
     if request.method == "POST":
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
@@ -129,7 +167,7 @@ def ptComparisonAllJson(request, api_ver, project_id):
 
         return JsonResponse({'id': cmp.id}, safe=False)
 
-    return JsonResponse([], safe=False)
+    return ComparisonJson.as_view()(request)
 
 
 def ptComparisonIdJson(request, api_ver, project_id, id):

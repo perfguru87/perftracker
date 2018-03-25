@@ -15,7 +15,7 @@ from rest_framework import serializers
 
 from perftracker.models.job import JobModel
 from perftracker.models.project import ProjectModel
-from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
+from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer
 
 
 class ptCmpChartType:
@@ -146,22 +146,62 @@ class ComparisonModel(models.Model):
 
 class ComparisonBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
+    suite_ver = serializers.SerializerMethodField()
+    suite_name = serializers.SerializerMethodField()
+    tests_total = serializers.SerializerMethodField()
+    tests_completed = serializers.SerializerMethodField()
+    tests_failed = serializers.SerializerMethodField()
+    tests_errors = serializers.SerializerMethodField()
+    tests_warnings = serializers.SerializerMethodField()
 
-    def get_env_node(self, job):
-        # this function is required to apply 'parent=None' filter because env_node children will be
-        # populated by the EnvNodeNestedSerializer
-        return None
+    def get_env_node(self, cmp):
+        objs = []
+        visited = set()
+        for job in cmp.jobs.all():
+            for obj in EnvNodeModel.objects.filter(job=job.id, parent=None).all():
+                if obj.name in visited:
+                    continue
+                visited.add(obj.name)
+                objs.append(obj)
+
+        return EnvNodeSimpleSerializer(objs, many=True).data
+
+    def _ptGetJobsAttr(self, cmp, attr):
+        ret = set()
+        for job in cmp.jobs.all():
+            ret.add(job.__dict__[attr])
+        return ", ".join(sorted(ret))
+
+    def _ptGetJobsSum(self, cmp, attr):
+        ret = 0
+        for job in cmp.jobs.all():
+            ret += job.__dict__[attr]
+        return ret
+
+    def get_suite_ver(self, cmp):
+        return self._ptGetJobsAttr(cmp, 'suite_ver')
+
+    def get_suite_name(self, cmp):
+        return self._ptGetJobsAttr(cmp, 'suite_name')
+
+    def get_tests_total(self, cmp):
+        return self._ptGetJobsSum(cmp, 'tests_total')
+
+    def get_tests_completed(self, cmp):
+        return self._ptGetJobsSum(cmp, 'tests_completed')
+
+    def get_tests_failed(self, cmp):
+        return self._ptGetJobsSum(cmp, 'tests_failed')
+
+    def get_tests_errors(self, cmp):
+        return self._ptGetJobsSum(cmp, 'tests_errors')
+
+    def get_tests_warnings(self, cmp):
+        return self._ptGetJobsSum(cmp, 'tests_warnings')
 
 
-class ComparisonSimpleSerializer(ComparisonBaseSerializer):
+class ComparisonSerializer(ComparisonBaseSerializer):
     class Meta:
         model = ComparisonModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
-
-
-class ComparisoNestedSerializer(ComparisonBaseSerializer):
-    class Meta:
-        model = ComparisonModel
-        fields = ('id', 'title', 'suite_name', 'suite_ver', 'product_name', 'product_ver', 'env_node', 'updated',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
