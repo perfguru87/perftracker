@@ -78,6 +78,12 @@ table.pt_obj_details tr:nth-child(even) td {
 table.pt_obj_details tr:nth-child(odd) td {
     background-color: #f4f4f4;
 }
+table.pt_obj_details thead tr th {
+    border-right: 1px solid #ddd;
+}
+table.pt_obj_details tbody tr td {
+    border-right: 1px solid #fff;
+}
 
 /* Slider */
 div.pt_slider {
@@ -157,4 +163,17 @@ div.pt_test_group_selector select {
     background: #777;
     border: 1px solid #fff;
     color: white;
+}
+
+/* Collapsable elements */
+.pt_collapse span {
+    font-size: 0.7em;
+    margin-left: 5px;
+    color: #777;
+}
+
+/* Sections */
+.pt_section {
+    padding-bottom: 5px;
+    border-bottom: 1px solid #ccc;
 }
