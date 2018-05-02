@@ -2,6 +2,7 @@ import numpy
 import uuid
 import itertools
 import json
+import copy
 from functools import reduce
 
 from datetime import timedelta
