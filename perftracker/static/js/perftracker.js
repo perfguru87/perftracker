@@ -155,3 +155,36 @@ function pt_draw_job_details(d, err_msg)
 
     return s;
 }
+
+function pt_ajax_job_details(api_ver, project_id, job_id)
+{
+    $.ajax({
+        url: '/api/v' + api_ver + '/' + project_id + '/job/{0}'.ptFormat(job_id),
+        cache: true,
+        data: null,
+        type: 'GET',
+        timeout: 2000,
+        success: function(data, status) {
+            $('#job_details_{0}'.ptFormat(job_id)).html(pt_draw_job_details(data, null));
+            $('#env_nodes_{0}'.ptFormat(job_id)).treetable({expandable: true});
+            $('#job_details_slider_{0}'.ptFormat(job_id)).slideDown();
+        },
+        error: function(data, status, error) {
+            $('#job_details_{0}'.ptFormat(job_id)).html(pt_draw_ajax_error(error));
+            $('#job_details_slider_{0}'.ptFormat(job_id)).slideDown();
+        }
+    });
+}
+
+$(document).ready(function() {
+    $('.pt_collapse.expanded').append('<span class="glyphicon glyphicon-triangle-bottom"></span>');
+    $('.pt_collapse.collapsed').append('<span class="glyphicon glyphicon-triangle-right"></span>');
+    $('.pt_collapse').on('click', function() {
+        var x = $(this).hasClass('collapsed');
+        if (x) {
+            $(this).find(".glyphicon-triangle-right").removeClass("glyphicon-triangle-right").addClass("glyphicon-triangle-bottom");
+        } else {
+            $(this).find(".glyphicon-triangle-bottom").removeClass("glyphicon-triangle-bottom").addClass("glyphicon-triangle-right");
+        }
+    });
+});

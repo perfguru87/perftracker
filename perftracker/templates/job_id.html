@@ -3,8 +3,12 @@
 {% block title %}Job: #{{ obj.id }} / {{ obj.title }}{% endblock %}
 
 {% block content %}
-<h3>Details</h3>
-<div class='container'><div id='job_details'></div></div>
+<div class='pt_section'>
+<h3 class='pt_collapse collapsed' data-toggle="collapse" data-target="#details">Details</h3>
+<div class='container collapse container' id='details'>
+  <div id='job_details_{{ obj.id }}'></div>
+</div>
+</div>
 
 <h3>Results</h3>
 <div class="container">
@@ -102,23 +106,7 @@ function pt_tests_repopulate(table, group_id)
 $(document).ready(function() {
     var id = {{ obj.id }};
 
-    $.ajax({
-        url: '/api/v{{ api_ver }}/{{ project.id }}/job/{0}'.ptFormat({{ obj.id }}),
-        cache: true,
-        data: null,
-        type: 'GET',
-        timeout: 2000,
-        success: function(data, status) {
-            $('#job_details').html(pt_draw_job_details(data, null));
-            $('#env_nodes_{0}'.ptFormat(id)).treetable({expandable: true});
-            $('#job_details_slider_{0}'.ptFormat(id)).slideDown();
-        },
-        error: function(data, status, error) {
-            $('#job_details').html(pt_draw_ajax_error(error));
-            div.innerHTML = pt_draw_job_details(row.data(), error);
-            $('#job_details_slider_{0}'.ptFormat(id)).slideDown();
-        }
-    });
+    pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, id);
 
     var table = $('#tests').DataTable( {
         "processing": true,
