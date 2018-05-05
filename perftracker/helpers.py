@@ -13,23 +13,23 @@ class ptDurationField(serializers.DurationField):
 def pt_float2human(value, MK=False):
     if str(value) == "":
         return "0"
-    value = float(value)
-    if MK and value > 100000000:
+    val = abs(float(value))
+    if MK and val > 100000000:
         return str(int(round(value / 1000000))) + "M"
-    elif MK and value > 100000:
+    elif MK and val > 100000:
         return str(int(round(value / 1000))) + "K"
-    elif value > 100:
+    elif val > 100:
         return str(int(round(value)))
-    elif value < 0.00000001:
+    elif val < 0.00000001:
         return "0"
     else:
         thr = 100
         prec = 0
-        while value < thr:
+        while val < thr:
             prec += 1
             thr /= 10.0
         fmt = "%." + str(prec) + "f"
-        return float(fmt % (value))
+        return float(fmt % (val)) * (1 if value > 0 else -1)
 
 
 class ptRoundedFloatField(serializers.FloatField):
