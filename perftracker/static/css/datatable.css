@@ -1,0 +1,47 @@
+table.dataTable.display tbody tr.odd { background-color: #f4f4f4; }
+table.dataTable.display tbody tr.odd:hover { background-color: #e8e8e8; }
+table.dataTable.display tbody tr.odd.selected { background-color: #d8d8d8; }
+table.dataTable.display tbody tr.odd.selected > .sorting_1 { background-color: #c0c0c0; }
+table.dataTable.display tbody tr.odd > .sorting_1,
+table.dataTable.order-column.stripe tbody tr.odd > .sorting_1 {
+  background-color: #f0f0f0;
+}
+table.dataTable.display tbody tr.odd:hover > .sorting_1,
+table.dataTable.order-column.stripe tbody tr.odd:hover > .sorting_1 {
+  background-color: #e4e4e4;
+}
+
+table.dataTable tbody tr.even { background-color: #f8f8f8; }
+table.dataTable tbody tr.even:hover { background-color: #ececec; }
+table.dataTable tbody tr.even.selected { background-color: #e0e0e0; }
+table.dataTable tbody tr.even.selected > .sorting_1 { background-color: #c8c8c8; }
+table.dataTable.display tbody tr.even > .sorting_1,
+table.dataTable.order-column.stripe tbody tr.even > .sorting_1 {
+  background-color: #f4f4f4;
+}
+table.dataTable.display tbody tr.even:hover > .sorting_1,
+table.dataTable.order-column.stripe tbody tr.even:hover > .sorting_1 {
+  background-color: #e8e8e8;
+}
+table.dataTable.display tbody tr.selected td {
+  border-top: 1px solid #fff;
+}
+table.dataTable.display tr td, table.dataTable.display tr th {
+  text-align: center;
+}
+table.dataTable.display tr th {
+  padding-right: 25px !important;
+}
+table.dataTable.row-border tbody th, table.dataTable.row-border tbody td,
+table.dataTable.display tbody th, table.dataTable.display tbody td {
+  border-top: 1px solid #fff;
+}
+table.dataTable thead .sorting, table.dataTable thead .sorting_asc, table.dataTable thead .sorting_desc {
+  background-image: none;
+}
+table.dataTable thead th.sorting_asc, table.dataTable thead th.sorting_desc {
+  background-color: #eee;
+}
+table.dataTable thead th, table.dataTable thead td {
+  padding: 10px 2px 10px 8px;
+}

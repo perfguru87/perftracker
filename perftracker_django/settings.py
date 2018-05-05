@@ -38,13 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bootstrap3',
-    'django_echarts',
     'perftracker',
 ]
-
-DJANGO_ECHARTS = {
-    'lib_js_host': 'cdnjs'
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -41,6 +41,8 @@ class TestModel(models.Model):
     deviations  = models.CharField(max_length=1024, help_text="Test deviations: [0.02, 0.03, 0.01]")
     deviations_rejected = models.IntegerField(default=0, help_text="Number of deviations rejected")
 
+    samples     = models.IntegerField(help_text="Number of test samples (iterations)", default=1)
+
     category    = models.CharField(max_length=128, help_text="Test category: 1-thread")
     metrics     = models.CharField(max_length=64, help_text="Test result metrics: MB/s")
     links       = models.CharField(max_length=1024, help_text="Test links json: {'test logs': 'http://logs.localdomain/231241.log'}")
@@ -74,10 +76,10 @@ class TestModel(models.Model):
         self.description = json_data.get('description', '')
 
         scores = json_data['scores']
-        deviations = json_data.get('deviations', [0] * len(scores))
+        deviations = json_data.get('deviations', None)
 
         self.scores = str(scores)
-        self.deviations = str(deviations)
+        self.deviations = str(deviations) if deviations else str([0] * len(scores))
 
         self.category = json_data.get('category', '')
         self.metrics = json_data.get('metrics', 'loops/sec')
@@ -94,13 +96,15 @@ class TestModel(models.Model):
         self.group = json_data.get('group', '')
         TestGroupModel.ptGetByTag(self.group)  # ensure appropriate TestGroupModel object exists
 
+        self.samples = json_data.get('samples', len(scores))
+
         self.avg_score = numpy.mean(scores)
         self.min_score = min(scores)
         self.max_score = max(scores)
 
-        self.avg_dev = numpy.mean(deviations)
-        self.min_dev = min(deviations)
-        self.max_dev = max(deviations)
+        self.avg_dev = numpy.mean(deviations) if deviations else numpy.std(scores)
+        self.min_dev = min(deviations) if deviations else self.avg_dev
+        self.max_dev = max(deviations) if deviations else self.avg_dev
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))

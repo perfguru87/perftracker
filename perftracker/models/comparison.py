@@ -3,8 +3,11 @@ import itertools
 import json
 import uuid
 
+from scipy import stats
+
 from datetime import timedelta
 from datetime import datetime
+from collections import OrderedDict
 
 from django.db import models
 from django.utils.dateparse import parse_datetime
@@ -14,38 +17,41 @@ from django.core.exceptions import SuspiciousOperation
 from rest_framework import serializers
 
 from perftracker.models.job import JobModel
+from perftracker.models.test import TestModel
+from perftracker.models.test_group import TestGroupModel
 from perftracker.models.project import ProjectModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer
+from perftracker.helpers import pt_float2human
 
 
 class ptCmpChartType:
     AUTO = 0
     NOCHART = 1
     XYLINE = 2
-    XYLINE_AND_TREND = 3
+    XYLINE_WITH_TREND = 3
     BAR = 4
-    BAR_AND_TREND = 5
+    BAR_WITH_TREND = 5
 
 
 CMP_CHARTS = (
     (ptCmpChartType.AUTO, 'Auto'),
     (ptCmpChartType.NOCHART, 'No charts'),
     (ptCmpChartType.XYLINE, 'XY-line'),
-    (ptCmpChartType.XYLINE_AND_TREND, 'XY-line + trend'),
+    (ptCmpChartType.XYLINE_WITH_TREND, 'XY-line + trend'),
     (ptCmpChartType.BAR, 'Bar charts'),
-    (ptCmpChartType.BAR_AND_TREND, 'Bar + trend'))
+    (ptCmpChartType.BAR_WITH_TREND, 'Bar + trend'))
 
 
 class ptCmpTableType:
     AUTO = 0
-    HIDE_ALL = 1
-    SHOW_ALL = 2
+    HIDE = 1
+    SHOW = 2
 
 
 CMP_TABLES = (
     (ptCmpTableType.AUTO, 'Auto'),
-    (ptCmpTableType.HIDE_ALL, 'Hide all tables'),
-    (ptCmpTableType.SHOW_ALL, 'Show all tables'))
+    (ptCmpTableType.HIDE, 'Hide all tables'),
+    (ptCmpTableType.SHOW, 'Show all tables'))
 
 
 class ptCmpTestsType:
@@ -205,3 +211,171 @@ class ComparisonSerializer(ComparisonBaseSerializer):
         model = ComparisonModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
+
+
+######################################################################
+# Comparison viewer
+######################################################################
+
+
+class ptComparisonServSideTestView:
+    def __init__(self, jobs):
+        self.tests = [None] * len(jobs)
+        self.title = ''
+        self.id = 0
+        self.seq_num = 0
+
+    def ptAddTest(self, job, job_n, test_obj):
+        self.tests[job_n] = test_obj
+        if not self.id:
+            self.title = ('%s {%s}' % (test_obj.tag, test_obj.category)) if test_obj.category else test_obj.tag
+            self.id = test_obj.id
+            self.seq_num = test_obj.seq_num
+
+    @property
+    def table_data(self):
+        if not len(self.tests):
+            return []
+        t = self.tests
+        ret = ['', self.id, self.seq_num, self.title]
+        for n in range(0, len(self.tests)):
+            if t[n]:
+                ret.append(pt_float2human(t[n].avg_score))
+                ret.append(int(round(100 * t[n].avg_dev / t[n].avg_score, 0)) if t[n].avg_score else 0)
+            else:
+                ret.append("-")
+                ret.append("-")
+
+            for prev in range(0, n):
+                if t[prev] is None or t[n] is None:
+                    ret.append("- 0")
+                    continue
+                if t[prev].avg_score < t[n].avg_score:
+                    d = 100 * (t[n].avg_score / t[prev].avg_score - 1)
+                elif t[prev].avg_score > t[n].avg_score:
+                    d = -100 * (t[prev].avg_score / t[n].avg_score - 1)
+                else:
+                    d = 0
+
+                diff = 0
+                try:
+                    s = stats.ttest_ind_from_stats(t[prev].avg_score, t[prev].avg_dev, t[prev].samples,
+                                                   t[n].avg_score, t[n].avg_dev, t[n].samples)
+                    if s[1] >= 0.1:
+                        diff = 1
+                except ZeroDivisionError:
+                    diff = 1
+
+                if diff:
+                    if t[prev].avg_score < t[n].avg_score:
+                        diff = (-1 if t[prev].less_better else 1)
+                    elif t[prev].avg_score > t[n].avg_score:
+                        diff = (1 if t[prev].less_better else -1)
+                    elif t[prev].avg_score == t[n].avg_score:
+                        diff = 0
+                ret.append(str(int(round(d, 0))) + " " + str(diff))
+
+        return ret
+
+
+class ptComparisonServSideSeriesView:
+    def __init__(self, legend):
+        self.series = []
+        self.legend = legend
+
+    def ptAddTest(self, job, job_n, test_obj):
+        self.series.append(pt_float2human(test_obj.avg_score))
+
+
+class ptComparisonServSideSectView:
+    def __init__(self, id, cmp_obj, jobs, title):
+        self.cmp_obj = cmp_obj
+        self.title = "Tests results" if title == "" else title
+        self.jobs = jobs
+        self.tests = OrderedDict()
+        self.tests_tags = set()
+        self.chart_type = ptCmpChartType.NOCHART
+        self.table_type = ptCmpTableType.HIDE
+        self.categories = []
+        self.metrics = ''
+        self.id = id
+
+        self.legends = [j.title for j in jobs]
+        if len(set(self.legends)) != len(self.legends):
+            self.legends = ["%d - %s" % (j.id, j.title) for j in jobs]
+        self.series = [ptComparisonServSideSeriesView(l) for l in self.legends]
+
+    def ptAddTest(self, job, job_n, test_obj):
+        key = "%s %s" % (test_obj.tag, test_obj.category)
+        if key not in self.tests:
+            self.tests[key] = ptComparisonServSideTestView(self.jobs)
+            self.categories.append(test_obj.category)
+            self.metrics = test_obj.metrics
+        self.series[job_n].ptAddTest(job, job_n, test_obj)
+        self.tests[key].ptAddTest(job, job_n, test_obj)
+        self.tests_tags.add(test_obj.tag)
+
+    def ptInitChartAndTable(self):
+        if len(self.tests_tags) == 1:
+            if self.cmp_obj.charts_type == ptCmpChartType.AUTO:
+                self.chart_type = ptCmpChartType.XYLINE if len(self.tests) > 3 else ptCmpChartType.BAR
+            if self.cmp_obj.tables_type == ptCmpTableType.AUTO:
+                self.table_type = ptCmpTableType.HIDE if len(self.tests) > 10 else ptCmpTableType.SHOW
+        else:
+            if self.cmp_obj.charts_type == ptCmpChartType.AUTO:
+                self.chart_type = ptCmpChartType.NOCHART
+            if self.cmp_obj.tables_type == ptCmpTableType.AUTO:
+                self.table_type = ptCmpTableType.SHOW
+
+    @property
+    def pageable(self):
+        return len(self.tests) > 10
+
+
+class ptComparisonServSideGroupView:
+    def __init__(self, id, cmp_obj, jobs, test_obj):
+        self.cmp_obj = cmp_obj
+        self.jobs = jobs
+        self.group_obj = TestGroupModel.ptGetByTag(test_obj.group)
+        self.sections = OrderedDict()
+        self.test_results = [[]] * len(jobs)
+        self.id = id
+
+    def ptAddTest(self, job, job_n, test_obj):
+        key = test_obj.tag if test_obj.category else ""
+        if key not in self.sections:
+            self.sections[key] = ptComparisonServSideSectView(len(self.sections), self.cmp_obj, self.jobs, key)
+        self.sections[key].ptAddTest(job, job_n, test_obj)
+        self.test_results[job_n].append(test_obj.avg_score)
+
+    def ptInitChartAndTable(self):
+        for s in self.sections.values():
+            s.ptInitChartAndTable()
+        if len(self.sections) > 1:
+            for s in self.sections.values():
+                if s.title == "":
+                    s.title = "Tests results"
+
+
+class ptComparisonServSideView:
+    def __init__(self, cmp_obj):
+        self.cmp_obj = cmp_obj
+        self.job_objs = self.cmp_obj.jobs.all()
+        self.groups = OrderedDict()
+
+        self.init()
+
+    def ptAddTest(self, job, job_n, test_obj):
+        if test_obj.group not in self.groups:
+            self.groups[test_obj.group] = ptComparisonServSideGroupView(len(self.groups), self.cmp_obj, self.job_objs, test_obj)
+        self.groups[test_obj.group].ptAddTest(job, job_n, test_obj)
+
+    def init(self):
+        for job_n in range(0, len(self.job_objs)):
+            j = self.job_objs[job_n]
+            tests = TestModel.objects.filter(job=j).order_by('seq_num')
+            for t in tests:
+                self.ptAddTest(j, job_n, t)
+
+        for g in self.groups.values():
+            g.ptInitChartAndTable()

@@ -3,6 +3,7 @@ django-echarts
 django-datatables-view
 django-request-logging
 numpy
+scipy
 python-dateutil
 djangorestframework
 django-bootstrap3
