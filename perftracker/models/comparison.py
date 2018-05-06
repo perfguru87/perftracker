@@ -21,7 +21,7 @@ from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
 from perftracker.models.project import ProjectModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer
-from perftracker.helpers import pt_float2human
+from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 
 
 class ptCmpChartType:
@@ -279,12 +279,23 @@ class ptComparisonServSideTestView:
 
 
 class ptComparisonServSideSeriesView:
-    def __init__(self, legend):
+    def __init__(self, sect, legend):
         self.series = []
+        self.sect = sect
         self.legend = legend
 
     def ptAddTest(self, job, job_n, test_obj):
         self.series.append(pt_float2human(test_obj.avg_score))
+
+    @property
+    def data(self):
+        if self.sect.chart_type == ptCmpChartType.BAR:
+            return self.series
+
+        ret = []
+        for n in range(0, len(self.series)):
+            ret.append([self.sect.categories[n], self.series[n]])
+        return ret
 
 
 class ptComparisonServSideSectView:
@@ -295,35 +306,74 @@ class ptComparisonServSideSectView:
         self.tests = OrderedDict()
         self.tests_tags = set()
         self.chart_type = ptCmpChartType.NOCHART
+        self.chart_trend_line = False
         self.table_type = ptCmpTableType.HIDE
         self.categories = []
-        self.metrics = ''
+        self.x_axis_name = ''
+        self.x_axis_type = 'category'
+        self.x_axis_rotate = 0
+        self.y_axis_name = ''
         self.id = id
 
         self.legends = [j.title for j in jobs]
         if len(set(self.legends)) != len(self.legends):
             self.legends = ["%d - %s" % (j.id, j.title) for j in jobs]
-        self.series = [ptComparisonServSideSeriesView(l) for l in self.legends]
+        self.series = [ptComparisonServSideSeriesView(self, l) for l in self.legends]
 
     def ptAddTest(self, job, job_n, test_obj):
         key = "%s %s" % (test_obj.tag, test_obj.category)
         if key not in self.tests:
             self.tests[key] = ptComparisonServSideTestView(self.jobs)
             self.categories.append(test_obj.category)
-            self.metrics = test_obj.metrics
+            self.y_axis_name = test_obj.metrics
         self.series[job_n].ptAddTest(job, job_n, test_obj)
         self.tests[key].ptAddTest(job, job_n, test_obj)
         self.tests_tags.add(test_obj.tag)
 
+    def _ptInitChartType(self):
+        if self.cmp_obj.charts_type == ptCmpChartType.XYLINE_WITH_TREND:
+            self.chart_type = ptCmpChartType.XYLINE
+            self.chart_trend_line = True
+            self.legends += [("%s (trend)" % l) for l in self.legends]
+            return
+
+        if self.cmp_obj.charts_type == ptCmpChartType.BAR_WITH_TREND:
+            self.chart_type = ptCmpChartType.BAR
+            self.chart_trend_line = True
+            return
+
+        if self.cmp_obj.charts_type != ptCmpChartType.AUTO:
+            return
+
+        if len(self.tests_tags) != 1:
+            self.chart_type = ptCmpChartType.NOCHART
+            return
+
+        self.chart_type = ptCmpChartType.BAR
+        if len(self.tests) <= 3:
+            return
+
+        int_ar = []
+        for c in self.categories:
+            print("C:", c)
+            try:
+               int_ar.append(float(c))
+            except ValueError:
+               if len(self.tests) > 10:
+                  self.x_axis_rotate = 45
+               return
+        self.x_axis_type = 'value'
+        self.chart_type = ptCmpChartType.XYLINE
+
     def ptInitChartAndTable(self):
+        self.x_axis_name, self.categories = pt_cut_common_sfx(self.categories)
+
+        self._ptInitChartType()
+
         if len(self.tests_tags) == 1:
-            if self.cmp_obj.charts_type == ptCmpChartType.AUTO:
-                self.chart_type = ptCmpChartType.XYLINE if len(self.tests) > 3 else ptCmpChartType.BAR
             if self.cmp_obj.tables_type == ptCmpTableType.AUTO:
                 self.table_type = ptCmpTableType.HIDE if len(self.tests) > 10 else ptCmpTableType.SHOW
         else:
-            if self.cmp_obj.charts_type == ptCmpChartType.AUTO:
-                self.chart_type = ptCmpChartType.NOCHART
             if self.cmp_obj.tables_type == ptCmpTableType.AUTO:
                 self.table_type = ptCmpTableType.SHOW
 
