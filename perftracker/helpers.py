@@ -1,4 +1,5 @@
 import uuid
+import os
 
 from rest_framework import serializers
 
@@ -63,3 +64,33 @@ def pt_is_valid_uuid(uuid_to_test, version=1):
         return False
 
     return str(uuid_obj) == uuid_to_test
+
+
+def pt_cut_common_sfx(lines, separators=None):
+    if separators is None:
+        separators = (' ', ';', '-', ',', '.')
+    common_sfx = os.path.commonprefix([s[::-1] for s in lines])[::-1]
+
+    # try to find separator...
+    while common_sfx and not common_sfx[0] in separators:
+        common_sfx = common_sfx[1:]
+
+    # trim it...
+    if common_sfx:
+        sep = common_sfx[0]
+        while common_sfx and common_sfx[0] == sep:
+            common_sfx = common_sfx[1:]
+
+    # and cut it...
+    ret = []
+    length = len(common_sfx)
+    if not length:
+        return common_sfx, lines
+
+    for line in lines:
+        l = line[:-length]
+        if len(l):
+            while l[-1] in separators:
+                l = l[:-1]
+        ret.append(l)
+    return common_sfx, ret

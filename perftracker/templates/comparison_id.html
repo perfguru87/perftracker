@@ -56,7 +56,9 @@ So we will use static HTML with couple tricks:
     <h4>{{ s.title }}</h4>
 
     {% if s.chart_type != ptCmpChartType.NOCHART %}
-      <div id="chart_{{ g.id }}_{{ s.id }}" class='pt_chart'>Loading chart...</div>
+      <div class='container collapse in pt_div_cmp'>
+        <div id="chart_{{ g.id }}_{{ s.id }}" class='pt_chart'>Loading chart...</div>
+      </div>
     {% endif %}
     {% if s.table_type == ptCmpTableType.SHOW %}
       <div class='container collapse in pt_div_cmp' id='results_{{ g.id }}_{{ s.id }}'>
@@ -220,20 +222,51 @@ $(document).ready(function() {
     {% for g_tag, g in cmp_view.groups.items %}
       {% for s_tag, s in g.sections.items %}
         {% if s.chart_type != ptCmpChartType.NOCHART %}
+
+          {% for serie in s.series %}
+            var data_{{ forloop.counter }} = {{ serie.data|safe }};
+
+            {% if s.chart_trend_line %}
+              var regr_{{ forloop.counter }} = ecStat.regression('polynomial', data_{{ forloop.counter }}, 3);
+              regr_{{ forloop.counter }}.points.sort(function(a, b) {
+                return a[0] - b[0];
+              });
+
+            {% endif %}
+          {% endfor %}
+
           var chart = echarts.init(document.getElementById('chart_{{ g.id }}_{{ s.id }}'));
 
           var option = {
             title: {
             },
-            tooltip: {},
+            tooltip: {
+                formatter: '{a}: {c}',
+            },
             legend: {
-                data: {{ s.legends|safe }}
+                data: {{ s.legends|safe }},
+                type: 'scroll',
+                orient: 'vertical',
+                right: 10,
+                top: 50,
+                width: 180,
+                align: 'left',
             },
             xAxis: {
                 data: {{ s.categories|safe }},
+                name: '{{ s.x_axis_name }}',
+                type: '{{ s.x_axis_type }}',
+                nameLocation: 'center',
+                axisLabel: { rotate: {{ s.x_axis_rotate }} },
+                nameGap: 30,
             },
             yAxis: {
-                name: '{{ s.metrics }}'
+                name: '{{ s.y_axis_name }}'
+            },
+            grid: {
+                top: 50,
+                right: 200,
+                left: 50,
             },
             toolbox: {
                 show: true,
@@ -259,8 +292,25 @@ $(document).ready(function() {
                 {% endif %}
                 barGap: '0.1',
                 animation: false,
-                data: {{ serie.series }}
+                data: data_{{ forloop.counter }},
               },
+              {% if s.chart_trend_line %}
+              {
+                name: '{{ serie.legend|safe }} (trend)',
+                type: 'line',
+                smooth: true,
+                showSymbol: false,
+                animation: false,
+                data: regr_{{ forloop.counter }}.points,
+                lineStyle: {
+                  normal: {
+                    color: 'gray',
+                    width: 1,
+                    type: 'dashed'
+                  }
+                },
+              },
+              {% endif %}
             {% endfor %}
             ]
           };
