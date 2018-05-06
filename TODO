@@ -41,14 +41,15 @@ Comparisons
 
 Comparison view:
 - highlights / thumbnails
-- results table
-- detailed charts
-- results details: jobs
-- results details: grafana link
-- results details: cmdline
-- results details: description
-- results details: start, end, duration
-- results details: iterations data, min, max, avg
++ results table
++ detailed charts
++ results details: jobs
++ results details: grafana link
++ results details: cmdline
++ results details: description
++ results details: start, end, duration
++ results details: iterations data, min, max, avg
+- charts: autocolors
 
 Job Upload
 + json upload
