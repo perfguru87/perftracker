@@ -31,7 +31,6 @@ Jobs list:
 Job view:
 + job details
 + results table
-- results charts
 + test details
 
 Comparisons
@@ -50,6 +49,8 @@ Comparison view:
 + results details: start, end, duration
 + results details: iterations data, min, max, avg
 - charts: autocolors
+- charts: find common prefix/suffix in y-asix values and set y-axis legend
+- charts: auto chart type 
 
 Job Upload
 + json upload
