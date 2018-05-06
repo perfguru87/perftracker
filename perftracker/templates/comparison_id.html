@@ -257,6 +257,7 @@ $(document).ready(function() {
                 {% elif s.chart_type == ptCmpChartType.BAR %}
                   type: 'bar',
                 {% endif %}
+                barGap: '0.1',
                 animation: false,
                 data: {{ serie.series }}
               },
