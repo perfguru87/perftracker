@@ -17,6 +17,7 @@ Jobs list:
 - job details: clear cache(s) (?)
 - job details: re-import (?)
 - job details: suite details
+- job details: rename job (name entered by user overrides the initial one)
 + add to comparison button
 + comparison dialog
 + comparison dialog: charts types
@@ -37,10 +38,12 @@ Comparisons
 + table
 - comparison details
 - comparison edit dialog
+- comparison auto name generator
 
 Comparison view:
 - highlights / thumbnails
 + results table
+- results table: draw chart of individual scores
 + detailed charts
 + results details: jobs
 + results details: grafana link
@@ -51,21 +54,24 @@ Comparison view:
 - charts: autocolors
 - charts: find common prefix/suffix in y-asix values and set y-axis legend
 - charts: auto chart type 
+- charts: line/bar charts with confidence interval
+- charts: ability to change chart type in report and save
 
 Job Upload
 + json upload
-+ test results format: group
-+ test results format: serie
-+ test results format: cmdline
-+ test results format: tag
-+ test results format: iterations
-+ test results format: metrics
-+ test results format: time
-+ test results format: loops
-+ test results format: threads
-- test results format: error messages
-- test results format: warning messages
-- test results format: links key:value (logs, grafana, ...)
++ test results: group
++ test results: serie
++ test results: cmdline
++ test results: tag
++ test results: iterations
++ test results: metrics
++ test results: time
++ test results: loops
++ test results: threads
+- test results: error messages
+- test results: warning messages
+- test results: links key:value (logs, grafana, ...)
+- test results: custom data (json)
 + envs
 - hw chassis
 - products: version
@@ -91,6 +97,9 @@ DB access
 - DB query optimization (don't fetch the same objects several times)
 
 Regressions
+- ...
+
+Integrations with Jira
 - ...
 
 --------------
