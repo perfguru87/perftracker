@@ -53,13 +53,15 @@
           <li class="dropdown active">
             {% if projects|length > 1 %}
               <a href="#" class="dropdown-toggle active" data-toggle="dropdown" role="button" aria-haspopup="true"
-                          aria-expanded="false">{{ project.title }} <span class="caret"></span></a>
+                          aria-expanded="false">{{ project.name }} <span class="caret"></span></a>
               <ul class="dropdown-menu">
                 {% for p in projects %}
-                  <li><a href="#">{{ p.title }}</a></li>
+                  {% if p.id != 1 %}
+                    <li><a href="/{{ p.id }}/comparison">{{ p.name }}</a></li>
+                  {% endif %}
                 {% endfor %}
                 <li role="separator" class="divider"></li>
-                <li><a href="#">All projects</a></li>
+                <li><a href="/0/comparison">All projects</a></li>
               </ul>
             {% endif %}
           </li>

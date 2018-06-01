@@ -160,6 +160,9 @@ def ptJobAllJson(request, api_ver, project_id):
             if search:
                 qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
 
+            if project_id != 0:
+                qs = qs.filter(Q(project_id=project_id))
+
             # more advanced example using extra parameters
             # filter_title = self.request.GET.get(u'title', None)
             #
@@ -294,6 +297,9 @@ def ptComparisonAllJson(request, api_ver, project_id):
             search = self.request.GET.get(u'search[value]', None)
             if search:
                 qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
+
+            if project_id != 0:
+                qs = qs.filter(Q(project_id=project_id))
 
             return qs
 
