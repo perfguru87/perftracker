@@ -20,9 +20,9 @@ def pt_float2human(value, MK=False):
     elif MK and val > 100000:
         return str(int(round(value / 1000))) + "K"
     elif val > 100:
-        return str(int(round(value)))
+        return int(round(value))
     elif val < 0.00000001:
-        return "0"
+        return 0
     else:
         thr = 100
         prec = 0
