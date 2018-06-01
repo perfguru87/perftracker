@@ -57,9 +57,9 @@ function pt_env_node_draw(j, parent_id)
                  j['hostname']
              ].filter(function (v) {return v;}).join(', '),
              [
-                 typeof j['cpus'] != 'undefined' ? "{0} CPUs".ptFormat(j['cpus']) : '',
-                 typeof j['ram_mb'] != 'undefined' ? "{0} GB RAM".ptFormat(j['ram_mb'] / 1024.0) : '',
-                 typeof j['disk_gb'] != 'undefined' ? "{0} GB Disk".ptFormat(j['disk_gb']) : '',
+                 !isNaN(parseInt(j['cpus'])) ? "{0} CPUs".ptFormat(j['cpus']) : '',
+                 !isNaN(parseInt(j['ram_mb'])) ? "{0} GB RAM".ptFormat(j['ram_mb'] / 1024.0) : '',
+                 !isNaN(parseInt(j['disk_gb'])) ? "{0} GB Disk".ptFormat(j['disk_gb']) : '',
                  j['params']
              ].filter(function (v) {return v;}).join(', ')
              );
