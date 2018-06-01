@@ -56,7 +56,7 @@
                           aria-expanded="false">{{ project.name }} <span class="caret"></span></a>
               <ul class="dropdown-menu">
                 {% for p in projects %}
-                  <li><a href="/{{ p.id }}/comparison">{{ p.name }}</a></li>
+                  <li><a href="/{{ p.id }}/{{ verb }}">{{ p.name }}</a></li>
                 {% endfor %}
                 <li role="separator" class="divider"></li>
                 <li><a href="/0/comparison">All projects</a></li>
