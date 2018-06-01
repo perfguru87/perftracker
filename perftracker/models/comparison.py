@@ -355,7 +355,6 @@ class ptComparisonServSideSectView:
 
         int_ar = []
         for c in self.categories:
-            print("C:", c)
             try:
                int_ar.append(float(c))
             except ValueError:
