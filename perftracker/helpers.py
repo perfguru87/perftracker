@@ -13,7 +13,7 @@ class ptDurationField(serializers.DurationField):
 
 def pt_float2human(value, MK=False):
     if str(value) == "":
-        return "0"
+        return 0
     val = abs(float(value))
     if MK and val > 100000000:
         return str(int(round(value / 1000000))) + "M"
