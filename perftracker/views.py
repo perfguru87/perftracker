@@ -54,8 +54,12 @@ def ptBaseHtml(request, project_id, template, params=None, obj=None):
 
     params = params if params else {}
 
+    dentries = request.path.split("/")
+    verb = dentries[2] if len(dentries) > 3 else "comparison"
+
     default_params = {'projects': ProjectModel().ptGetAll(),
                       'request': request,
+                      'verb': verb,
                       'obj': obj,
                       'project': ProjectModel.ptGetById(project_id),
                       'api_ver': API_VER,
