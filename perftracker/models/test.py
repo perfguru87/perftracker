@@ -83,7 +83,7 @@ class TestModel(models.Model):
 
         self.category = json_data.get('category', '')
         self.metrics = json_data.get('metrics', 'loops/sec')
-        self.links = json_data.get('links', '')
+        self.links = json.dumps(json_data.get('links', None))
         self.less_better = json_data.get('less_better', False)
         self.errors = len(json_data.get('errors', []))
         self.warnings = len(json_data.get('warnings', []))
@@ -137,6 +137,9 @@ class TestModel(models.Model):
             raise SuspiciousOperation("%s: 'scores' field not found" % j)
         if type(json_data['scores']) is not list:
             raise SuspiciousOperation("%s: 'scores' field must be a list" % j)
+        if 'links' in json_data:
+            if type(json_data['links']) is not dict:
+                raise SuspiciousOperation("Invalid test 'links' format '%s', it must be a dictionary" % json_data['links'])
         if 'deviations' in json_data:
             if type(json_data['deviations']) is not list:
                 raise SuspiciousOperation("%s: 'deviations' field must be a list" % j)
