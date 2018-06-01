@@ -22,7 +22,7 @@
         <th class='colCategory'></th>
         <th class='colDuration'>Duration</th>
         <th class='colScore'>Score</th>
-        <th class='colDeviation'>Deviation</th>
+        <th class='colDeviation'>&plusmn; %</th>
       </tr>
     </thead>
     <tfoot>
@@ -34,7 +34,7 @@
         <th class='colCategory'></th>
         <th class='colDuration'>Duration</th>
         <th class='colScore'>Score</th>
-        <th class='colDeviation'>Deviation</th>
+        <th class='colDeviation'>&plusmn; %</th>
       </tr>
     </tfoot>
   </table>
@@ -144,7 +144,7 @@ $(document).ready(function() {
                 "targets": "colDeviation",
                 "type": "string",
                 "render": function ( data, type, row ) {
-                    return data;
+                    return Math.round(100 * data / row.avg_score);
                 }
             },
             {
