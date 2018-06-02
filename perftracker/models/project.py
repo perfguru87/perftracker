@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.exceptions import SuspiciousOperation
 
 class ProjectModel(models.Model):
     name = models.CharField(max_length=64, help_text="Project name: Browsers, Clients, Servers...")
