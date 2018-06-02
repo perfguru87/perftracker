@@ -200,12 +200,11 @@ class TestModel(models.Model):
 class TestSimpleSerializer(serializers.ModelSerializer):
     duration = ptDurationField()
     avg_score = ptRoundedFloatMKField()
-    avg_dev = ptRoundedFloatField()
     avg_plusmin = ptRoundedFloatField()
 
     class Meta:
         model = TestModel
-        fields = ('id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_dev', 'avg_plusmin')
+        fields = ('id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin')
 
 
 class TestDetailedSerializer(TestSimpleSerializer):
