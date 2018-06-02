@@ -93,8 +93,10 @@ class TestModel(models.Model):
         self.warnings = len(json_data.get('warnings', []))
         self.begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else None
         self.end = parse_datetime(json_data['end']) if json_data.get('end', None) else None
-        self.duration = self.end - self.begin
         self.status = json_data.get('status', "SUCCESS")
+
+        dur_sec = json_data.get('duration_sec', 0)
+        self.duration = timedelta(seconds=int(dur_sec)) if dur_sec else self.end - self.begin
 
         self.job = job
         self.group = json_data.get('group', '')
