@@ -18,6 +18,7 @@ Jobs list:
 - job details: re-import (?)
 - job details: suite details
 - job details: rename job (name entered by user overrides the initial one)
+- delete job
 + add to comparison button
 + comparison dialog
 + comparison dialog: charts types
@@ -39,6 +40,7 @@ Comparisons
 - comparison details
 - comparison edit dialog
 - comparison auto name generator
+- delete comparison
 
 Comparison view:
 - highlights / thumbnails
