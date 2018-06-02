@@ -134,6 +134,7 @@ function pt_draw_job_details(d, err_msg)
             s += "<tr><td>Links</td><td>{0}</td></tr>".ptFormat(links);
     }
 
+    s += "<tr><td>Job #</td><td>{0}</td></tr>".ptFormat(d.id)
     s += "<tr><td>UUID</td><td>{0}</td></tr>".ptFormat(d.uuid)
     s += "<tr><td>Duration</td><td>{0} - {1} ({2}), uploaded: {3}</td></tr>".ptFormat(
          pt_date2str(d.begin), pt_date2str(d.end), d.duration, pt_date2str(d.upload))
