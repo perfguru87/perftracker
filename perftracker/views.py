@@ -218,8 +218,8 @@ def ptJobIdJson(request, api_ver, project_id, job_id):
 def ptJobTestAllJson(request, api_ver, project_id, job_id, group_id):
     class TestView(BaseDatatableView):
         model = TestModel
-        columns = ['', 'id', 'seq_num', 'tag', 'category', 'duration', 'avg_score', 'avg_dev']
-        order_columns = ['', 'id', 'seq_num', 'tag', 'category', 'duration', 'avg_score', 'avg_dev']
+        columns = ['', 'id', 'seq_num', 'tag', 'category', 'duration', 'avg_score', 'avg_dev', 'avg_plusmin']
+        order_columns = ['', 'id', 'seq_num', 'tag', 'category', 'duration', 'avg_score', 'avg_dev', 'avg_plusmin']
         max_display_length = 5000
 
         def filter_queryset(self, qs):

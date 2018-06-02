@@ -65,6 +65,10 @@ class TestModel(models.Model):
     min_dev     = models.FloatField("Test min deviation: 0.01", null=True)
     max_dev     = models.FloatField("Test max deviation: 0.03", null=True)
 
+    avg_plusmin = models.FloatField("Deviation in % of average score: 0.02", null=True)
+    min_plusmin = models.FloatField("Deviation in % of min score: 0.01", null=True)
+    max_plusmin = models.FloatField("Deviation in % of max score: 0.03", null=True)
+
     def ptUpdate(self, job, json_data):
         self.ptValidateJson(json_data)
 
@@ -105,6 +109,10 @@ class TestModel(models.Model):
         self.avg_dev = numpy.mean(deviations) if deviations else numpy.std(scores)
         self.min_dev = min(deviations) if deviations else self.avg_dev
         self.max_dev = max(deviations) if deviations else self.avg_dev
+
+        self.avg_plusmin = int(round(100 * abs(self.avg_dev / self.avg_score))) if self.avg_score else 0
+        self.min_plusmin = int(round(100 * abs(self.min_dev / self.min_score))) if self.min_score else 0
+        self.max_plusmin = int(round(100 * abs(self.max_dev / self.max_score))) if self.max_score else 0
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))
@@ -191,10 +199,11 @@ class TestSimpleSerializer(serializers.ModelSerializer):
     duration = ptDurationField()
     avg_score = ptRoundedFloatMKField()
     avg_dev = ptRoundedFloatField()
+    avg_plusmin = ptRoundedFloatField()
 
     class Meta:
         model = TestModel
-        fields = ('id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_dev')
+        fields = ('id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_dev', 'avg_plusmin')
 
 
 class TestDetailedSerializer(TestSimpleSerializer):
