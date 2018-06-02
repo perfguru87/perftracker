@@ -91,6 +91,18 @@ function pt_toggle_env_nodes(el)
     return false;
 }
 
+function pt_draw_attribs(attribs)
+{
+    var j = JSON.parse(attribs);
+    var ret = '';
+    for(var title in j) {
+        if (ret)
+            ret += "; ";
+        ret += "{0}: {1}".ptFormat(title, j[title]);
+    }
+    return ret;
+}
+
 function pt_draw_links(links)
 {
     var j = JSON.parse(links);
