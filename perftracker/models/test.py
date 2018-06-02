@@ -46,6 +46,7 @@ class TestModel(models.Model):
     category    = models.CharField(max_length=128, help_text="Test category: 1-thread")
     metrics     = models.CharField(max_length=64, help_text="Test result metrics: MB/s")
     links       = models.CharField(max_length=1024, help_text="Test links json: {'test logs': 'http://logs.localdomain/231241.log'}")
+    attribs     = models.CharField(max_length=1024, help_text="Custom test attributes json: {'version': '12.3'}")
     less_better = models.BooleanField(help_text="Set to True if 'less' score is better")
     errors      = models.IntegerField(help_text="Number of test errors")
     warnings    = models.IntegerField(help_text="Number of test warnings")
@@ -88,6 +89,7 @@ class TestModel(models.Model):
         self.category = json_data.get('category', '')
         self.metrics = json_data.get('metrics', 'loops/sec')
         self.links = json.dumps(json_data.get('links', None))
+        self.attribs = json.dumps(json_data.get('attribs', None))
         self.less_better = json_data.get('less_better', False)
         self.errors = len(json_data.get('errors', []))
         self.warnings = len(json_data.get('warnings', []))
@@ -150,6 +152,9 @@ class TestModel(models.Model):
         if 'links' in json_data:
             if type(json_data['links']) is not dict:
                 raise SuspiciousOperation("Invalid test 'links' format '%s', it must be a dictionary" % json_data['links'])
+        if 'attribs' in json_data:
+            if type(json_data['attribs']) is not dict:
+                raise SuspiciousOperation("Invalid test 'attribs' format '%s', it must be a dictionary" % json_data['attribs'])
         if 'deviations' in json_data:
             if type(json_data['deviations']) is not list:
                 raise SuspiciousOperation("%s: 'deviations' field must be a list" % j)
