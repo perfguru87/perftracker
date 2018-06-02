@@ -44,6 +44,8 @@ class JobModel(models.Model):
 
     project         = models.ForeignKey(ProjectModel, help_text="Job project", on_delete=models.CASCADE)
 
+    deleted         = models.BooleanField(help_text="True means the Job was deleted", db_index=True)
+
     def __str__(self):
         return "#%d, %s" % (self.id, self.title)
 

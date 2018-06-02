@@ -88,6 +88,7 @@ class ComparisonModel(models.Model):
     author      = models.CharField(max_length=128, help_text="Comparison author: user@mycompany.localdomain", null=True, blank=True)
     project     = models.ForeignKey(ProjectModel, help_text="Comparison project", on_delete=models.CASCADE)
     updated     = models.DateTimeField(help_text="Comparison updated datetime", default=timezone.now)
+    deleted     = models.BooleanField(help_text="True means the Comparison was deleted", db_index=True)
 
     is_public   = models.BooleanField(help_text="Seen to everybody", default=False, blank=True)
 

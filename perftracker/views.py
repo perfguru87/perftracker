@@ -167,6 +167,8 @@ def ptJobAllJson(request, api_ver, project_id):
             if project_id != 0:
                 qs = qs.filter(Q(project_id=project_id))
 
+            qs = qs.filter(Q(deleted=False))
+
             # more advanced example using extra parameters
             # filter_title = self.request.GET.get(u'title', None)
             #
@@ -304,6 +306,8 @@ def ptComparisonAllJson(request, api_ver, project_id):
 
             if project_id != 0:
                 qs = qs.filter(Q(project_id=project_id))
+
+            qs = qs.filter(Q(deleted=False))
 
             return qs
 
