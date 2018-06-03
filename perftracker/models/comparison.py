@@ -262,7 +262,7 @@ class ptComparisonServSideTestView:
                 try:
                     s = stats.ttest_ind_from_stats(t[prev].avg_score, t[prev].avg_dev, t[prev].samples,
                                                    t[n].avg_score, t[n].avg_dev, t[n].samples)
-                    if s[1] >= 0.1:
+                    if s[1] < 0.1:
                         diff = 1
                 except ZeroDivisionError:
                     diff = 1
