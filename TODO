@@ -12,13 +12,12 @@ Jobs list:
 + job details: env info
 - job details: json download
 - job details: xls download
-- job details: job delete
++ job details: job delete
 - job details: which comparisons refer to the job?
 - job details: clear cache(s) (?)
 - job details: re-import (?)
 - job details: suite details
-- job details: rename job (name entered by user overrides the initial one)
-- delete job
++ job details: rename job (name entered by user overrides the initial one)
 + add to comparison button
 + comparison dialog
 + comparison dialog: charts types

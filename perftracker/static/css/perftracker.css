@@ -225,3 +225,13 @@ div.pt_test_group_selector select {
   background-color: #f8f8f8;
   margin-bottom: 20px;
 }
+
+/* Object management menu */
+div.pt_obj_management {
+  text-align: right;
+  margin: 10px 10px 0px 0px;
+}
+
+div.pt_obj_management span {
+  margin: 0px 10px 0px 10px;
+}
