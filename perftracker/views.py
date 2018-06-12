@@ -21,7 +21,7 @@ from django.db.models import Count
 from django.db.models.query import QuerySet
 
 from perftracker.models.project import ProjectModel
-from perftracker.models.comparison import ComparisonModel, ComparisonSerializer, ptComparisonServSideView
+from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
@@ -312,7 +312,7 @@ def ptComparisonAllJson(request, api_ver, project_id):
             return qs
 
         def prepare_results(self, qs):
-            return ComparisonSerializer(qs, many=True).data
+            return ComparisonSimpleSerializer(qs, many=True).data
 
     if request.method == "POST":
         body_unicode = request.body.decode('utf-8')
@@ -334,8 +334,11 @@ def ptComparisonAllJson(request, api_ver, project_id):
     return ComparisonJson.as_view()(request)
 
 
-def ptComparisonIdJson(request, api_ver, project_id, id):
-    return JsonResponse([], safe=False)
+def ptComparisonIdJson(request, api_ver, project_id, cmp_id):
+    try:
+        return JsonResponse(ComparisonNestedSerializer(ComparisonModel.objects.get(pk=cmp_id)).data, safe=False)
+    except ComparisonModel.DoesNotExist:
+        return JsonResponse([], safe=False)
 
 
 def ptComparisonTestAllJson(request, api_ver, project_id, cmp_id, group_id):

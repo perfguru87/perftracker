@@ -16,7 +16,7 @@ from django.core.exceptions import SuspiciousOperation
 
 from rest_framework import serializers
 
-from perftracker.models.job import JobModel
+from perftracker.models.job import JobModel, JobSimpleSerializer
 from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
 from perftracker.models.project import ProjectModel
@@ -207,7 +207,20 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
         return self._ptGetJobsSum(cmp, 'tests_warnings')
 
 
-class ComparisonSerializer(ComparisonBaseSerializer):
+class ComparisonSimpleSerializer(ComparisonBaseSerializer):
+    class Meta:
+        model = ComparisonModel
+        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
+                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
+
+
+class ComparisonNestedSerializer(ComparisonBaseSerializer):
+    jobs = serializers.SerializerMethodField()
+
+    def get_jobs(self, cmp):
+        # jobs = JobModel.objects.filter(jobejob.id, parent=None).all()
+        return JobSimpleSerializer(cmp.jobs.all(), many=True).data
+
     class Meta:
         model = ComparisonModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',

@@ -193,6 +193,52 @@ function pt_ajax_job_details(api_ver, project_id, job_id)
     });
 }
 
+function pt_draw_comparison_details(d, err_msg)
+{
+    var s = '';
+    var env_node = d.env_node;
+    var vms = d.vms;
+    var clients = d.clients;
+
+    s += "<div class='pt_slider' id='comparison_details_slider_{0}'>".ptFormat(d.id)
+
+    if (err_msg) {
+        s += "<div class='row'><div class='col-md-12'>";
+        s += pt_draw_ajax_error(ptFormat(err_msg));
+        s += "</div></div>";
+        return s;
+    }
+
+    s += "<div class='row'>";
+
+    s += "<div class='pt_obj_management'>" +
+         "<a href='/admin/perftracker/comparisonmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
+         "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
+
+    s += "<div class='col-md-12'><h4>Jobs</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th></thead>";
+
+    for (var j = 0; j < d.jobs.length; j++) {
+        var job = d.jobs[j];
+        s += "<tr>";
+        s += "<td>{0}</td><td>{1}</td>".ptFormat(job.id, pt_date2str(job.end));
+        var hw = '';
+        for (var h = 0; h < job.env_node.length; h++) {
+            if (hw)
+                hw += ', ';
+            hw += job.env_node[h].name;
+        }
+        s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, d.project, job.id, job.title);
+        s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
+        s += "</tr>";
+    }
+    s += "</table></div>";
+    s += "</div></div>"; // row, slider
+
+    return s;
+}
+
 $(document).ready(function() {
     $('.pt_collapse.expanded').append('<span class="glyphicon glyphicon-triangle-bottom"></span>');
     $('.pt_collapse.collapsed').append('<span class="glyphicon glyphicon-triangle-right"></span>');

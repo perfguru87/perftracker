@@ -150,7 +150,43 @@ $(document).ready(function() {
     /*
      * 2. Comparison details
      */
-    $("#comparisons").on('click', 'td.pt_row_details_toggle', function() { alert("Sorry, not implemented"); return false; });
+    $("#comparisons").on('click', 'td.pt_row_details_toggle', function() {
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+        var id = row.data().id;
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+            $('#comparison_details_slider_{0}'.ptFormat(id), row.child()).slideUp(function() {
+                row.child.hide()
+                tr.removeClass('shown');
+            });
+        }
+        else {
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/{0}'.ptFormat(id),
+                cache: true,
+                data: null,
+                type: 'GET',
+                timeout: 2000,
+                success: function(data, status) {
+                    row.child(pt_draw_comparison_details(data, null)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#env_nodes_{0}'.ptFormat(id)).treetable({expandable: true});
+                    $('#comparison_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                },
+                error: function(data, status, error) {
+                    row.child(pt_draw_comparison_details(row.data(), error)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#comparison_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                }
+            });
+        }
+    });
 
     /*
      * 3. Comparison options
