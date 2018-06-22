@@ -74,7 +74,7 @@ class JobModel(models.Model):
         self.end = parse_datetime(json_data['end']) if json_data.get('end', None) else now
         self.upload = now
         self.duration = self.end - self.begin
-        self.tests_total = len(tests_json)
+        self.tests_total = json_data.get('tests_total', len(tests_json))
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))
