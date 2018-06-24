@@ -38,14 +38,16 @@ urlpatterns = [
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/$', views.ptJobGroupAllJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)$', views.ptJobIdJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/$', views.ptJobAllJson),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/(?P<hw_id>\d+)$', views.ptHwFarmNodeIdJson),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/$', views.ptHwFarmNodeAllJson),
 
     path('<int:project_id>/home/', views.ptHomeHtml, name='Home'),
     path('<int:project_id>/comparison/<int:cmp_id>', views.ptComparisonIdHtml, name='Comparisons'),
     path('<int:project_id>/comparison/', views.ptComparisonAllHtml, name='Comparisons'),
     path('<int:project_id>/job/<int:job_id>', views.ptJobIdHtml, name='Jobs'),
     path('<int:project_id>/job/', views.ptJobAllHtml, name='Jobs'),
-    path('<int:project_id>/hw/<int:hw_id>', views.ptHwIdHtml, name='Hosts'),
-    path('<int:project_id>/hw/', views.ptHwAllHtml, name='Hosts'),
+    path('<int:project_id>/hw_farm/<int:hw_id>', views.ptHwFarmIdHtml, name='Hosts'),
+    path('<int:project_id>/hw_farm/', views.ptHwFarmAllHtml, name='Hosts'),
 
     path('', RedirectView.as_view(url='/1/comparison/')),
     path('redirect/', views.ptRedirect),

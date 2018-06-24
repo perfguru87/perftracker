@@ -239,6 +239,63 @@ function pt_draw_comparison_details(d, err_msg)
     return s;
 }
 
+function pt_draw_hw_farm_node_details(d, err_msg)
+{
+    var s = '';
+    var env_node = d.env_node;
+    var vms = d.vms;
+    var clients = d.clients;
+
+    s += "<div class='pt_slider' id='hw_farm_node_details_slider_{0}'>".ptFormat(d.id)
+
+    if (err_msg) {
+        s += "<div class='row'><div class='col-md-12'>";
+        s += pt_draw_ajax_error(ptFormat(err_msg));
+        s += "</div></div>";
+        return s;
+    }
+
+    s += "<div class='row'>";
+
+    s += "<div class='pt_obj_management'>" +
+         "<a href='/admin/perftracker/hwfarmnodemodel/2/change/'>Edit</a></div>".ptFormat(d.id); 
+
+    s += "<div class='col-md-12'><h4>Hardware node</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th>Value</th></thead>";
+
+    s += "<tr><td>Node</td><td>#{0} - {1}</td></tr>".ptFormat(d.id, d.name);
+    s += "<tr><td>Hostname</td><td>{0} {1}</td></tr>".ptFormat(d.ip, d.hostname);
+    s += "<tr><td>Model</td><td>{0} {1}</td></tr>".ptFormat(d.vendor, d.model);
+    s += "<tr><td>CPU</td><td>{0} {1}</td></tr>".ptFormat(d.cpus_count, d.cpu_info);
+    s += "<tr><td>RAM</td><td>{0} GB {1}</td></tr>".ptFormat(d.ram_gb, d.ram_info);
+    s += "<tr><td>Storage</td><td>{0} TB {1}</td></tr>".ptFormat(d.storage_tb, d.storage_info);
+    s += "<tr><td>Network</td><td>{0} Gb/s {1}</td></tr>".ptFormat(d.network_gbs, d.network_info);
+    if (d.dashboard)
+        s += "<tr><td>Dashboard</td><td><a href='{0}'>Link</a></td></tr>".ptFormat(d.dashboard);
+    if (d.inv_id)
+        s += "<tr><td>Inventory ID</td><td>{0}</td></tr>".ptFormat(d.inv_id);
+    if (d.phys_location)
+        s += "<tr><td>Phys location</td><td>{0}</td></tr>".ptFormat(d.phys_loation);
+    s += "</table></div>";
+    s += "</div>";
+
+    if (d.cpu_score_up) {
+        s += "<div class='row'>";
+        s += "<div class='col-md-12'><h4>Performance scores</h4>";
+        s += "<table id='perf_score_{0}' class='pt_obj_details'>".ptFormat(d.id);
+        s += "<thead><th>Resource</th><th>UP score</th><th>SMP score</th></thead>";
+        s += "<tr><td>CPU</td><td>{0}</td><td>{1}</td></tr>".ptFormat(d.cpu_score_up, d.cpu_score_smp);
+        s += "<tr><td>RAM</td><td>{0}</td><td>{1}</td></tr>".ptFormat(d.ram_score_up, d.ram_score_smp);
+        s += "<tr><td>Storage</td><td>{0}</td><td>{1}</td></tr>".ptFormat(d.storage_score_up, d.storage_score_smp);
+        s += "<tr><td>Network</td><td>{0}</td><td>{1}</td></tr>".ptFormat(d.network_score_up, d.network_score_smp);
+        s += "</tbody></table></div>";
+        s += "</div></div>";
+    }
+
+    return s;
+}
+
 $(document).ready(function() {
     $('.pt_collapse.expanded').append('<span class="glyphicon glyphicon-triangle-bottom"></span>');
     $('.pt_collapse.collapsed').append('<span class="glyphicon glyphicon-triangle-right"></span>');
