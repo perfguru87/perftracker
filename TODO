@@ -98,7 +98,9 @@ DB access
 - DB query optimization (don't fetch the same objects several times)
 
 Regressions
-- ...
+- New regression (title, tag)
+- Regression charts
+- Support --regression-tag in suites
 
 Integrations with Jira
 - ...
