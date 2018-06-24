@@ -24,6 +24,7 @@ from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
+from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
@@ -66,7 +67,7 @@ def ptBaseHtml(request, project_id, template, params=None, obj=None):
                       'screens': [('Home', '/%d/home/' % project_id),
                                   ('Comparisons', '/%d/comparison/' % project_id),
                                   ('Jobs', '/%d/job/' % project_id),
-                                  ('Hosts', '/%d/hw/' % project_id)]}
+                                  ('Hosts', '/%d/hw_farm/' % project_id)]}
     params.update(default_params)
     return TemplateResponse(request, template, params)
 
@@ -112,13 +113,13 @@ def ptJobIdHtml(request, project_id, job_id):
 
 
 # @login_required
-def ptHwAllHtml(request, project_id):
-    return ptBaseHtml(request, project_id, 'hw_all.html')
+def ptHwFarmAllHtml(request, project_id):
+    return ptBaseHtml(request, project_id, 'hw_farm_node_all.html')
 
 
 # @login_required
-def ptHwIdHtml(request, project_id, id):
-    return ptBaseHtml(request, project_id, 'hw_id.html')
+def ptHwFarmIdHtml(request, project_id, id):
+    return ptBaseHtml(request, project_id, 'hw_farm_node_id.html')
 
 
 # Json views ###
@@ -389,3 +390,53 @@ def ptComparisonTestIdJson(request, api_ver, project_id, cmp_id, group_id, test_
         except TestModel.DoesNotExist:
             ret.append({})
     return JsonResponse(ret, safe=False)
+
+
+@csrf_exempt
+def ptHwFarmNodeAllJson(request, api_ver, project_id):
+
+    class HwFarmNodeJson(BaseDatatableView):
+        # The model we're going to show
+        model = HwFarmNodeModel
+
+        # define the columns that will be returned
+        columns = ['', 'order', 'id', 'name', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'locked_by']
+        order_columns = ['', 'order', 'id', 'name', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'locked_by']
+
+        # set max limit of records returned, this is used to protect our site if someone tries to attack our site
+        # and make it return huge amount of data
+        max_display_length = 5000
+
+        def render_column(self, row, column):
+            # We want to render user as a custom column
+            if column == 'model':
+                return '{0} {1}'.format(row.vendor, row.model)
+            else:
+                return super(HwFarmNodeJson, self).render_column(row, column)
+
+        def filter_queryset(self, qs):
+            # use parameters passed in GET request to filter queryset
+
+            # simple example:
+            search = self.request.GET.get(u'search[value]', None)
+            if search:
+                qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
+
+            if project_id != 0:
+                qs = qs.filter(Q(projects=project_id))
+
+            qs = qs.filter(Q(hidden=False))
+            return qs
+
+        def prepare_results(self, qs):
+            return HwFarmNodeSimpleSerializer(qs, many=True).data
+
+    return HwFarmNodeJson.as_view()(request)
+
+
+def ptHwFarmNodeIdJson(request, api_ver, project_id, hw_id):
+    try:
+        return JsonResponse(HwFarmNodeNestedSerializer(HwFarmNodeModel.objects.get(pk=hw_id)).data, safe=False)
+    except HwFarmNodeModel.DoesNotExist:
+        return JsonResponse([], safe=False)
+

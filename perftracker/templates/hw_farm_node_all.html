@@ -1,0 +1,132 @@
+{% extends '_base.html' %}
+
+{% block title %}Hosts{% endblock %}
+
+{% block content %}
+
+<table id="hws" class="display dataTable" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colOrder'></th>
+      <th class='colID'>ID</th>
+      <th class='colName'>Name</th>
+      <th class='colHostname'>Hostname</th>
+      <th class='colModel'>Model</th>
+      <th class='colCPUs'>CPUs</th>
+      <th class='colRAM'>RAM (GB)</th>
+      <th class='colStorage'>Storage (TB)</th>
+      <th class='colNetwork'>Network (Gb/s)</th>
+      <th class='colLock'>Locked by</th>
+    </tr>
+  </thead>
+  <tfoot>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colOrder'></th>
+      <th class='colID'>ID</th>
+      <th class='colName'>Name</th>
+      <th class='colHostname'>Hostname</th>
+      <th class='colModel'>Model</th>
+      <th class='colCPUs'>CPUs</th>
+      <th class='colRAM'>RAM (GB)</th>
+      <th class='colStorage'>Storage (TB)</th>
+      <th class='colNetwork'>Network (Gb/s)</th>
+      <th class='colLock'>Locked by</th>
+    </tr>
+  </tfoot>
+</table>
+
+<script>
+$(document).ready(function() {
+
+    /*
+     * 1. HW list table
+     */
+
+    var table = $('#hws').DataTable( {
+        "processing": true,
+        "serverSide": true,
+        "lengthMenu": [[50, 200, 1000, -1], [50, 200, 1000, "All"]],
+        "ajax": "/api/v{{ api_ver }}/{{ project.id }}/hw_farm/",
+        "order": [[ 1, "desc" ], [3, "asc"]],
+        "columns": [
+            {
+                "className": 'pt_row_details_toggle',
+                "orderable": false,
+                "data":      null,
+                "defaultContent": "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>",
+            },
+            { "data": "order" },
+            { "data": "id" },
+            { "data": "name" },
+            { "data": "hostname" },
+            { "data": "model" },
+            { "data": "cpus_count" },
+            { "data": "ram_gb" },
+            { "data": "storage_tb" },
+            { "data": "network_gbs" },
+            { "data": "locked_by" }
+        ],
+        "columnDefs": [
+            {
+                "targets": [ "colOrder" ],
+                "type": "string",
+                "visible": false,
+            },
+            {
+                "targets": "colModel",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return row.vendor + ' ' + data;
+                },
+            },
+        ],
+    });
+
+    /*
+     * 2. Job deails opening / closing
+     */
+
+    $('#hws').on('click', 'td.pt_row_details_toggle', function () {
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+        var id = row.data().id;
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+            $('#hw_farm_node_details_slider_{0}'.ptFormat(id), row.child()).slideUp(function() {
+                row.child.hide()
+                tr.removeClass('shown');
+            });
+        }
+        else {
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/hw_farm/{0}'.ptFormat(id),
+                cache: true,
+                data: null,
+                type: 'GET',
+                timeout: 2000,
+                success: function(data, status) {
+                    row.child(pt_draw_hw_farm_node_details(data, null)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#env_nodes_{0}'.ptFormat(id)).treetable({expandable: true});
+                    $('#hw_farm_node_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                },
+                error: function(data, status, error) {
+                    row.child(pt_draw_hw_farm_node_details(row.data(), error)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#hw_farm_node_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                }
+            });
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

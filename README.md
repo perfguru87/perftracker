@@ -82,6 +82,13 @@ python3.6 ./manage.py runserver 0.0.0.0:8000
 You can add several projects which will be displayed as dropdown list in the menu then. To add/modify/delete the projects go to:
 $PERF_TRACKER_URL/admin/perftracker/projectmodel/
 
+### Managing the hardware farm
+
+You can add your hardware fleet and specify in which projects it is used:
+$PERF_TRACKER_URL/admin/perftracker/hwfarmnodemodel/
+
+So then you will be able to manage hardware locking on the 'Hosts' tab
+
 ### Managing custom screens
 
 TODO
