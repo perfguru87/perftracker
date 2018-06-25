@@ -64,3 +64,6 @@ table.dataTable thead .sorting_desc:after {
 table.dataTable thead .sorting:after {
   content: "";
 }
+table.dataTable tbody td, table.dataTable tbody th {
+  padding: 3px 3px;
+}
