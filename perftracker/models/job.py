@@ -64,17 +64,28 @@ class JobModel(models.Model):
         tests_json = json_data.get('tests', [])
         env_nodes_json = json_data.get('env_nodes', [])
 
+        append = json_data.get('append', False)
+
         self.suite_name = json_data.get('suite_name', '')
         self.suite_ver  = json_data.get('suite_ver', '')
         self.author     = json_data.get('author', None)
         self.product_name = json_data.get('product_name', None)
         self.product_ver  = json_data.get('product_ver', None)
         self.links = json.dumps(json_data.get('links', None))
-        self.begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else now
         self.end = parse_datetime(json_data['end']) if json_data.get('end', None) else now
         self.upload = now
-        self.duration = self.end - self.begin
-        self.tests_total = json_data.get('tests_total', len(tests_json))
+
+        self.tests_total = 0
+        self.tests_completed = 0
+        self.tests_failed = 0
+        self.tests_errors = 0
+        self.tests_warnings = 0
+
+        if append:
+            self.duration += self.end - self.begin
+        else:
+            self.begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else now
+            self.duration = self.end - self.begin
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))
@@ -103,11 +114,6 @@ class JobModel(models.Model):
             if test_seq_num <= t.seq_num:
                 test_seq_num = t.seq_num
 
-        self.tests_completed = 0
-        self.tests_failed = 0
-        self.tests_errors = 0
-        self.tests_warnings = 0
-
         for t in tests_json:
             TestModel.ptValidateJson(t)
             test_uuid = t['uuid']
@@ -121,6 +127,7 @@ class JobModel(models.Model):
 
             test.ptUpdate(self, t)
 
+            self.tests_total += 1
             if test.ptStatusIsCompleted():
                 self.tests_completed += 1
             if test.ptStatusIsFailed():
@@ -133,6 +140,17 @@ class JobModel(models.Model):
 
         if json_data.get('replace', False):
             TestModel.ptDeleteTests(uuid2test.keys())
+
+        for t in uuid2test.values():
+            self.tests_total += 1
+            if t.ptStatusIsCompleted():
+                self.tests_completed += 1
+            if t.ptStatusIsFailed():
+                self.tests_failed += 1
+            if t.errors:
+                self.tests_errors += 1
+            if t.warnings:
+                self.tests_warnings += 1
 
         self.save()
 
