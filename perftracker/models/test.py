@@ -73,7 +73,10 @@ class TestModel(models.Model):
     def ptUpdate(self, job, json_data):
         self.ptValidateJson(json_data)
 
-        self.seq_num = json_data['seq_num']
+        if 'seq_num' in json_data:
+            self.seq_num = json_data['seq_num']
+        if not self.seq_num:
+            self.seq_num = 0
         self.tag = json_data['tag']
 
         self.binary = json_data.get('binary', '')
@@ -141,8 +144,6 @@ class TestModel(models.Model):
             raise SuspiciousOperation("%s: 'tag' field not found" % j)
         if 'uuid' not in json_data:
             raise SuspiciousOperation("%s: 'uuid' field not found" % j)
-        if 'seq_num' not in json_data:
-            raise SuspiciousOperation("%s: 'seq_num' field not found" % j)
         if not pt_is_valid_uuid(json_data['uuid']):
             raise SuspiciousOperation("%s: 'uuid' '%s' is not invalid, it must be version1 UUID" % (j, json_data['uuid']))
         if 'scores' not in json_data:

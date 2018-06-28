@@ -96,9 +96,12 @@ class JobModel(models.Model):
 
         # process tests
         tests = TestModel.objects.filter(job=self)
+        test_seq_num = 0
         uuid2test = {}
         for t in tests:
             uuid2test[str(t.uuid)] = t
+            if test_seq_num <= t.seq_num:
+                test_seq_num = t.seq_num
 
         self.tests_completed = 0
         self.tests_failed = 0
@@ -111,6 +114,8 @@ class JobModel(models.Model):
 
             if test_uuid not in uuid2test:
                 uuid2test[test_uuid] = TestModel(job=self, uuid=test_uuid)
+                test_seq_num += 1
+                uuid2test[test_uuid].seq_num = test_seq_num
 
             test = uuid2test[test_uuid]
 
@@ -126,7 +131,8 @@ class JobModel(models.Model):
                 self.tests_warnings += 1
             ret = uuid2test.pop(test_uuid, None)
 
-        TestModel.ptDeleteTests(uuid2test.keys())
+        if not json_data.get('append', False):
+            TestModel.ptDeleteTests(uuid2test.keys())
 
         self.save()
 
