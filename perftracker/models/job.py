@@ -131,7 +131,7 @@ class JobModel(models.Model):
                 self.tests_warnings += 1
             ret = uuid2test.pop(test_uuid, None)
 
-        if not json_data.get('append', False):
+        if json_data.get('replace', False):
             TestModel.ptDeleteTests(uuid2test.keys())
 
         self.save()
