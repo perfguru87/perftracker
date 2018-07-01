@@ -43,7 +43,7 @@ table.dataTable thead th.sorting_asc, table.dataTable thead th.sorting_desc {
   background-color: #eee;
 }
 table.dataTable thead th, table.dataTable thead td {
-  padding: 10px 2px 10px 8px;
+  padding: 4px 2px 4px 6px;
 }
 
 /* Sort icons */
