@@ -72,8 +72,10 @@ class JobModel(models.Model):
         self.product_name = json_data.get('product_name', None)
         self.product_ver  = json_data.get('product_ver', None)
         self.links = json.dumps(json_data.get('links', None))
-        self.end = parse_datetime(json_data['end']) if json_data.get('end', None) else now
         self.upload = now
+
+        begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else now
+        end = parse_datetime(json_data['end']) if json_data.get('end', None) else now
 
         self.tests_total = 0
         self.tests_completed = 0
@@ -81,11 +83,14 @@ class JobModel(models.Model):
         self.tests_errors = 0
         self.tests_warnings = 0
 
-        if append:
-            self.duration += self.end - self.begin
-        else:
-            self.begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else now
-            self.duration = self.end - self.begin
+        if not self.begin:
+            self.begin = begin
+        if not self.end:
+            self.end = end
+        if not self.duration:
+            self.duration = timedelta(0)
+
+        self.duration += end - begin
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))
