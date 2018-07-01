@@ -205,7 +205,7 @@ def ptJobAllJson(request, api_ver, project_id):
                 pass
 
         if not job:
-            if append or replace:
+            if replace:
                 return HttpResponseBadRequest("Job with uuid %s doesn't exist" % uuid)
             job = JobModel(title=body['job_title'], uuid=body['uuid'])
 
