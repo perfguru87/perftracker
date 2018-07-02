@@ -31,6 +31,7 @@ from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
 
 from perftracker.forms import ptCmpDialogForm
+from perftracker.helpers import pt_dur2str
 
 API_VER = 1.0
 
@@ -115,7 +116,7 @@ def ptRegressionIdHtml(request, project_id, regression_id):
                       params={'jobs': JobModel.objects.filter(regression_tag=obj.tag).order_by('end'),
                               'first_job': obj.first_job,
                               'last_job': obj.last_job,
-                              'duration': obj.last_job.end - obj.first_job.end,
+                              'duration': pt_dur2str(obj.last_job.end - obj.first_job.end),
                               'regr_view': ptRegressionServSideView(obj),
                               'ptCmpChartType': ptCmpChartType,
                               'ptCmpTableType': ptCmpTableType,
