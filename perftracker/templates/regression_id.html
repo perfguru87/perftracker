@@ -119,6 +119,8 @@ $(document).ready(function() {
         pt_charts_el[n] = document.getElementById('chart_{{ group.id }}_{{ serie.id }}');
         pt_charts_data[n] = {{ serie.values|safe }};
 
+        var left_padding = Math.max.apply(null, pt_charts_data[n]).toString().length * 5;
+
         {% if serie.show_regression %}
           pt_charts_regr_data[n] = {{ serie.xy_values|safe }};
           pt_charts_regr_obj[n] = ecStat.regression('polynomial', pt_charts_regr_data[n], 3);
@@ -150,8 +152,8 @@ $(document).ready(function() {
           },
           grid: {
             top: 30,
-            right: 30,
-            left: 30,
+            right: 15,
+            left: 15 + left_padding,
             bottom: 30,
           },
           toolbox: {
