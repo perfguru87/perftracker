@@ -52,8 +52,10 @@ def pt_dur2str(duration):
     minutes = minutes % 60
 
     ret = "{:02d}:{:02d}".format(hours, minutes)
-    if days:
-        return "%dd %s" % (days, ret)
+    if days > 1:
+        return "%d days %s" % (days, ret)
+    elif days == 1:
+        return "%d day %s" % (days, ret)
     return ret
 
 
