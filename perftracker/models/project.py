@@ -46,7 +46,7 @@ class ProjectModel(models.Model):
         try:
             return ProjectModel.objects.get(name=proj_name)
         except ProjectModel.DoesNotExist:
-            raise SuspiciouOperation("Project '%s' doesn't exist" % proj_name)
+            raise SuspiciousOperation("Project '%s' doesn't exist" % proj_name)
 
     def ptGetAll(self):
         try:
