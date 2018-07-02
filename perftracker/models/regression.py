@@ -58,7 +58,35 @@ class RegressionModel(models.Model):
             r.ptSetFirstLastJob()
         for r in RegressionModel.objects.filter(last_job=job).all():
             r.ptSetFirstLastJob()
-        for r in RegressionModel.objects.filter(tag=job.regression_tag).all():
+
+        if not job.regression_tag and not job.regression_name:
+            return
+
+        r = None
+        if job.regression_tag:
+            try:
+                r = RegressionModel.objects.get(tag=job.regression_tag, project=job.project)
+            except RegressionModel.DoesNotExist:
+                pass
+
+        if job.regression_name and not r:
+            try:
+                r = RegressionModel.objects.get(title=job.regression_name, project=job.project)
+            except RegressionModel.DoesNotExist:
+                pass
+
+        if r is None:
+            regression_tag = job.regression_tag if job.regression_tag else "regression"
+            regression_title = job.regression_name if job.regression_name else "Regression"
+            r = RegressionModel(title=regression_title, tag=regression_tag, project=job.project, jobs=0)
+            r.save()
+        elif job.regression_name and r.title != job.regression_name:
+            r.title = job.regression_name
+            r.save()
+
+        regression_tag = r.tag
+
+        for r in RegressionModel.objects.filter(tag=regression_tag).all():
             r.ptSetFirstLastJob()
 
 

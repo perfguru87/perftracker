@@ -74,6 +74,9 @@ class JobModel(models.Model):
         self.product_name = json_data.get('product_name', None)
         self.product_ver  = json_data.get('product_ver', None)
         self.links = json.dumps(json_data.get('links', None))
+        self.regression_tag = json_data.get('regression_tag', '')
+        self.regression_name = json_data.get('regression_name', '')
+
         self.upload = now
 
         begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else now
