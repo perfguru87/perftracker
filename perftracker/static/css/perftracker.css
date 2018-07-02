@@ -235,3 +235,54 @@ div.pt_obj_management {
 div.pt_obj_management span {
   margin: 0px 10px 0px 10px;
 }
+
+/* Regressions */
+div.pt_regr_neg, div.pt_regr_neg2 {
+  display: block;
+}
+div.pt_regr_norm, div.pt_regr_pos, div.pt_regr_pos2 {
+  display: none;
+}
+
+div.pt_regr_norm .pt_chart, div.pt_regr_neg .pt_chart, div.pt_regr_pos .pt_chart, div.pt_regr_neg2 .pt_chart, div.pt_regr_pos2 .pt_chart {
+  width: 30%;
+  height: 150px;
+  text-align: center;
+  color: #777;
+  line-height: 150px;
+  vertical-align: middle;
+  border: 1px solid #ccc;
+  background-color: #f8f8f8;
+  margin-bottom: 10px;
+}
+
+div.pt_regr_neg .pt_chart {
+  background-color: #ffe0e0;
+}
+
+div.pt_regr_neg2 .pt_chart {
+  background-color: #ffa0a0;
+}
+
+div.pt_regr_pos .pt_chart {
+  background-color: #e0ffe0;
+}
+
+div.pt_regr_pos2 .pt_chart {
+  background-color: #a0ffa0;
+}
+
+table.pt_regr_summary td {
+  padding: 0px 2px 0px 2px;
+}
+
+.pt_regr_filter div {
+  padding: 10px 0px 10px 15px;
+  margin: 0px !important;
+  margin-left: 0px !important;
+}
+
+.pt_regr_filter div label {
+  padding: 0px;
+  margin: 0px;
+}

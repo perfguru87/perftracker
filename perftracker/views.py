@@ -22,6 +22,7 @@ from django.db.models.query import QuerySet
 
 from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
+from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
@@ -65,6 +66,7 @@ def ptBaseHtml(request, project_id, template, params=None, obj=None):
                       'project': ProjectModel.ptGetById(project_id),
                       'api_ver': API_VER,
                       'screens': [('Home', '/%d/home/' % project_id),
+                                  ('Regressions', '/%d/regression/' % project_id),
                                   ('Comparisons', '/%d/comparison/' % project_id),
                                   ('Jobs', '/%d/job/' % project_id),
                                   ('Hosts', '/%d/hw_farm/' % project_id)]}
@@ -93,6 +95,30 @@ def ptComparisonIdHtml(request, project_id, cmp_id):
                               'cmp_view': ptComparisonServSideView(obj),
                               'ptCmpChartType': ptCmpChartType,
                               'ptCmpTableType': ptCmpTableType
+                              },
+                      obj=obj)
+
+
+def ptRegressionAllHtml(request, project_id):
+    return ptBaseHtml(request, project_id, 'regression_all.html')
+
+
+def ptRegressionIdHtml(request, project_id, regression_id):
+    try:
+        obj = RegressionModel.objects.get(pk=regression_id)
+    except RegressionModel.DoesNotExist:
+        raise Http404
+
+    # register 'range' template tag
+
+    return ptBaseHtml(request, project_id, 'regression_id.html',
+                      params={'jobs': JobModel.objects.filter(regression_tag=obj.tag).order_by('end'),
+                              'first_job': obj.first_job,
+                              'last_job': obj.last_job,
+                              'duration': obj.last_job.end - obj.first_job.end,
+                              'regr_view': ptRegressionServSideView(obj),
+                              'ptCmpChartType': ptCmpChartType,
+                              'ptCmpTableType': ptCmpTableType,
                               },
                       obj=obj)
 
@@ -395,6 +421,109 @@ def ptComparisonTestIdJson(request, api_ver, project_id, cmp_id, group_id, test_
             ret.append({})
     return JsonResponse(ret, safe=False)
 
+
+@csrf_exempt
+def ptRegressionAllJson(request, api_ver, project_id):
+    class RegressionJson(BaseDatatableView):
+        # The model we're going to show
+        model = RegressionModel
+
+        # define the columns that will be returned
+        columns = ['', 'id', 'title', 'tag', 'jobs', 'first_job', 'last_job']
+
+        # define column names that will be used in sorting
+        # order is important and should be same as order of columns
+        # displayed by datatables. For non sortable columns use empty
+        # value like ''
+        order_columns = ['', 'id', 'title', 'tag', 'jobs', 'first_job', 'last_job']
+
+        # set max limit of records returned, this is used to protect our site if someone tries to attack our site
+        # and make it return huge amount of data
+        max_display_length = 5000
+
+        def render_column(self, row, column):
+            # We want to render user as a custom column
+            if column == 'tests_total':
+                return '{0} {1}'.format(row.tests_total, row.tests_completed)
+            else:
+                return super(JobJson, self).render_column(row, column)
+
+        def filter_queryset(self, qs):
+            # use parameters passed in GET request to filter queryset
+
+            # simple example:
+            search = self.request.GET.get(u'search[value]', None)
+            if search:
+                qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
+
+            if project_id != 0:
+                qs = qs.filter(Q(project_id=project_id))
+
+            qs = qs.filter(Q(deleted=False))
+
+            return qs
+
+        def prepare_results(self, qs):
+            return RegressionSerializer(qs, many=True).data
+
+    return RegressionJson.as_view()(request)
+
+
+def ptRegressionIdJson(request, api_ver, project_id, regression_id):
+    try:
+        return JsonResponse(RegressionSerializer(RegressionModel.objects.get(pk=regression_id)).data, safe=False)
+    except RegressionModel.DoesNotExist:
+        return JsonResponse([], safe=False)
+
+
+def ptRegressionTestAllJson(request, api_ver, project_id, regression_id, group_id):
+    regr = RegressionModel.objects.get(pk=regression_id)
+    jobs = regr.jobs.all()
+    ret = []
+    for job in jobs:
+        ret.append(ptJobTestAllJson(request, api_ver, project_id, job.id, group_id).content.decode("utf-8"))
+    return HttpResponse("[" + ",".join(ret) + "]", content_type="application/json")
+
+
+@csrf_exempt
+def ptRegressionGroupAllJson(request, api_ver, project_id, regression_id):
+    try:
+        regr = RegressionModel.objects.get(pk=regression_id)
+    except RegressionModel.DoesNotExist:
+        raise Http404
+
+    jobs = regr.jobs.all()
+
+    found = set()
+    ret = []
+    for job in jobs:
+        groups = TestModel.objects.filter(job=job).values('group').annotate(Count('id'))
+        for g in groups:
+            group = g['group']
+            if group in found:
+                continue
+            found.add(group)
+            ret.append(TestGroupModel.ptGetByTag(group))
+    return JsonResponse(TestGroupSerializer(ret, many=True).data, safe=False)
+
+
+def ptRegressionTestIdJson(request, api_ver, project_id, regression_id, group_id, test_id):
+    regr = RegressionModel.objects.get(pk=regression_id)
+
+    try:
+        orig_test = TestModel.objects.get(id=test_id)
+    except TestModel.DoesNotExist:
+        return JsonResponse([], safe=False)
+
+    jobs = regr.jobs.all()
+    ret = []
+    for job in jobs:
+        try:
+            test = TestModel.objects.get(job=job.id, tag=orig_test.tag, category=orig_test.category)
+            ret.append(TestDetailedSerializer(test).data)
+        except TestModel.DoesNotExist:
+            ret.append({})
+    return JsonResponse(ret, safe=False)
 
 @csrf_exempt
 def ptHwFarmNodeAllJson(request, api_ver, project_id):

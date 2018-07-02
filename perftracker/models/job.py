@@ -23,7 +23,7 @@ class JobModel(models.Model):
 
     uuid            = models.UUIDField(default=uuid.uuid1, editable=False, help_text="job uuid", db_index=True)
 
-    suite_name      = models.CharField(max_length=128, help_text="Test suite name")
+    suite_name      = models.CharField(max_length=128, help_text="Test suite name", blank=True)
     suite_ver       = models.CharField(max_length=128, help_text="Test suite version")
     author          = models.CharField(max_length=128, help_text="Job author: user@mycompany.localdomain", null=True, blank=True)
     product_name    = models.CharField(max_length=128, help_text="Tested product name", null=True, blank=True)
@@ -43,6 +43,8 @@ class JobModel(models.Model):
     tests_warnings  = models.IntegerField(default=0, help_text="Total number of tests with warnings", null=True)
 
     project         = models.ForeignKey(ProjectModel, help_text="Job project", on_delete=models.CASCADE)
+
+    regression_tag  = models.CharField(max_length=512, help_text="MyProduct-2.0 regression", null=True, blank=True, db_index=True)
 
     deleted         = models.BooleanField(help_text="True means the Job was deleted", db_index=True, default=False)
 
@@ -170,6 +172,11 @@ class JobModel(models.Model):
         if not pt_is_valid_uuid(json_data['uuid']):
             raise SuspiciousOperation("Invalid job 'uuid' format '%s', it must be uuid1" % json_data['uuid'])
 
+    def save(self):
+        from perftracker.models.regression import RegressionModel
+        super(JobModel, self).save()
+        RegressionModel.ptOnJobSave(self)
+
     class Meta:
         verbose_name = "Job"
         verbose_name_plural = "Jobs"
@@ -193,7 +200,8 @@ class JobSimpleSerializer(JobBaseSerializer):
     class Meta:
         model = JobModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'end', 'duration', 'upload',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project')
+                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
+                  'product_name', 'product_ver')
 
 
 class JobNestedSerializer(JobBaseSerializer):
@@ -201,4 +209,5 @@ class JobNestedSerializer(JobBaseSerializer):
         model = JobModel
         fields = ('id', 'title', 'cmdline', 'uuid', 'suite_name', 'suite_ver', 'product_name', 'product_ver',
                   'links', 'env_node', 'begin', 'end', 'duration', 'upload',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project')
+                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
+                  'product_name', 'product_ver')
