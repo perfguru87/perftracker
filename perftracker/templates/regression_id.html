@@ -1,0 +1,200 @@
+{% extends '_base.html' %}
+
+{% load range_tag %}
+
+{% block title %}Regression: #{{ obj.id }} / {{ obj.title }}{% endblock %}
+
+{% block content %}
+<div class='pt_section'>
+  <h3 class='pt_collapse expanded' data-toggle="collapse" data-target="#summary">Summary</h3>
+  <div class='collapse in' id='summary'>
+    <ul>
+      <table class='pt_regr_summary'>
+      <tr><td><li>First job:</td><td> #{{ first_job.id }} </td><td> - </td><td>{{ first_job.title }}</td><td> - </td><td>{{ first_job.end }}</td></tr>
+      <tr><td><li>Last job:</td><td> #{{ last_job.id }} </td><td> - </td><td>{{ last_job.title }}</td><td> - </td><td>{{ last_job.end }}</td></tr>
+      <tr><td></td><td></td><td></td><td style='text-align: right;'><b>Total duration</b></td><td> - </td><td><b>{{ duration }}</b></td></tr>
+      </table>
+    </ul>
+    <div class='container'>
+      <a class='pt_collapse collapsed' data-toggle="collapse" data-target="#details" href='#'>Jobs details</a>
+
+      <div class='collapse container' id='details'>
+        <h4>Regression: {{ obj }}</h4>
+        <div id='regression_details'>...<br><br></div>
+        {% for job in jobs %}
+            <h4>Job: {{ job }}</h4>
+            <div class='container'><div id='job_details_{{ job.id }}'></div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class='pt_section'>
+<div class="row pt_regr_filter">
+<div class='col-md-2'>
+  <b>Results filter:</b>
+</div>
+<!-- FIXME. Crap //-->
+
+{% for css_class, info in regr_view.info.items %}
+  <div class="checkbox col-md-2">
+    <label><input class='{{ css_class }}' type="checkbox"
+    {% if info.0 %}
+      {% if info.2 %}
+        checked="checked"
+      {% endif %}
+    {% endif %}
+    {% if not info.0 %}
+      disabled="disabled"
+    {% endif %}
+    </label>{{ info.1 }}<br>({{ info.0 }} tests)
+  </div>
+{% endfor %}
+</div>
+</div>
+
+{% for g_tag, group in regr_view.groups.items %}
+  <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#{{ g_tag }}'>{{ g_tag }}</h3>
+  <div class="row">
+  {% for s_tag, serie in group.series.items %}
+    <div class='col-md-4 {{ serie.css_class }}'>
+    {{ s_tag }}
+
+    <div class='container collapse in pt_div_regr'>
+      <div id="chart_{{ group.id }}_{{ serie.id }}" class='pt_chart'>Loading chart...</div>
+    </div>
+    </div>
+    {% if forloop.counter|divisibleby:3 %}
+<!--
+      </div>
+      <div class="row">
+//-->
+    {% endif %}
+  {% endfor %}
+  </div>
+<!--  </div> //-->
+{% endfor %}
+
+<script>
+
+var pt_charts_data = [];
+var pt_charts_regr_data = [];
+var pt_charts_regr_obj = [];
+var pt_charts_el = [];
+var pt_charts_obj = [];
+var pt_charts_options = [];
+
+function pt_show_charts() {
+  for (var i = 0; i < pt_charts_el.length; i++) {
+    if (pt_charts_el[i].offsetParent !== null && pt_charts_obj[i] == null) {
+      pt_charts_obj[i] = echarts.init(pt_charts_el[i]);
+      pt_charts_obj[i].setOption(pt_charts_options[i]);
+    }
+  }
+}
+
+$(document).ready(function() {
+    var id = {{ obj.id }};
+
+    $('.pt_regr_filter :checkbox').change(function() {
+      var cl = $(this).attr('class');
+      if (this.checked) {
+        $("div." + cl).show();
+        pt_show_charts();
+      } else {
+        $("div." + cl).hide();
+      }
+    });
+
+    {% for job in jobs %}
+        pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
+    {% endfor %}
+
+    var n = 0;
+
+    {% for g_tag, group in regr_view.groups.items %}
+      {% for s_tag, serie in group.series.items %}
+
+        pt_charts_el[n] = document.getElementById('chart_{{ group.id }}_{{ serie.id }}');
+        pt_charts_data[n] = {{ serie.values|safe }};
+
+        {% if serie.show_regression %}
+          pt_charts_regr_data[n] = {{ serie.xy_values|safe }};
+          pt_charts_regr_obj[n] = ecStat.regression('polynomial', pt_charts_regr_data[n], 3);
+          pt_charts_regr_obj[n].points.sort(function(a, b) {
+              return a[0] - b[0];
+          });
+        {% endif %}
+
+        pt_charts_obj[n] = null;
+
+        pt_charts_options[n] = {
+          title: {
+            text: '{{ serie.title }}',
+            textStyle: { fontSize: 10, fontWeight: 'normal' },
+          },
+          tooltip: {
+            formatter: '{b}: {c}',
+          },
+          xAxis: {
+            data: {{ serie.categories|safe }},
+            type: '{{ serie.x_axis_type }}',
+            nameLocation: 'center',
+            axisLabel: { fontSize: 10, rotate: {{ serie.x_axis_rotate }} },
+            nameGap: 0,
+          },
+          yAxis: {
+            name: '{{ s.y_axis_name }}',
+            axisLabel: { fontSize: 10 },
+          },
+          grid: {
+            top: 30,
+            right: 30,
+            left: 30,
+            bottom: 30,
+          },
+          toolbox: {
+            show: true,
+            feature: {
+              magicType: {type: ['line', 'bar']},
+            },
+            height: 10,
+            top: 0,
+          },
+          series: [
+            {
+              name: 'data',
+              type: 'line',
+              color: '#444',
+              barGap: '0.1',
+              animation: false,
+              data: pt_charts_data[n],
+            },
+            {% if serie.show_regression %}
+            {
+              name: 'trend',
+              type: 'line',
+              smooth: true,
+              showSymbol: false,
+              animation: false,
+              data: pt_charts_regr_obj[n].points,
+              lineStyle: {
+                normal: {
+                  color: 'gray',
+                  width: 1,
+                  type: 'dashed'
+                }
+              },
+            }
+            {% endif %}
+          ]
+        };
+        n += 1;
+      {% endfor %}
+    {% endfor %}
+    pt_show_charts();
+});
+</script>
+
+{% endblock %}

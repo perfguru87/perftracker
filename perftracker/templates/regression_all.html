@@ -1,0 +1,156 @@
+{% extends '_base.html' %}
+
+{% block title %}Regressions{% endblock %}
+
+{% block content %}
+
+<table id="regressions" class="display dataTable" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colID'>ID</th>
+      <th class='colTitle'>Title</th>
+      <th class='colTag'>Tag</th>
+      <th class='colJobs'>Jobs</th>
+      <th class='colFirstBuild'>First build</th>
+      <th class='colLastBuild'>Last build</th>
+      <th class='colFirstDate'>First build date</th>
+      <th class='colLastDate'>Last build date</th>
+    </tr>
+  </thead>
+  <tfoot>
+    <tr>
+      <th class='colExpander'></th>
+      <th class='colID'>ID</th>
+      <th class='colTitle'>Title</th>
+      <th class='colTag'>Tag</th>
+      <th class='colJobs'>Jobs</th>
+      <th class='colFirstBuild'>First build</th>
+      <th class='colLastBuild'>Last build</th>
+      <th class='colFirstDate'>First build date</th>
+      <th class='colLastDate'>Last build date</th>
+    </tr>
+  </tfoot>
+</table>
+
+
+<script>
+$(document).ready(function() {
+
+    /*
+     * 1. Comparisons list table
+     */
+
+    var table = $('#regressions').DataTable( {
+        "processing": true,
+        "serverSide": true,
+        "lengthMenu": [[50, 200, 1000, -1], [50, 200, 1000, "All"]],
+        "ajax": "/api/v{{ api_ver }}/{{ project.id }}/regression/",
+        "order": [[ 2, "desc" ]],
+        "columns": [
+            {
+                "className": 'pt_row_details_toggle',
+                "orderable": false,
+                "data":      null,
+                "defaultContent": "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>",
+            },
+            { "data": "id" },
+            { "data": "title" },
+            { "data": "tag" },
+            { "data": "jobs" },
+            { "data": "first_job" },
+            { "data": "last_job" },
+            { "data": "first_build_date" },
+            { "data": "last_build_date" },
+        ],
+        "columnDefs": [
+            {
+                "targets": "colTitle",
+                "type": "string",
+                "orderData": [ 5, 1 ],
+                "render": function ( data, type, row ) {
+                    return "<a href='/{{ project.id }}/regression/" + row.id + "'>" + data + "</a>";
+                },
+            },
+            {
+                "targets": "colJobs",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return data;
+                },
+            },
+            {
+                "targets": "colFirstBuild",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return row.first_job.product_ver;
+                },
+            },
+            {
+                "targets": "colLastBuild",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return row.last_job.product_ver;
+                },
+            },
+            {
+                "targets": "colFirstDate",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return pt_date2str(row.first_job.end);
+                },
+            },
+            {
+                "targets": "colLastDate",
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return pt_date2str(row.last_job.end);
+                },
+            },
+        ],
+    });
+
+    /*
+     * 2. Comparison details
+     */
+    $("#regressions").on('click', 'td.pt_row_details_toggle', function() {
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+        var id = row.data().id;
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+            $('#regression_details_slider_{0}'.ptFormat(id), row.child()).slideUp(function() {
+                row.child.hide()
+                tr.removeClass('shown');
+            });
+        }
+        else {
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/regression/{0}'.ptFormat(id),
+                cache: true,
+                data: null,
+                type: 'GET',
+                timeout: 2000,
+                success: function(data, status) {
+                    row.child(pt_draw_regression_details(data, null)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#env_nodes_{0}'.ptFormat(id)).treetable({expandable: true});
+                    $('#regression_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                },
+                error: function(data, status, error) {
+                    row.child(pt_draw_regression_details(row.data(), error)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    $('#regression_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                }
+            });
+        }
+    });
+});
+</script>
+
+{% endblock %}

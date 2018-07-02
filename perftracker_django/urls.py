@@ -25,6 +25,8 @@ urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico'), name='favicon'),
 
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/home/$', views.ptHomeJson),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/regression/(?P<regression_id>\d+)$', views.ptRegressionIdJson),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/regression/$', views.ptRegressionAllJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/test/(?P<test_id>\d+)$',
         views.ptComparisonTestIdJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/test/$',
@@ -42,6 +44,8 @@ urlpatterns = [
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/$', views.ptHwFarmNodeAllJson),
 
     path('<int:project_id>/home/', views.ptHomeHtml, name='Home'),
+    path('<int:project_id>/regression/<int:regression_id>', views.ptRegressionIdHtml, name='Regressions'),
+    path('<int:project_id>/regression/', views.ptRegressionAllHtml, name='Regressions'),
     path('<int:project_id>/comparison/<int:cmp_id>', views.ptComparisonIdHtml, name='Comparisons'),
     path('<int:project_id>/comparison/', views.ptComparisonAllHtml, name='Comparisons'),
     path('<int:project_id>/job/<int:job_id>', views.ptJobIdHtml, name='Jobs'),
