@@ -59,7 +59,7 @@ class RegressionModel(models.Model):
         for r in RegressionModel.objects.filter(last_job=job).all():
             r.ptSetFirstLastJob()
 
-        if not job.regression_tag and not job.regression_name:
+        if not job.regression_tag:
             return
 
         r = None
@@ -69,19 +69,9 @@ class RegressionModel(models.Model):
             except RegressionModel.DoesNotExist:
                 pass
 
-        if job.regression_name and not r:
-            try:
-                r = RegressionModel.objects.get(title=job.regression_name, project=job.project)
-            except RegressionModel.DoesNotExist:
-                pass
-
         if r is None:
             regression_tag = job.regression_tag if job.regression_tag else "regression"
-            regression_title = job.regression_name if job.regression_name else "Regression"
-            r = RegressionModel(title=regression_title, tag=regression_tag, project=job.project, jobs=0)
-            r.save()
-        elif job.regression_name and r.title != job.regression_name:
-            r.title = job.regression_name
+            r = RegressionModel(title="%s regression" % job.project.name, tag=regression_tag, project=job.project, jobs=0)
             r.save()
 
         regression_tag = r.tag
