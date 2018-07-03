@@ -59,7 +59,7 @@
   <div class="row">
   {% for s_tag, serie in group.series.items %}
     <div class='col-md-4 {{ serie.css_class }}'>
-    {{ s_tag }}
+      <div class='pt_regr_chart_title'>{{ s_tag }}</div>
 
     <div class='container collapse in pt_div_regr'>
       <div id="chart_{{ group.id }}_{{ serie.id }}" class='pt_chart'>Loading chart...</div>
