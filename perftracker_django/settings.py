@@ -165,6 +165,7 @@ LOGGING = {
 REQUEST_LOGGING_ENABLE_COLORIZE = False
 REQUEST_LOGGING_MAX_BODY_LENGTH = 1024
 
-if os.path.exists(os.path.join(os.path.abspath(os.path.dirname(__file__)), "settings_local.py")):
-    sys.path.append(abspath(dirname(__file__)))
+curr_dir = os.path.abspath(os.path.dirname(__file__))
+if os.path.exists(os.path.join(curr_dir, "settings_local.py")):
+    sys.path.append(curr_dir)
     from settings_local import *
