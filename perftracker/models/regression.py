@@ -138,11 +138,15 @@ class ptRegressionServSideSeriesView:
                 self.less_better = True
 
     def calcTrend(self):
-        if len(self.data) < 6:
-            p_coeff = numpy.polyfit( range(0, len(self.data)), self.values, 1)
+        l = len(self.data)
+
+        if l <= 1:
+            return
+        elif l <= 6:
+            p_coeff = numpy.polyfit( range(0, l), self.values, 1)
             p = numpy.poly1d(p_coeff)
             self.trend_begin = p(0)
-            self.trend_end = p(len(self.data) - 1)
+            self.trend_end = p(l - 1)
         else:
             self.trend_begin = numpy.mean([d[1] for d in self.data[0:3]])
             self.trend_end =   numpy.mean([d[1] for d in self.data[-3:]])
