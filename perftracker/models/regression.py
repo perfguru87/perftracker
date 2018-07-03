@@ -206,7 +206,7 @@ class ptRegressionServSideGroupView:
 class ptRegressionServSideView:
     def __init__(self, regr_obj):
         self.regr_obj = regr_obj
-        self.job_objs = JobModel.objects.filter(regression_tag=regr_obj.tag, deleted=False).order_by('end')
+        self.job_objs = regr_obj.ptGetJobs()
         self.groups = OrderedDict()
 
         self.init()
