@@ -113,7 +113,7 @@ def ptRegressionIdHtml(request, project_id, regression_id):
     # register 'range' template tag
 
     return ptBaseHtml(request, project_id, 'regression_id.html',
-                      params={'jobs': JobModel.objects.filter(regression_tag=obj.tag).order_by('end'),
+                      params={'jobs': obj.ptGetJobs(),
                               'first_job': obj.first_job,
                               'last_job': obj.last_job,
                               'duration': pt_dur2str(obj.last_job.end - obj.first_job.end),
