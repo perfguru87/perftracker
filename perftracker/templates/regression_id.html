@@ -107,6 +107,14 @@ $(document).ready(function() {
       }
     });
 
+    {% for css_class, info in regr_view.info.items %}
+      {% if info.2 %}
+        $("div.{{ css_class }}").show();
+      {% else %}
+        $("div.{{ css_class }}").hide();
+      {% endif %}
+    {% endfor %}
+
     {% for job in jobs %}
         pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
     {% endfor %}
