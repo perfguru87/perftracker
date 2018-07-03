@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -163,3 +164,7 @@ LOGGING = {
 
 REQUEST_LOGGING_ENABLE_COLORIZE = False
 REQUEST_LOGGING_MAX_BODY_LENGTH = 1024
+
+if os.path.exists(os.path.join(os.path.abspath(os.path.dirname(__file__)), "settings_local.py")):
+    sys.path.append(abspath(dirname(__file__)))
+    from settings_local import *
