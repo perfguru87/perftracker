@@ -38,7 +38,7 @@ class RegressionModel(models.Model):
         super(RegressionModel, self).save()
 
     def ptSetFirstLastJob(self):
-        jobs = JobModel.objects.filter(regression_tag=self.tag).order_by('end').all()
+        jobs = JobModel.objects.filter(regression_tag=self.tag, deleted=False).order_by('end').all()
         if len(jobs):
             first = jobs[0]
             last = jobs[len(jobs) - 1]
