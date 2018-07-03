@@ -91,10 +91,10 @@ class JobModel(models.Model):
             self.begin = begin
         if not self.end:
             self.end = end
-        if not self.duration:
-            self.duration = timedelta(0)
-
-        self.duration += end - begin
+        if self.duration:
+            self.duration += end - begin
+        else:
+            self.duration = end - begin
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))
