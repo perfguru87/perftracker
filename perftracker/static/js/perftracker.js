@@ -278,7 +278,7 @@ function pt_draw_regression_details(d, err_msg)
                 hw += ', ';
             hw += job.env_node[h].name;
         }
-        s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, d.project, job.id, job.title);
+        s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, job.project, job.id, job.title);
         s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
         s += "</tr>";
     }
