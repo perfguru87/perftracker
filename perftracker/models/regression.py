@@ -131,7 +131,7 @@ class ptRegressionServSideSeriesView:
         if not test_obj.avg_score:
             return
 
-        self.data.append((job.product_ver, pt_float2human(test_obj.avg_score)))
+        self.data.append((job.product_ver if job.product_ver is not None else '?', pt_float2human(test_obj.avg_score)))
         if not self.title:
             self.title = test_obj.metrics + " " + ("[lower is better]" if test_obj.less_better else "[bigger is better]")
             if test_obj.less_better:
