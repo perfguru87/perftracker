@@ -32,13 +32,13 @@
 
 <div class='pt_section'>
 <div class="row pt_regr_filter">
-<div class='col-md-2'>
+<div class='col-md-2 col-sm-4 col-xs-6' style='padding-left: 15px;'>
   <b>Results filter:</b>
 </div>
 <!-- FIXME. Crap //-->
 
 {% for css_class, info in regr_view.info.items %}
-  <div class="checkbox col-md-2">
+  <div class="checkbox col-md-2 col-sm-4 col-xs-6">
     <label><input class='{{ css_class }}' type="checkbox"
     {% if info.0 %}
       {% if info.2 %}

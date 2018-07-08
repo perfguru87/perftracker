@@ -276,8 +276,12 @@ table.pt_regr_summary td {
   padding: 0px 2px 0px 2px;
 }
 
+.pt_regr_filter {
+  padding: 10px 0px 10px 0px;
+}
+
 .pt_regr_filter div {
-  padding: 10px 0px 10px 15px;
+  padding: 0px 0px 0px 40px;
   margin: 0px !important;
   margin-left: 0px !important;
 }
