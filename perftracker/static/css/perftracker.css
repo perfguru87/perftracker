@@ -245,7 +245,7 @@ div.pt_regr_norm, div.pt_regr_pos, div.pt_regr_pos2 {
 }
 
 div.pt_regr_norm .pt_chart, div.pt_regr_neg .pt_chart, div.pt_regr_pos .pt_chart, div.pt_regr_neg2 .pt_chart, div.pt_regr_pos2 .pt_chart {
-  width: 30%;
+  display: block;
   height: 150px;
   text-align: center;
   color: #777;

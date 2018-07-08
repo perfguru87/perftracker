@@ -58,10 +58,10 @@
   <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#{{ g_tag }}'>{{ g_tag }}</h3>
   <div class="row">
   {% for s_tag, serie in group.series.items %}
-    <div class='col-md-4 {{ serie.css_class }}'>
+    <div class='col-md-4 col-xs-12 col-sm-6 {{ serie.css_class }}'>
       <div class='pt_regr_chart_title'>{{ s_tag }}</div>
 
-    <div class='container collapse in pt_div_regr'>
+    <div class='pt_div_regr'>
       <div id="chart_{{ group.id }}_{{ serie.id }}" class='pt_chart'>Loading chart...</div>
     </div>
     </div>
