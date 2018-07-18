@@ -4,6 +4,14 @@
 
 {% block content %}
 
+{% if timeline %}
+  <div class='pt_timeline'>
+  {{ timeline|safe }}
+    <div class="pt_obj_management">
+    </div>
+  </div>
+{% endif %}
+
 <table id="hws" class="display dataTable" cellspacing="0" width="100%">
   <thead>
     <tr>
@@ -18,7 +26,7 @@
       <th class='colRAM'>RAM (GB)</th>
       <th class='colStorage'>Storage (TB)</th>
       <th class='colNetwork'>Network (Gb/s)</th>
-      <th class='colLock'>Locked by</th>
+      <th class='colLock'>Locked</th>
     </tr>
   </thead>
   <tfoot>
@@ -34,7 +42,7 @@
       <th class='colRAM'>RAM (GB)</th>
       <th class='colStorage'>Storage (TB)</th>
       <th class='colNetwork'>Network (Gb/s)</th>
-      <th class='colLock'>Locked by</th>
+      <th class='colLock'>Locked</th>
     </tr>
   </tfoot>
 </table>
@@ -84,6 +92,16 @@ $(document).ready(function() {
                     return row.vendor + ' ' + data;
                 },
             },
+            {
+                "targets": "colLock",
+                "render": function ( data, type, row ) {
+                    if (data)
+                        return "<a class='glyphicon glyphicon-check' href='/admin/perftracker/hwfarmnodelockmodel/" + data + "/change/'></a>";
+                    else
+                        return "<a class='glyphicon glyphicon-unchecked' href='/admin/perftracker/hwfarmnodelockmodel/add/'></a>";
+                },
+            },
+
         ],
     });
 

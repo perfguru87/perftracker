@@ -297,3 +297,24 @@ table.pt_regr_summary td {
   white-space: nowrap;
   overflow-x: scroll;
 }
+
+/* Hw Nodes Tasks */
+.pt_timeline {
+  margin-bottom: 20px;
+}
+
+.pt_timeline_task_auto .timeline-event-content {
+  background-color: #339;
+  color: #fff;
+}
+
+div.pt_timeline_task_manual .timeline-event-content {
+  background-color: #777;
+  color: #fff;
+}
+
+.pt_timeline_task_auto.timeline-event-selected,
+.pt_timeline_task_manual.timeline-event-selected {
+  filter: alpha(opacity=50);
+  opacity: 0.5;
+}

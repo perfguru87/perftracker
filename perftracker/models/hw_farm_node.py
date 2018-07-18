@@ -1,3 +1,8 @@
+import pytz
+import datetime
+from collections import OrderedDict
+
+from django import forms
 from django.db import models
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -7,27 +12,42 @@ from rest_framework import serializers
 
 from perftracker.helpers import ptDurationField
 from perftracker.models.project import ProjectModel
+from perftrackerlib.helpers.timeline import ptTimeline, ptDoc, ptSection, ptTimeline, ptTask
 
 
 class HwFarmNodeLockModel(models.Model):
     title           = models.CharField(blank=True, max_length=128, help_text="My product perf job #123")
     owner           = models.CharField(blank=True, max_length=64, help_text="Jenkins")
 
-    color_rgb       = models.CharField(blank=True, max_length=6, help_text="003399")
-    begin           = models.DateTimeField(default=timezone.now, help_text="2018-07-01 12:21:10")
-    end             = models.DateTimeField(null=True, blank=True, help_text="2018-07-01 18:03:45")
+    begin           = models.DateTimeField(default=timezone.now, help_text="2018-07-01 12:21:10", db_index=True)
+    end             = models.DateTimeField(null=True, blank=True, help_text="2018-07-01 18:03:45", db_index=True)
 
-    manual          = models.BooleanField(help_text="True means it was manually locked", default=False)
-    deleted         = models.BooleanField(help_text="Lock deleted", default=False)
+    manual          = models.BooleanField(help_text="True means it was manually locked", default=True)
+    deleted         = models.BooleanField(help_text="Lock deleted", default=False, db_index=True)
 
-    planned_dur_hrs = models.DurationField(default=24, help_text="Planned lock duration (hours)")
+    hw_nodes        = models.ManyToManyField('HwFarmNodeModel', help_text="Host", limit_choices_to={'locked_by': None})
+
+    planned_dur_hrs = models.IntegerField(default=24, help_text="Planned lock duration (hours)")
 
     def __str__(self):
-        return "#%d, %s" % (self.id, self.name)
+        return "#%s, %s" % (str(self.id), self.title)
 
     class Meta:
         verbose_name = "Hw Node Lock"
         verbose_name_plural = "Hw Node Locks"
+
+    def save(self):
+        super(HwFarmNodeLockModel, self).save()
+
+        for n in HwFarmNodeModel.objects.filter(locked_by=self):
+            n.locked_by = None
+            n.save()
+
+        now = timezone.now()
+        if self.end is None or (self.end > now and self.begin <= now):
+            for n in self.hw_nodes.all():
+                n.locked_by = self
+                n.save()
 
 
 class HwFarmNodeModel(models.Model):
@@ -105,3 +125,58 @@ class HwFarmNodeNestedSerializer(HwFarmNodeBaseSerializer):
     class Meta:
         model = HwFarmNodeModel
         fields = ('order', 'id', 'name', 'os', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'notes', 'locked_by')
+
+
+class HwFarmNodesTimeline:
+    def __init__(self, project_id):
+        self.project_id = project_id
+
+    def gen_html(self):
+        nodes = HwFarmNodeModel.objects.filter(projects=self.project_id, hidden=False)
+
+        now = datetime.datetime.now()
+        now_utc = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+
+        range_begin = (now - datetime.timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+        range_end = (now + datetime.timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+        d = ptDoc(header=" ", footer=" ")
+        s = d.add_section(ptSection())
+        t = s.add_timeline(ptTimeline(title=None, begin=range_begin, end=range_end,
+                                      js_opts={
+                                               'groupsTitle': "'Host'",
+                                               'groupsWidth': "'100px'",
+                                               'groupsComments': "'host_status'",
+                                               'axisOnTop': 'true',
+                                               'showNavigation': 'true',
+                                              }))
+
+        since = range_begin - datetime.timedelta(days=60)
+        default_end = now + datetime.timedelta(days=1)
+
+        groups = OrderedDict()
+        for n in nodes:
+            groups[n.id] = n.name
+            t.add_task(ptTask("1970-01-01 00:00:00", "1970-01-01 00:00:00", group=n.name))
+
+            locks = HwFarmNodeLockModel.objects.filter(begin__gte=since, hw_nodes=n.pk, deleted=False)
+            for l in locks:
+                hint = l.title
+                if l.owner:
+                    hint += " (%s)" % l.owner
+                hint += " | " + str(l.begin)
+                if l.end:
+                    hint += " - " + str(l.end)
+
+                end = default_end
+                if l.end:
+                   end = l.end
+                elif l.planned_dur_hrs:
+                   end = l.begin + datetime.timedelta(hours=l.planned_dur_hrs)
+                   if end < now_utc:
+                       end = default_end
+
+                t.add_task(ptTask(l.begin, end, group=n.name, hint=hint, title=l.title,
+                                  cssClass='pt_timeline_task_manual' if l.manual else 'pt_timeline_task_auto'))
+
+        return d.gen_html()
