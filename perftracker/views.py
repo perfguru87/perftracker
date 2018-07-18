@@ -534,8 +534,8 @@ def ptHwFarmNodeAllJson(request, api_ver, project_id):
         model = HwFarmNodeModel
 
         # define the columns that will be returned
-        columns = ['', 'order', 'id', 'name', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'locked_by']
-        order_columns = ['', 'order', 'id', 'name', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'locked_by']
+        columns = ['', 'order', 'id', 'name', 'os', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'locked_by']
+        order_columns = ['', 'order', 'id', 'name', 'os', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'locked_by']
 
         # set max limit of records returned, this is used to protect our site if someone tries to attack our site
         # and make it return huge amount of data
