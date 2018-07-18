@@ -25,7 +25,7 @@ from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSeria
 from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
-from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
+from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer, HwFarmNodesTimeline
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
@@ -141,7 +141,8 @@ def ptJobIdHtml(request, project_id, job_id):
 
 # @login_required
 def ptHwFarmAllHtml(request, project_id):
-    return ptBaseHtml(request, project_id, 'hw_farm_node_all.html')
+    params = {'timeline': HwFarmNodesTimeline(project_id).gen_html()}
+    return ptBaseHtml(request, project_id, 'hw_farm_node_all.html', params=params)
 
 
 # @login_required
