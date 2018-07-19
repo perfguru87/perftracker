@@ -132,7 +132,13 @@ class HwFarmNodesTimeline:
         self.project_id = project_id
 
     def gen_html(self):
-        nodes = HwFarmNodeModel.objects.filter(projects=self.project_id, hidden=False)
+        if self.project_id:
+            nodes = HwFarmNodeModel.objects.filter(projects=self.project_id, hidden=False)
+        else:
+            nodes = HwFarmNodeModel.objects.filter(hidden=False)
+
+        if len(nodes) == 0:
+            return None
 
         now = datetime.datetime.now()
         now_utc = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
