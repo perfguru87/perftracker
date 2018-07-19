@@ -126,7 +126,7 @@ def ptRegressionIdHtml(request, project_id, regression_id):
 
 # @login_required
 def ptJobAllHtml(request, project_id):
-    params = {'cmp_form': ptCmpDialogForm()}
+    params = {'cmp_form': ptCmpDialogForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
     return ptBaseHtml(request, project_id, 'job_all.html', params=params)
 
 
