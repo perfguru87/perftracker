@@ -4,6 +4,12 @@
 
 {% block content %}
 
+{% if timeline %}
+  <div class='pt_timeline'>
+    {{ timeline|safe }}
+  </div>
+{% endif %}
+
 <table id="jobs" class="display dataTable" cellspacing="0" width="100%">
   <thead>
     <tr>
