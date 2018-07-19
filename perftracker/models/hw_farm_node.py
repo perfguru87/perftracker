@@ -142,7 +142,7 @@ class HwFarmNodesTimeline:
 
         d = ptDoc(header=" ", footer=" ")
         s = d.add_section(ptSection())
-        t = s.add_timeline(ptTimeline(title=None, begin=range_begin, end=range_end,
+        t = s.add_timeline(ptTimeline(title=None, begin=range_begin, end=range_end, groups_title='Hosts',
                                       js_opts={
                                                'groupsTitle': "'Host'",
                                                'groupsWidth': "'100px'",
