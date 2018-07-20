@@ -314,7 +314,8 @@ function pt_draw_hw_farm_node_details(d, err_msg)
     s += "<thead><th>Parameter</th><th>Value</th></thead>";
 
     s += "<tr><td>Node</td><td>#{0} - {1}</td></tr>".ptFormat(d.id, d.name);
-    s += "<tr><td>Hostname</td><td>{0} {1}</td></tr>".ptFormat(d.ip, d.hostname);
+    s += "<tr><td>Hostname</td><td>{0}</td></tr>".ptFormat(d.hostname);
+    s += "<tr><td>IP</td><td>{0}</td></tr>".ptFormat(d.ip);
     s += "<tr><td>Model</td><td>{0} {1}</td></tr>".ptFormat(d.vendor, d.model);
     s += "<tr><td>CPU</td><td>{0} {1}</td></tr>".ptFormat(d.cpus_count, d.cpu_info);
     s += "<tr><td>RAM</td><td>{0} GB {1}</td></tr>".ptFormat(d.ram_gb, d.ram_info);

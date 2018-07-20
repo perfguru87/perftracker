@@ -124,7 +124,7 @@ class HwFarmNodeSimpleSerializer(HwFarmNodeBaseSerializer):
 class HwFarmNodeNestedSerializer(HwFarmNodeBaseSerializer):
     class Meta:
         model = HwFarmNodeModel
-        fields = ('order', 'id', 'name', 'os', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'notes', 'locked_by')
+        fields = ('order', 'id', 'name', 'os', 'hostname', 'ip', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'notes', 'locked_by')
 
 
 class HwFarmNodesTimeline:
