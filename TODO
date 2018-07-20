@@ -79,6 +79,11 @@ Job Upload
 - products: name
 - links: key:value (login to UI, config blob, grafana)
 - author
+- return job id in upload results
+- proper error message format in case of upload failure
+
+Custom upload
+- custom test data upload (blob)
 
 Hosts view
 - hosts status
