@@ -10,9 +10,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='hwfarmnodelockmodel',
+            name='planned_dur_hrs',
+        ),
+        migrations.AddField(
             model_name='hwfarmnodelockmodel',
             name='planned_dur_hrs',
             field=models.IntegerField(default=24, help_text='Planned lock duration (hours)'),
+            preserve_default=False,
         ),
     ]
