@@ -57,6 +57,10 @@ th.pt_job {
   border-radius: 10px 10px 0px 0px;
 }
 
+.pt_nowrap {
+  white-space: nowrap;
+}
+
 /* An object details table */
 table.pt_obj_details {
   border-collapse: initial;
