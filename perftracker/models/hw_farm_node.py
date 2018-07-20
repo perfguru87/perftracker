@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 from django import forms
 from django.db import models
+from django.db.models import Q
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
@@ -13,7 +14,6 @@ from rest_framework import serializers
 from perftracker.helpers import ptDurationField
 from perftracker.models.project import ProjectModel
 from perftrackerlib.helpers.timeline import ptTimeline, ptDoc, ptSection, ptTimeline, ptTask
-
 
 class HwFarmNodeLockModel(models.Model):
     title           = models.CharField(blank=True, max_length=128, help_text="My product perf job #123")
@@ -165,7 +165,7 @@ class HwFarmNodesTimeline:
             groups[n.id] = n.name
             t.add_task(ptTask("1970-01-01 00:00:00", "1970-01-01 00:00:00", group=n.name))
 
-            locks = HwFarmNodeLockModel.objects.filter(begin__gte=since, hw_nodes=n.pk, deleted=False)
+            locks = HwFarmNodeLockModel.objects.filter(Q(begin__gte=since) | Q(end=None), hw_nodes=n.pk, deleted=False)
             for l in locks:
                 hint = l.title
                 if l.owner:
