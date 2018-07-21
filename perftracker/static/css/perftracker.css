@@ -233,7 +233,7 @@ div.pt_test_group_selector select {
 /* Object management menu */
 div.pt_obj_management {
   text-align: right;
-  margin: 10px 10px 0px 0px;
+  margin: 10px 20px 0px 0px;
 }
 
 div.pt_obj_management span {
