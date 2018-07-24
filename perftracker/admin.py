@@ -27,7 +27,7 @@ class HwFarmNodeLockForm(forms.ModelForm):
             self.fields['hw_nodes'].queryset = HwFarmNodeModel.objects.filter(locked_by=None)
 
     def save(self, commit=True):
-        l = super(HwFarmNodeLockForm, self).save(commit=False)
+        l = super(HwFarmNodeLockForm, self).save(commit=commit)
 
         hw_nodes_ids = self.cleaned_data['hw_nodes']
 
@@ -36,13 +36,11 @@ class HwFarmNodeLockForm(forms.ModelForm):
             if n.locked_by and n.locked_by != l:
                  raise forms.ValidationError("Node '%s' is already locked" % str(n))
 
-        if commit:
-            l.save()
-            l.save_m2m()
+        l.save()
 
-            l.hw_nodes.clear()
-            for n in hw_nodes:
-                l.hw_nodes.add(n)
+        l.hw_nodes.clear()
+        for n in hw_nodes:
+            l.hw_nodes.add(n)
 
         return l
 
