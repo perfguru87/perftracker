@@ -311,6 +311,7 @@ table.pt_regr_summary td {
 .pt_timeline_task_auto .timeline-event-content {
   background-color: #339;
   color: #fff;
+  text-align: right;
 }
 
 div.pt_timeline_task_manual .timeline-event-content {
