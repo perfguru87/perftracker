@@ -88,7 +88,8 @@ Custom upload
 Hosts view
 - hosts status
 - short grafana-like CPU usage
-- manual hosts locking
+- manual hosts locking form
+- host locking API
 
 Links view
 - custom link group
