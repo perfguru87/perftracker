@@ -28,6 +28,7 @@ Jobs list:
 + comparison dialog: submit button
 - comparison dialog: preview button
 + comparison dialog: cancel button
+- comparison dialog: 'back' button doesn't work after creating the comparison
 
 Job view:
 + job details
@@ -57,6 +58,7 @@ Comparison view:
 - charts: auto chart type 
 - charts: line/bar charts with confidence interval
 - charts: ability to change chart type in report and save
+- charts: add an option to see the table
 
 Job Upload
 + json upload
