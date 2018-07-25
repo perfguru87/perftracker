@@ -330,8 +330,19 @@ $(document).ready(function() {
             $("#pt_jobs_to_compare").append(
                 "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(id, title) +
                 "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
-            jobs_in_comparison[id] = id;
+            jobs_in_comparison[id] = title;
         }
+
+        var job_ids = [];
+        var job_titles = [];
+
+        $("#pt_jobs_to_compare li input").each(function(n) {
+            var id = parseInt($(this).attr("value"));
+            job_ids.push(id);
+            job_titles.push(jobs_in_comparison[id]);
+        });
+
+        $("#pt_comparison_title").attr("placeholder", pt_gen_comparison_title(job_ids, job_titles));
     });
 
     /*
@@ -361,6 +372,8 @@ $(document).ready(function() {
         var payload = {}
 
         payload.title = $("#pt_comparison_title").val();
+        if (payload.title == "")
+            payload.title = $("#pt_comparison_title").attr("placeholder");
         payload.charts_type = $.trim($("#pt_charts_type").text());
         payload.tables_type = $.trim($("#pt_tables_type").text());
         payload.tests_type = $.trim($("#pt_tests_type").text());
