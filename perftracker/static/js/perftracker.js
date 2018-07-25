@@ -346,6 +346,70 @@ function pt_draw_hw_farm_node_details(d, err_msg)
     return s;
 }
 
+function pt_common_prefix(strings, words_boundary=true)
+{
+    var ar = strings.concat().sort();
+    var a1 = ar[0];
+    var a2 = ar[ar.length - 1];
+    var l = a1.length, i= 0;
+
+    while(i < l && a1.charAt(i) === a2.charAt(i))
+        i++;
+
+    var common_prefix = a1.substring(0, i);
+    if (common_prefix.length == 0)
+        return "";
+
+    if (words_boundary) {
+        var ar1 = strings[0].split(" ");
+        var ar2 = common_prefix.split(" ");
+        common_prefix = "";
+
+        for (var i = 0; i < ar2.length; i++) {
+            if (ar2[i] != ar1[i])
+                break;
+            if (common_prefix)
+                common_prefix += " ";
+            common_prefix += ar1[i];
+        }
+    }
+
+    return common_prefix;
+}
+
+function pt_gen_comparison_title(job_ids, job_titles)
+{
+    if (job_titles.length == 0)
+        return "Title";
+    else if (job_titles.length == 1)
+        return job_titles[0];
+
+    if (!!job_titles.reduce(function(a, b){ return (a === b) ? a : NaN; })) {
+        /* all equal */
+        titles = [];
+        for (var i = 0; i < job_titles.length; i++)
+            titles.push(job_titles[i] + " #" + job_ids[i]);
+        job_titles = titles;
+    }
+
+    console.log(job_titles);
+
+    var title = pt_common_prefix(job_titles);
+    var len = title.length;
+
+    if (len == 0)
+        return job_titles.join(" vs ");
+
+    title += ": ";
+
+    for (var i = 0; i < titles.length; i++) {
+        if (i)
+            title += " vs ";
+        title += job_titles[i].substring(len, job_titles[i].length);
+    }
+    return title;
+}
+
 $(document).ready(function() {
     $('.pt_collapse.expanded').append('<span class="glyphicon glyphicon-triangle-bottom"></span>');
     $('.pt_collapse.collapsed').append('<span class="glyphicon glyphicon-triangle-right"></span>');
