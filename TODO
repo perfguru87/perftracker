@@ -1,3 +1,7 @@
+View:
+- icon
+- version
+
 Authentication:
 + login form
 - sign in
@@ -108,10 +112,13 @@ DB access
 Regressions
 - New regression (title, tag)
 - Regression charts
-- Support --regression-tag in suites
++ Support --regression-tag in suites
+- Automated first two vs last two builds comparison for regressions
 
 Integrations with Jira
-- ...
+- Custom fields for dashboards
+- Items hierarchy by filter
+- Jira items lifecycle on the regression chart
 
 --------------
 
