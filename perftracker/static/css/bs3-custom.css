@@ -20,3 +20,51 @@ h1, .h1, h2, .h2, h3, .h3 {
   margin-top: 12px;
   margin-bottom: 7px;
 }
+
+/*
+ * Modal window customization
+ */
+
+.modal-title {
+  margin: 0px;
+}
+
+.modal {
+  text-align: center;
+}
+
+@media screen and (min-width: 768px) {
+  .modal:before {
+    display: inline-block;
+    vertical-align: middle;
+    content: " ";
+    height: 100%;
+  }
+}
+
+.modal-dialog {
+  display: inline-block;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.modal-header {
+  background-color: #3072ab;
+  color: white;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.modal-header button.close {
+  color: #ccc;
+  opacity: 1;
+}
+
+.modal-header a {
+  color: #eee;
+  text-decoration: underline;
+}
+
+.modal-header a:hover {
+  color: #fff;
+}
