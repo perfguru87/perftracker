@@ -42,6 +42,8 @@ urlpatterns = [
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/$', views.ptJobAllJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/(?P<hw_id>\d+)$', views.ptHwFarmNodeIdJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/$', views.ptHwFarmNodeAllJson),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/(?P<id>\d+)$', views.ptHwFarmNodeLockIdJson),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/$', views.ptHwFarmNodeLockAllJson),
 
     path('<int:project_id>/home/', views.ptHomeHtml, name='Home'),
     path('<int:project_id>/regression/<int:regression_id>', views.ptRegressionIdHtml, name='Regressions'),

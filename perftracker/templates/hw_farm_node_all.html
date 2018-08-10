@@ -45,6 +45,54 @@
   </tfoot>
 </table>
 
+
+<!-- The modal -->
+<div class="modal fade-scale" id="hwLockDialog" tabindex="-1" role="dialog" aria-labelledby="modalLabelSmall" aria-hidden="true">
+<div class="modal-dialog modal-sm">
+<div class="modal-content">
+
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+<span aria-hidden="true">&times;</span>
+</button>
+<h4 class="modal-title" id="lockLabel"></h4>
+</div>
+
+<div class="modal-body">
+
+<form id="lockForm">
+    <div class="form-group">
+        <label for="Lock Title">Title</label>
+        <input type="hidden" id="lockId">
+        <input type="title" class="form-control" id="lockTitle" placeholder="Lock Title" value="">
+    </div>
+    <div class="form-group" id="lockBeginGroup">
+        <label for="inputBegin">Locked since</label>
+        <input type="begin" class="form-control" id="lockBegin" placeholder="inputBegin" disabled="disabled" value=''>
+    </div>
+    <div class="form-group">
+        <label for="inputDur">Planned lock duration (hours)</label>
+        <input type="number" class="form-control" id="lockDur" data-bind="value:replyNumber" placeholder="inputDur" value=''>
+    </div>
+    <div class="form-group">
+        <label for="inputNodes">Locked nodes</label>
+        <select multiple class="form-control" id="lockNodes" placeholder="inputNodes">
+          <option></option>
+        </select>
+    </div>
+    <div class='pt_button_group'>
+    <button type="submit" id="lockSave" class="btn btn-primary">Save</button>
+    <button type="submit" id="lockAction" class="btn btn-primary pull-right float-right">Action</button>
+    </div>
+</form>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
 <script>
 $(document).ready(function() {
 
@@ -95,13 +143,115 @@ $(document).ready(function() {
                 "targets": "colLock",
                 "render": function ( data, type, row ) {
                     if (data)
-                        return "<a class='glyphicon glyphicon-check' href='/admin/perftracker/hwfarmnodelockmodel/" + data + "/change/'></a>";
+                        return "<a data-toggle='modal' data-id='" + data +
+                               "' class='pt-lock-edit glyphicon glyphicon-lock' href='#hwLockDialog'></a>";
                     else
-                        return "<a class='glyphicon glyphicon-unchecked' href='/admin/perftracker/hwfarmnodelockmodel/add/'></a>";
+                        return "<a data-toggle='modal' data-id='0' " +
+                               "class='pt-lock-create glyphicon glyphicon-unchecked' href='#hwLockDialog''></a>";
                 },
             },
-
         ],
+        "drawCallback": function(settings) {
+
+            var updateLockData = function(data) {
+                data.planned_dur_hrs = parseInt($("#lockDur").val());
+                data.title = $("#lockTitle").val();
+                data.planned_dur_hrs = parseInt($(".modal-body #lockDur").val());
+                data.hw_nodes = [];
+                $("#lockNodes").find('option:selected').each(function() {
+                    data.hw_nodes.push($(this).val());
+                });
+                return data;
+            };
+
+            $(".pt-lock-edit").on("click", function () {
+                var lockId = parseInt($(this).data('id'));
+
+                $('#lockAction').html('Unlock');
+                $('#lockSave').show();
+                $('#lockBeginGroup').show();
+
+                $("#lockLabel").html("Hardware lock <a href='/admin/perftracker/hwfarmnodelockmodel/{0}/change/'>#{1}</a>".ptFormat(lockId, lockId));
+                $.getJSON("/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}".ptFormat(lockId), function( data ) {
+                    $("#lockId").val(lockId);
+                    $("#lockTitle").val(data.title);
+                    $("#lockBegin").val(pt_date2str(data.begin));
+                    $("#lockDur").val(data.planned_dur_hrs);
+                    var hw_nodes = $(".modal-body #lockNodes").empty();
+                    $.each(data.hw_nodes, function() {
+                        var o = $("<option></option>").val(this['id']).text("#{0} - {1}".ptFormat(this['id'], this['name']));
+                        if (lockId == this['locked_by'])
+                            o.attr("selected", "selected");
+                        hw_nodes.append(o);
+                    });
+
+                    $('#lockAction').on('click', function () {
+                        console.log("LOG", data);
+                        $.ajax({
+                            url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
+                            type: 'DELETE',
+                            success: function(xhr) { location.reload(); },
+                            error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
+                        });
+                        return false;
+                    });
+                    $('#lockSave').on('click', function () {
+                        data = updateLockData(data);
+                        $.ajax({
+                            url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
+                            type: 'PUT',
+                            contentType: "application/json",
+                            data: JSON.stringify(data),
+                            success: function(xhr) { location.reload(); },
+                            error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
+                        });
+                        return false;
+                    });
+                });
+            });
+
+            $(".pt-lock-create").on("click", function () {
+                var lockId = parseInt($(this).data('id'));
+
+                $('#lockAction').html('Lock');
+                $('#lockAction').attr("disabled", true);
+                $('#lockSave').hide();
+                $('#lockBeginGroup').hide();
+
+                $("#lockLabel").html("New hardware lock");
+                $("#lockTitle").val("");
+                $("#lockDur").val("24");
+
+                $("#lockTitle").on("change paste keyup", function() {
+                    $('#lockAction').attr("disabled", $("#lockTitle").val().trim() == "" || !$("#lockNodes :selected").length);
+                });
+                $("#lockNodes").change(function() {
+                    $('#lockAction').attr("disabled", $("#lockTitle").val().trim() == "" || !$("#lockNodes :selected").length);
+                });
+
+                $.getJSON("/api/v{{ api_ver }}/{{ project.id }}/hw_farm/", function( data ) {
+                    var hw_nodes = $(".modal-body #lockNodes").empty();
+                    $.each(data.data, function() {
+                        var o = $("<option></option>").val(this['id']).text("#{0} - {1}".ptFormat(this['id'], this['name']));
+                        if (lockId == this['locked_by'])
+                            o.attr("selected", "selected");
+                        hw_nodes.append(o);
+                    });
+
+                    $('#lockAction').on('click', function () {
+                        data = updateLockData({});
+                        $.ajax({
+                            url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/',
+                            type: 'POST',
+                            data: JSON.stringify(data),
+                            success: function(xhr) { location.reload(); },
+                            error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
+                        });
+                        return false;
+                    });
+                });
+            });
+        },
     });
 
     /*
@@ -145,7 +295,6 @@ $(document).ready(function() {
             });
         }
     });
-
 });
 </script>
 

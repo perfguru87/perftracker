@@ -9,7 +9,7 @@ from django.views.generic.base import TemplateView
 from django.template import RequestContext
 from django.template.response import TemplateResponse
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, JsonResponse, Http404
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse, Http404
 from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
 from django.core.serializers import serialize
@@ -25,12 +25,13 @@ from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSeria
 from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
-from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer, HwFarmNodesTimeline
+from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesTimeline
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
 
-from perftracker.forms import ptCmpDialogForm
+from perftracker.forms import ptCmpDialogForm, ptHwFarmNodeLockForm
 from perftracker.helpers import pt_dur2str
 
 API_VER = 1.0
@@ -141,7 +142,7 @@ def ptJobIdHtml(request, project_id, job_id):
 
 # @login_required
 def ptHwFarmAllHtml(request, project_id):
-    params = {'timeline': HwFarmNodesTimeline(project_id).gen_html()}
+    params = {'hw_lock_form': ptHwFarmNodeLockForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
     return ptBaseHtml(request, project_id, 'hw_farm_node_all.html', params=params)
 
 
@@ -527,6 +528,7 @@ def ptRegressionTestIdJson(request, api_ver, project_id, regression_id, group_id
             ret.append({})
     return JsonResponse(ret, safe=False)
 
+
 @csrf_exempt
 def ptHwFarmNodeAllJson(request, api_ver, project_id):
 
@@ -575,3 +577,82 @@ def ptHwFarmNodeIdJson(request, api_ver, project_id, hw_id):
     except HwFarmNodeModel.DoesNotExist:
         return JsonResponse([], safe=False)
 
+
+@csrf_exempt
+def ptHwFarmNodeLockAllJson(request, api_ver, project_id):
+
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        try:
+            body = json.loads(body_unicode)
+        except ValueError as ve:
+            return HttpResponseBadRequest("unable to parse JSON data. Error : {0}".format(ve))
+
+        obj = HwFarmNodeLockModel()
+
+        try:
+            obj.ptValidateJson(body)
+        except SuspiciousOperation as e:
+            return HttpResponseBadRequest(e)
+
+        obj.ptUpdate(body)
+        return HttpResponse("OK")
+
+    if request.method == 'GET':
+
+        class LockView(BaseDatatableView):
+            model = HwFarmNodeLockModel
+            columns = ['', 'id', 'title', 'owner', 'begin', 'end', 'manual', 'planned_dur_hrs']
+            order_columns = ['', 'id', 'title', 'owner', 'begin', 'end', 'manual', 'planned_dur_hrs']
+            max_display_length = 5000
+
+            def filter_queryset(self, qs):
+                search = self.request.GET.get(u'search[value]', None)
+                if search:
+                    qs = qs.filter(Q(tag__icontains=search) | Q(category__icontains=search))
+                return qs
+
+            def prepare_results(self, qs):
+                return HwFarmNodeLockSimpleSerializer(qs, many=True).data
+
+        return LockView.as_view()(request)
+
+    return HttpResponseBadRequest("")
+
+
+@csrf_exempt
+def ptHwFarmNodeLockIdJson(request, api_ver, project_id, id):
+
+    try:
+        obj = HwFarmNodeLockModel.objects.get(pk=id)
+    except HwFarmNodeLockModel.DoesNotExist:
+        return HttpResponseNotFound()
+
+    if request.method == 'DELETE':
+        # FIXME. Check owner
+        obj.ptUnlock()
+        return HttpResponse("OK")
+
+    if request.method == 'PUT':
+
+        if request.content_type != "application/json":
+            return HttpResponseBadRequest("content_type must be 'application/json'")
+
+        body_unicode = request.body.decode('utf-8')
+        try:
+            body = json.loads(body_unicode)
+        except ValueError as ve:
+            return HttpResponseBadRequest("unable to parse JSON data. Error : {0}".format(ve))
+
+        try:
+            HwFarmNodeLockModel.ptValidateJson(body)
+        except SuspiciousOperation as e:
+            return HttpResponseBadRequest(e)
+
+        obj.ptUpdate(body)
+        return HttpResponse("OK")
+
+    try:
+        return JsonResponse(HwFarmNodeLockNestedSerializer(HwFarmNodeLockModel.objects.get(pk=id)).data, safe=False)
+    except HwFarmNodeLockModel.DoesNotExist:
+        return JsonResponse([], safe=False)
