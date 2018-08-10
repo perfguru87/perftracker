@@ -20,6 +20,7 @@ from django.db.models import Q
 from django.db.models import Count
 from django.db.models.query import QuerySet
 
+from perftracker import __pt_version__
 from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
 from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
@@ -65,6 +66,7 @@ def ptBaseHtml(request, project_id, template, params=None, obj=None):
                       'request': request,
                       'verb': verb,
                       'obj': obj,
+                      'pt_version': __pt_version__,
                       'project': ProjectModel.ptGetById(project_id),
                       'api_ver': API_VER,
                       'screens': [('Home', '/%d/home/' % project_id),

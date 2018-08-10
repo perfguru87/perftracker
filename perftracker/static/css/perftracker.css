@@ -334,3 +334,20 @@ div.pt_timeline_task_manual .timeline-event-content {
 .pt_button_group {
   min-height: 30px;
 }
+
+/* Logo */
+.pt_logo img {
+  position: absolute;
+  top: 10px;
+  left: 15px;
+}
+
+.pt_logo span {
+  position: absolute;
+  left: 15px;
+  top: 27px;
+  font-size: 9px;
+  display: block;
+  text-align: center;
+  width: 37px;
+}
