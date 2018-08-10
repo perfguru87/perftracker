@@ -6,7 +6,8 @@ from perftracker.models.regression import RegressionModel
 from perftracker.models.comparison import ComparisonModel
 from perftracker.models.test_group import TestGroupModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeTypeModel
-from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeLockModel
+from perftracker.models.hw_farm_node import HwFarmNodeModel
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel
 
 from django.contrib import admin
 from django import forms

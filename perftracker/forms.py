@@ -1,8 +1,36 @@
 from django.forms import ModelForm
 from perftracker.models.comparison import ComparisonModel, CMP_CHARTS, CMP_TABLES, CMP_TESTS, CMP_VALUES
-
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel
 
 class ptCmpDialogForm(ModelForm):
     class Meta:
         model = ComparisonModel
         fields = ['title', 'charts_type', 'tables_type', 'tests_type', 'values_type']
+
+
+class ptHwFarmNodeLockForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ptHwFarmNodeLockForm, self).__init__(*args, **kwargs)
+        instance = getattr(self, 'instance', None)
+        if instance and instance.id:
+            self.fields['begin'].widget.attrs['readonly'] = True
+
+    def clean_begin(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.id:
+            return instance.begin
+        else:
+            return self.cleaned_data['begin']
+
+    def clean_end(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.id:
+            return instance.end
+        else:
+            return self.cleaned_data['end']
+
+
+    class Meta:
+        model = HwFarmNodeLockModel
+        fields = ['title', 'begin', 'end', 'hw_nodes', 'planned_dur_hrs']
+        exclude = ['end']

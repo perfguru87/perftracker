@@ -330,3 +330,7 @@ div.pt_timeline_task_manual .timeline-event-content {
   filter: alpha(opacity=100);
   opacity: 1.0;
 }
+
+.pt_button_group {
+  min-height: 30px;
+}
