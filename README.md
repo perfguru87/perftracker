@@ -92,3 +92,8 @@ So then you will be able to manage hardware locking on the 'Hosts' tab
 ### Managing custom screens
 
 TODO
+
+# Release Notes
+
+See [http://www.perftracker.org/server/#Release_Notes](http://www.perftracker.org/server/#Release_Notes)
+See [http://www.perftracker.org/server/#ToDo](http://www.perftracker.org/server/#ToDo)
