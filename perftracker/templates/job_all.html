@@ -42,6 +42,40 @@
     </tr>
   </tfoot>
 </table>
+<br>
+
+<!-- File upload -->
+
+<h4>Manual job json upload</h4>
+<div class='row'>
+  <form class='navbar-form' id='pt_job_upload_form' method='POST' enctype="multipart/form-data">
+    <div class='col-md-6'>
+      <span class="pt_control_fileupload">
+        <label for="file">Choose a file to upload:</label>
+        <input type="file" id="job_file" name="job_file">
+      </span>
+    </div>
+    <div class='col-md-5'>
+      <input type="text" class="form-control" id="job_title" name="job_title" aria-describedby="textHelp" placeholder="Override job title">
+    </div>
+    <div class='col-md-1'>
+      <button type="submit" class="btn btn-primary pt_right" id='pt_btn_upload' disabled="disabled">Upload</button>
+    </div>
+  </form>
+</div>
+
+<script>
+$(function() {
+  $('input[type=file]').change(function(){
+    var t = $(this).val();
+    var labelText = 'File : ' + t.substr(12, t.length);
+    $(this).prev('label').text(labelText);
+    $("#pt_btn_upload").attr('disabled', false);
+  })
+});
+</script>
+
+<!-- /File upload -->
 
 <footer class="navbar-default navbar-fixed-bottom pt_job_comparison_dialog">
   <div class="container">

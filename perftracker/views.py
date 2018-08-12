@@ -9,7 +9,8 @@ from django.views.generic.base import TemplateView
 from django.template import RequestContext
 from django.template.response import TemplateResponse
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, JsonResponse, Http404
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
+from django.http import JsonResponse, Http404
 from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
 from django.core.serializers import serialize
@@ -32,7 +33,7 @@ from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetaile
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
 
-from perftracker.forms import ptCmpDialogForm, ptHwFarmNodeLockForm
+from perftracker.forms import ptCmpDialogForm, ptHwFarmNodeLockForm, ptJobUploadForm
 from perftracker.helpers import pt_dur2str
 
 API_VER = 1.0
@@ -127,8 +128,68 @@ def ptRegressionIdHtml(request, project_id, regression_id):
                       obj=obj)
 
 
+def _ptUploadJobJson(data, job_title=None, project_name=None):
+    try:
+        j = json.loads(data)
+    except ValueError as e:
+        return HttpResponse("can't load json: %s" % str(e), status = http.client.UNSUPPORTED_MEDIA_TYPE)
+
+    if job_title:
+        j['job_title'] = job_title
+    if project_name:
+        j['project_name'] = project_name
+
+    try:
+        JobModel.ptValidateJson(j)
+    except SuspiciousOperation as e:
+        return HttpResponse("can't parse json: %s" % str(e), status = http.client.BAD_REQUEST)
+
+    uuid = j.get('uuid', None)
+    append = j.get('append', False)
+    replace = j.get('replace', False)
+
+    if replace and not uuid:
+        return HttpResponseBadRequest("Job w/o uuid can't be replaced")
+
+    job = None
+    if uuid:
+        try:
+            job = JobModel.objects.get(uuid=uuid)
+            replace = True
+        except JobModel.DoesNotExist:
+            pass
+
+    if not job:
+        if replace:
+            return HttpResponseBadRequest("Job with uuid %s doesn't exist" % uuid)
+        job = JobModel(title=j['job_title'], uuid=j['uuid'])
+
+    job.ptUpdate(j)
+    return HttpResponse("OK, job %d has been %s" % (job.id, "updated" if replace else ("appended" if append else "created")))
+
+
 # @login_required
+@csrf_exempt
 def ptJobAllHtml(request, project_id):
+    if request.method == 'POST':
+        f = ptJobUploadForm(request.POST, request.FILES)
+        if f.is_valid():
+            try:
+                project = ProjectModel.objects.get(id=project_id)
+            except ProjectModel.DoesNotExist:
+                raise Http404
+
+            try:
+                data = request.FILES['job_file'].read()
+                ret = _ptUploadJobJson(data, job_title=f.cleaned_data['job_title'], project_name=project.name)
+                msg = ret.content.decode('utf-8')
+                messages.success(request, msg) if ret.status_code == http.client.OK else messages.error(request, msg)
+            except UnicodeDecodeError as e:
+                messages.error(request, "can't decode json file")
+        else:
+            messages.error(request, 'Upload failed: ' + f.errors.as_text())
+        return HttpResponseRedirect(request.get_full_path())
+
     params = {'cmp_form': ptCmpDialogForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
     return ptBaseHtml(request, project_id, 'job_all.html', params=params)
 
@@ -217,31 +278,7 @@ def ptJobAllJson(request, api_ver, project_id):
             return JobSimpleSerializer(qs, many=True).data
 
     if request.method == 'POST':
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-
-        try:
-            JobModel.ptValidateJson(body)
-        except SuspiciousOperation as e:
-            return HttpResponseBadRequest(e)
-
-        uuid = body.get('uuid', None)
-        append = body.get('append', False)
-        replace = body.get('replace', False)
-        job = None
-        if uuid:
-            try:
-                job = JobModel.objects.get(uuid=uuid)
-            except JobModel.DoesNotExist:
-                pass
-
-        if not job:
-            if replace:
-                return HttpResponseBadRequest("Job with uuid %s doesn't exist" % uuid)
-            job = JobModel(title=body['job_title'], uuid=body['uuid'])
-
-        job.ptUpdate(body)
-        return HttpResponse("OK")
+        return _ptUploadJobJson(request.body.decode('utf-8'))
 
     return JobJson.as_view()(request)
 
