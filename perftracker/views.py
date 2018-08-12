@@ -181,7 +181,7 @@ def ptJobAllHtml(request, project_id):
 
             try:
                 data = request.FILES['job_file'].read()
-                ret = _ptUploadJobJson(data, job_title=f.cleaned_data['job_title'], project_name=project.name)
+                ret = _ptUploadJobJson(data, job_title=f.cleaned_data['job_title'].strip(), project_name=project.name)
                 msg = ret.content.decode('utf-8')
                 messages.success(request, msg) if ret.status_code == http.client.OK else messages.error(request, msg)
             except UnicodeDecodeError as e:
