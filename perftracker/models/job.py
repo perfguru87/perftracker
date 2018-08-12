@@ -1,6 +1,7 @@
 import uuid
 import itertools
 import json
+import re
 
 from datetime import timedelta
 from datetime import datetime
@@ -174,6 +175,12 @@ class JobModel(models.Model):
         if not pt_is_valid_uuid(json_data['uuid']):
             raise SuspiciousOperation("Invalid job 'uuid' format '%s', it must be uuid1" % json_data['uuid'])
 
+    def ptGenFileName(self):
+        name = self.title
+        if self.id:
+            name = "job-%d-%s" % (self.id, name)
+        return re.sub(r'[^a-zA-Z0-9_-]', '_', name)
+
     def save(self):
         from perftracker.models.regression import RegressionModel
         super(JobModel, self).save()
@@ -213,3 +220,10 @@ class JobNestedSerializer(JobBaseSerializer):
                   'links', 'env_node', 'begin', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
                   'product_name', 'product_ver')
+
+
+class JobFullSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobModel
+        depth = 1
+        fields = [f.name for f in JobModel._meta.get_fields()] + ['tests']
