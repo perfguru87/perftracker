@@ -56,7 +56,7 @@ class TestModel(models.Model):
     duration    = models.DurationField(help_text="total execution time (sec)")
     status      = models.CharField(max_length=16, help_text="Test status: %s" % str(TEST_STATUSES))
 
-    job         = models.ForeignKey(JobModel, help_text="Job instance", on_delete=models.CASCADE)
+    job         = models.ForeignKey(JobModel, help_text="Job instance", related_name="tests", on_delete=models.CASCADE)
 
     avg_score   = models.FloatField("Test average score: 13.02", null=True)
     min_score   = models.FloatField("Test min score: 12.21", null=True)

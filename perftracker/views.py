@@ -26,7 +26,7 @@ from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
 from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
-from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer
+from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobFullSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesTimeline
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
@@ -197,10 +197,17 @@ def ptJobAllHtml(request, project_id):
 # @login_required
 def ptJobIdHtml(request, project_id, job_id):
     try:
-        obj = JobModel.objects.get(pk=job_id)
+        job = JobModel.objects.get(pk=job_id)
     except JobModel.DoesNotExist:
         raise Http404
-    return ptBaseHtml(request, project_id, 'job_id.html', obj=obj)
+
+    if request.GET.get('as_json', False):
+        j = JobFullSerializer(job).data
+        resp = JsonResponse(JobFullSerializer(job).data, safe=False)
+        resp['Content-Disposition'] = 'attachment; filename=%s.json' % job.ptGenFileName()
+        return resp
+
+    return ptBaseHtml(request, project_id, 'job_id.html', obj=job)
 
 
 # @login_required

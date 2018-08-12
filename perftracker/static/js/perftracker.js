@@ -135,6 +135,7 @@ function pt_draw_job_details(d, err_msg)
 
     s += "<div class='pt_obj_management'>" +
          "<a href='/admin/perftracker/jobmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
+         "<a href='/0/job/{0}?as_json=1'>Download JSON</a><span>|</span>".ptFormat(d.id) +
          "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
 
     s += "<div class='col-md-12'><h4>Test suite</h4>";
