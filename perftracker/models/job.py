@@ -167,7 +167,7 @@ class JobModel(models.Model):
     def ptValidateJson(json_data):
         for key in ('project_name', 'job_title', 'uuid', 'tests'):
             if key not in json_data:
-                raise SuspiciousOperation("'%s' key is not found in the POST request payload" % key)
+                raise SuspiciousOperation("'%s' key is not found in the job JSON" % key)
         if 'links' in json_data:
             if type(json_data['links']) is not dict:
                 raise SuspiciousOperation("Invalid job 'links' format '%s', it must be a dictionary" % json_data['links'])

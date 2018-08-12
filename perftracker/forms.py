@@ -1,4 +1,5 @@
 from django.forms import ModelForm
+from django import forms
 from perftracker.models.comparison import ComparisonModel, CMP_CHARTS, CMP_TABLES, CMP_TESTS, CMP_VALUES
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel
 
@@ -34,3 +35,13 @@ class ptHwFarmNodeLockForm(ModelForm):
         model = HwFarmNodeLockModel
         fields = ['title', 'begin', 'end', 'hw_nodes', 'planned_dur_hrs']
         exclude = ['end']
+
+
+class ptJobUploadForm(forms.Form):
+    def validate_json_ext(value):
+        if not value.name.endswith('.json'):
+            raise ValidationError(u'Only *.json file can be uploaded')
+
+    content_type = "text/plain"
+    job_title = forms.CharField(max_length=256, label='Tests run title', required=False)
+    job_file = forms.FileField(label='perftracker job results (*.json)', validators=[validate_json_ext], required=False)
