@@ -15,7 +15,7 @@ from rest_framework import serializers
 
 from perftracker.models.project import ProjectModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
-from perftracker.helpers import ptDurationField, pt_is_valid_uuid
+from perftracker.helpers import ptDurationField, ptJson
 
 
 class JobModel(models.Model):
@@ -55,32 +55,40 @@ class JobModel(models.Model):
     def ptUpdate(self, json_data):
         from perftracker.models.test import TestModel
 
-        self.ptValidateJson(json_data)
+        j = ptJson(json_data, obj_name="job json", exception_type=SuspiciousOperation)
 
-        self.title = json_data['job_title']
-        self.cmdline = json_data.get('cmdline', None)
-        self.uuid = json_data['uuid']
-        self.project = ProjectModel.ptGetByName(json_data['project_name'])
+        project_name = j.get_str('project_name', require=True)
+        self.uuid = j.get_uuid('uuid', require=True)
+
+        self.title = j.get_str('job_title')
+        if not self.title:
+            self.title = j.get_str('title', require=True)
+        self.cmdline = j.get_str('cmdline')
+        self.project = ProjectModel.ptGetByName(j.get_str('project_name'))
 
         now = timezone.now()
 
-        tests_json = json_data.get('tests', [])
-        env_nodes_json = json_data.get('env_nodes', [])
+        env_nodes_json = j.get_list('env_nodes')
+        tests_json = j.get_list('tests', require=True)
 
-        append = json_data.get('append', False)
+        for t in tests_json:
+            if 'uuid' not in t:
+                raise SuspiciousOperation("test doesn't have 'uuid' key: %s" % str(t))
+            test = TestModel(job=self, uuid=t['uuid'])
+            test.ptUpdate(self, t, validate_only=True)  # FIXME, double ptUpdate() call (here and below)
 
-        self.suite_name = json_data.get('suite_name', '')
-        self.suite_ver  = json_data.get('suite_ver', '')
-        self.author     = json_data.get('author', None)
-        self.product_name = json_data.get('product_name', None)
-        self.product_ver  = json_data.get('product_ver', None)
-        self.links = json.dumps(json_data.get('links', None))
+        self.suite_name = j.get_str('suite_name')
+        self.suite_ver  = j.get_str('suite_ver')
+        self.author     = j.get_str('author')
+        self.product_name = j.get_str('product_name')
+        self.product_ver  = j.get_str('product_ver')
+        self.links = json.dumps(j.get_dict('links'))
         self.regression_tag = json_data.get('regression_tag', '')
 
         self.upload = now
 
-        begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else now
-        end = parse_datetime(json_data['end']) if json_data.get('end', None) else now
+        begin = j.get_datetime('begin', now)
+        end = j.get_datetime('end', now)
 
         self.tests_total = 0
         self.tests_completed = 0
@@ -88,14 +96,15 @@ class JobModel(models.Model):
         self.tests_errors = 0
         self.tests_warnings = 0
 
-        if not self.begin:
-            self.begin = begin
-        if not self.end:
-            self.end = end
-        if self.duration:
+        if j.get_bool('append'):
             self.duration += end - begin
+            if not self.begin:
+                self.begin = begin
+            self.end = end
         else:
             self.duration = end - begin
+            self.begin = begin
+            self.end = end
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))
@@ -125,7 +134,6 @@ class JobModel(models.Model):
                 test_seq_num = t.seq_num
 
         for t in tests_json:
-            TestModel.ptValidateJson(t)
             test_uuid = t['uuid']
 
             if test_uuid not in uuid2test:
@@ -148,7 +156,7 @@ class JobModel(models.Model):
                 self.tests_warnings += 1
             ret = uuid2test.pop(test_uuid, None)
 
-        if json_data.get('replace', False):
+        if j.get_bool('replace'):
             TestModel.ptDeleteTests(uuid2test.keys())
 
         for t in uuid2test.values():
@@ -163,17 +171,6 @@ class JobModel(models.Model):
                 self.tests_warnings += 1
 
         self.save()
-
-    @staticmethod
-    def ptValidateJson(json_data):
-        for key in ('project_name', 'job_title', 'uuid', 'tests'):
-            if key not in json_data:
-                raise SuspiciousOperation("'%s' key is not found in the job JSON" % key)
-        if 'links' in json_data:
-            if type(json_data['links']) is not dict:
-                raise SuspiciousOperation("Invalid job 'links' format '%s', it must be a dictionary" % json_data['links'])
-        if not pt_is_valid_uuid(json_data['uuid']):
-            raise SuspiciousOperation("Invalid job 'uuid' format '%s', it must be uuid1" % json_data['uuid'])
 
     def ptGenFileName(self):
         name = self.title
@@ -222,7 +219,7 @@ class JobNestedSerializer(JobBaseSerializer):
                   'product_name', 'product_ver')
 
 
-class JobFullSerializer(serializers.ModelSerializer):
+class JobDetailedSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobModel
         depth = 1
