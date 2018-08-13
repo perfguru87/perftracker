@@ -18,7 +18,7 @@ from rest_framework import serializers
 
 from perftracker.models.job import JobModel
 from perftracker.models.test_group import TestGroupModel, TEST_GROUP_TAG_LENGTH
-from perftracker.helpers import ptDurationField, ptRoundedFloatField, ptRoundedFloatMKField, pt_is_valid_uuid
+from perftracker.helpers import ptDurationField, ptRoundedFloatField, ptRoundedFloatMKField, ptJson
 
 from pyecharts import Bar
 
@@ -70,44 +70,58 @@ class TestModel(models.Model):
     min_plusmin = models.FloatField("Deviation in % of min score: 0.01", null=True)
     max_plusmin = models.FloatField("Deviation in % of max score: 0.03", null=True)
 
-    def ptUpdate(self, job, json_data):
-        self.ptValidateJson(json_data)
+    def ptUpdate(self, job, json_data, validate_only=False):
+        j = ptJson(json_data, obj_name="test json", exception_type=SuspiciousOperation)
 
         if 'seq_num' in json_data:
             self.seq_num = json_data['seq_num']
         if not self.seq_num:
             self.seq_num = 0
-        self.tag = json_data['tag']
 
-        self.binary = json_data.get('binary', '')
-        self.cmdline = json_data.get('cmdline', '')
-        self.description = json_data.get('description', '')
+        self.tag = j.get_str('tag', require=True)
+        j.obj_name = self.tag
 
-        scores = json_data['scores']
-        deviations = json_data.get('deviations', None)
+        self.binary = j.get_str('binary')
+        self.cmdline = j.get_str('cmdline')
+        self.description = j.get_str('description')
+
+        scores = j.get_list('scores', require=True)
+        deviations = j.get_list('deviations')
 
         self.scores = str(scores)
         self.deviations = str(deviations) if deviations else str([0] * len(scores))
 
-        self.category = json_data.get('category', '')
-        self.metrics = json_data.get('metrics', 'loops/sec')
-        self.links = json.dumps(json_data.get('links', None))
-        self.attribs = json.dumps(json_data.get('attribs', None))
-        self.less_better = json_data.get('less_better', False)
-        self.errors = len(json_data.get('errors', []))
-        self.warnings = len(json_data.get('warnings', []))
-        self.begin = parse_datetime(json_data['begin']) if json_data.get('begin', None) else None
-        self.end = parse_datetime(json_data['end']) if json_data.get('end', None) else None
-        self.status = json_data.get('status', "SUCCESS")
+        self.category = j.get_str('category')
+        self.metrics = j.get_str('metrics', 'loops/sec')
+        self.links = json.dumps(j.get_dict('links'))
+        self.attribs = json.dumps(j.get_dict('attribs'))
+        self.less_better = j.get_bool('less_better')
+        self.begin = j.get_datetime('begin')
+        self.end = j.get_datetime('end')
+        self.status = j.get_str('status', "SUCCESS")
+        if self.status not in TEST_STATUSES:
+            raise SuspiciousOperation("invalid 'status' value '%s', must be one of: %s" % (self.status, str(TEST_STATUSES)))
 
-        dur_sec = json_data.get('duration_sec', 0)
+        e = j.get('errors', 0)
+        if type(e) is int:
+            self.errors = e
+        else:
+            self.errors = len(j.get_list('errors'))
+
+        w = j.get('warnings', 0)
+        if type(w) is int:
+            self.warnings = w
+        else:
+            self.warnings = len(j.get_list('warnings'))
+
+        dur_sec = j.get_int('duration_sec', 0)
         self.duration = timedelta(seconds=int(dur_sec)) if dur_sec else self.end - self.begin
 
         self.job = job
-        self.group = json_data.get('group', '')
+        self.group = j.get_str('group')
         TestGroupModel.ptGetByTag(self.group)  # ensure appropriate TestGroupModel object exists
 
-        self.samples = json_data.get('samples', len(scores))
+        self.samples = j.get_int('samples', len(scores))
 
         self.avg_score = numpy.mean(scores)
         self.min_score = min(scores)
@@ -126,45 +140,17 @@ class TestModel(models.Model):
         if self.end and (self.end.tzinfo is None or self.end.tzinfo.utcoffset(self.end) is None):
             raise SuspiciousOperation("'end' datetime object must include timezone: %s" % str(self.end))
 
-        try:
-            obj = TestModel.objects.get(uuid=self.uuid)
-        except TestModel.DoesNotExist:
-            obj = None
+        if not validate_only:
+            try:
+                obj = TestModel.objects.get(uuid=self.uuid)
+            except TestModel.DoesNotExist:
+                obj = None
 
-        if obj is None or not self.ptIsEqualTo(obj):
-            self.save()
+            if obj is None or not self.ptIsEqualTo(obj):
+                self.save()
 
     def __str__(self):
         return self.tag
-
-    @staticmethod
-    def ptValidateJson(json_data):
-        j = str(json_data)
-        if 'tag' not in json_data:
-            raise SuspiciousOperation("%s: 'tag' field not found" % j)
-        if 'uuid' not in json_data:
-            raise SuspiciousOperation("%s: 'uuid' field not found" % j)
-        if not pt_is_valid_uuid(json_data['uuid']):
-            raise SuspiciousOperation("%s: 'uuid' '%s' is not invalid, it must be version1 UUID" % (j, json_data['uuid']))
-        if 'scores' not in json_data:
-            raise SuspiciousOperation("%s: 'scores' field not found" % j)
-        if type(json_data['scores']) is not list:
-            raise SuspiciousOperation("%s: 'scores' field must be a list" % j)
-        if 'links' in json_data:
-            if type(json_data['links']) is not dict:
-                raise SuspiciousOperation("Invalid test 'links' format '%s', it must be a dictionary" % json_data['links'])
-        if 'attribs' in json_data:
-            if type(json_data['attribs']) is not dict:
-                raise SuspiciousOperation("Invalid test 'attribs' format '%s', it must be a dictionary" % json_data['attribs'])
-        if 'deviations' in json_data:
-            if type(json_data['deviations']) is not list:
-                raise SuspiciousOperation("%s: 'deviations' field must be a list" % j)
-            if len(json_data['deviations']) != len(json_data['scores']):
-                raise SuspiciousOperation("%s: length of 'deviations' and 'scores' lists mismatch: %s, %s" %
-                                          (j, json_data['deviations'], json_data['scores']))
-        if 'status' in json_data:
-            if not json_data['status'] in TEST_STATUSES:
-                raise SuspiciousOperation("%s: invalid 'status' value '%s', must be one of: %s" % (j, json_data['status'], TEST_STATUSES))
 
     def ptStatusIsCompleted(self):
         return self.status in ("SUCCESS", "FAILED")

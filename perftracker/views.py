@@ -26,7 +26,7 @@ from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
 from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
-from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobFullSerializer
+from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesTimeline
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
@@ -34,7 +34,7 @@ from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
 
 from perftracker.forms import ptCmpDialogForm, ptHwFarmNodeLockForm, ptJobUploadForm
-from perftracker.helpers import pt_dur2str
+from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 
 API_VER = 1.0
 
@@ -139,14 +139,14 @@ def _ptUploadJobJson(data, job_title=None, project_name=None):
     if project_name:
         j['project_name'] = project_name
 
-    try:
-        JobModel.ptValidateJson(j)
-    except SuspiciousOperation as e:
-        return HttpResponse("can't parse json: %s" % str(e), status = http.client.BAD_REQUEST)
-
     uuid = j.get('uuid', None)
     append = j.get('append', False)
     replace = j.get('replace', False)
+
+    if not uuid:
+        raise SuspiciousOperation("job 'uuid' is no set")
+    if not pt_is_valid_uuid(uuid):
+        raise SuspiciousOperation("job 'uuid' '%s' is not invalid, it must be version1 UUID" % uuid)
 
     if replace and not uuid:
         return HttpResponseBadRequest("Job w/o uuid can't be replaced")
@@ -156,6 +156,7 @@ def _ptUploadJobJson(data, job_title=None, project_name=None):
         try:
             job = JobModel.objects.get(uuid=uuid)
             replace = True
+            j['replace'] = True
         except JobModel.DoesNotExist:
             pass
 
@@ -164,7 +165,11 @@ def _ptUploadJobJson(data, job_title=None, project_name=None):
             return HttpResponseBadRequest("Job with uuid %s doesn't exist" % uuid)
         job = JobModel(title=j['job_title'], uuid=j['uuid'])
 
-    job.ptUpdate(j)
+    try:
+        job.ptUpdate(j)
+    except SuspiciousOperation as e:
+        return HttpResponse(str(e), status = http.client.BAD_REQUEST)
+
     return HttpResponse("OK, job %d has been %s" % (job.id, "updated" if replace else ("appended" if append else "created")))
 
 
@@ -202,8 +207,8 @@ def ptJobIdHtml(request, project_id, job_id):
         raise Http404
 
     if request.GET.get('as_json', False):
-        j = JobFullSerializer(job).data
-        resp = JsonResponse(JobFullSerializer(job).data, safe=False)
+        j = JobDetailedSerializer(job).data
+        resp = JsonResponse(JobDetailedSerializer(job, allow_null=False).data, safe=False, json_dumps_params={'indent': 2})
         resp['Content-Disposition'] = 'attachment; filename=%s.json' % job.ptGenFileName()
         return resp
 
