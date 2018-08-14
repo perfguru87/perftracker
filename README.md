@@ -1,4 +1,5 @@
 # The perftracker
+
 PerfTracker - performance regression tracking server for your CI:
 - Run your tests job in your jenkins/whatever
 - use client library to upload job results to perftracker
@@ -6,7 +7,7 @@ PerfTracker - performance regression tracking server for your CI:
 
 Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) to upload your jobs
 
-# Features
+## Features
 Version 0.1 (current):
 - performance tests jobs uploader
 - jobs list view
@@ -15,7 +16,7 @@ Version 0.1 (current):
 - job tests view
 - job tests details
 
-# Todo
+## Todo
 - fixtures
 - jobs & tests comparisons
 - charts (lines/columns/trends) in comparisons
@@ -23,17 +24,17 @@ Version 0.1 (current):
 - custom screens support
 - regressions AI
 
-# Versions convention
+## Versions convention
 Versions before 1.0 are considered as early alpha and will not guarantee upgrade from each other
 
 Versions after 1.0 will guarantee backward compatibility and upgrade steps
 
-# Requirements
+## Requirements
 
 - Python3.0+
 - Django2.0+
 
-# Installation
+## Installation
 ### Install python3
 
 CentOS-7:
@@ -69,13 +70,13 @@ python3.6 ./manage.py migrate
 python3.6 ./manage.py createsuperuser
 ```
 
-# Running the server
+## Running the server
 
 ```
 python3.6 ./manage.py runserver 0.0.0.0:8000
 ```
 
-# Managing the contents
+## Managing the contents
 
 ### Managing the projects
 
@@ -93,7 +94,7 @@ So then you will be able to manage hardware locking on the 'Hosts' tab
 
 TODO
 
-# Release Notes
+## Release Notes
 
 See [http://www.perftracker.org/server/#Release_Notes](http://www.perftracker.org/server/#Release_Notes)
 See [http://www.perftracker.org/server/#ToDo](http://www.perftracker.org/server/#ToDo)
