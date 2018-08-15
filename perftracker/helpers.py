@@ -129,7 +129,7 @@ class ptJson:
                 ret = defval
 
         if ret == defval and require:
-            self._raise("%s: key '%' is not found" % (self.obj_name, key))
+            self._raise("%s: key '%s' is not found" % (self.obj_name, key))
         return ret
 
     def _get_structure(self, key, defval, require, key_type):
