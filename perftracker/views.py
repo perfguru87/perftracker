@@ -229,9 +229,17 @@ def ptHwFarmIdHtml(request, project_id, id):
 # Json views ###
 
 
+@csrf_exempt
+def ptProjectJson(request, api_ver, project_id):
+    ret = []
+    projects = ProjectModel.objects.all()
+    for p in ProjectModel.objects.all():
+        ret.append({"id": p.id, "name": p.name})
+    return JsonResponse(ret, safe=False)
+
+
 def ptHomeJson(request, api_ver, project_id):
     return JsonResponse([], safe=False)
-
 
 
 @csrf_exempt
