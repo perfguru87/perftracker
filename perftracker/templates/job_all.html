@@ -92,9 +92,9 @@ $(function() {
           <ul id='pt_jobs_to_compare'>
           </ul>
           <div>
-            <button type="cancel" class="btn btn-default">Cancel</button>   
-            <button type="submit" class="btn btn-primary pt_right" id='pt_btn_save'>Save</button>   
-            <button type="submit" class="btn btn-default pt_right" id='pt_btn_preview'>Preview</button>   
+            <button type="cancel" class="btn btn-default">Cancel</button>
+            <button type="submit" class="btn btn-primary pt_right" id='pt_btn_save'>Save</button>
+            <button type="submit" class="btn btn-default pt_right" id='pt_btn_preview'>Preview</button>
           </div>
         </div>
 
@@ -175,7 +175,7 @@ $(function() {
               </ul>
             </div>
           </div>
-        
+
         </div>
       </div> <!-- form //-->
     </form>
@@ -384,7 +384,7 @@ $(document).ready(function() {
      */
 
     $('div.input-group ul.dropdown-menu li a').click(function (e) {
-        var $div = $(this).parent().parent().parent(); 
+        var $div = $(this).parent().parent().parent();
         var $btn = $div.find('button');
         $btn.html($(this).text() + ' <span class="caret"></span>');
         $div.removeClass('open');
@@ -406,8 +406,10 @@ $(document).ready(function() {
         var payload = {}
 
         payload.title = $("#pt_comparison_title").val();
-        if (payload.title == "")
+        if (payload.title == "") {
             payload.title = $("#pt_comparison_title").attr("placeholder");
+        }
+
         payload.charts_type = $.trim($("#pt_charts_type").text());
         payload.tables_type = $.trim($("#pt_tables_type").text());
         payload.tests_type = $.trim($("#pt_tests_type").text());
@@ -415,23 +417,24 @@ $(document).ready(function() {
         payload.jobs = Array();
 
         var elements = $('#pt_jobs_to_compare').find('input');
-        for (var i = 0; i < elements.length; i++)
-	    payload.jobs.push(parseInt(elements[i].value));
+        for (var i = 0; i < elements.length; i++) {
+	        payload.jobs.push(parseInt(elements[i].value));
+        }
 
         $.ajax({
-                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
-                type : "POST",
-                contentType: "application/json; charset=utf-8",
-                dataType : 'json',
-                data : JSON.stringify(payload),
-                success : function(result) {
-                    window.location.replace("/{{ project.id }}/comparison/" + result.id)
-                },
-                error: function(xhr, resp, text) {
-                    console.log("Form comparison sumbit failed", xhr, resp, text);
-                    alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
-                }
-            })
+            url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
+            type : "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType : 'json',
+            data : JSON.stringify(payload),
+            success : function(result) {
+                window.location.replace("/{{ project.id }}/comparison/" + result.id)
+            },
+            error: function(xhr, resp, text) {
+                console.log("Form comparison sumbit failed", xhr, resp, text);
+                alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
+            }
+        })
 
         return false;
     });

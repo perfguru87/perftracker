@@ -23,9 +23,9 @@ from django.db.models.query import QuerySet
 
 from perftracker import __pt_version__
 from perftracker.models.project import ProjectModel
-from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
-from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
-from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
+from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, PTComparisonServSideView
+from perftracker.models.regression import RegressionModel, RegressionSerializer, PTRegressionServSideView
+from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesTimeline
@@ -33,18 +33,18 @@ from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetaile
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
 
-from perftracker.forms import ptCmpDialogForm, ptHwFarmNodeLockForm, ptJobUploadForm
+from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 
 API_VER = 1.0
 
 
-def ptHandle500(request):
+def pt_handle_500(request):
     context = RequestContext(request)
     return HttpResponseBadRequest(context)
 
 
-def ptRedirect(request):
+def pt_redirect(request):
     redirect = request.session.get('redirect', None)
     del request.session['redirect']
     if redirect:
@@ -53,8 +53,7 @@ def ptRedirect(request):
 
 # HTML views ###
 
-
-def ptBaseHtml(request, project_id, template, params=None, obj=None):
+def pt_base_html(request, project_id, template, params=None, obj=None):
     if request.method == 'POST':
         raise Http404
 
@@ -63,12 +62,12 @@ def ptBaseHtml(request, project_id, template, params=None, obj=None):
     dentries = request.path.split("/")
     verb = dentries[2] if len(dentries) > 3 else "comparison"
 
-    default_params = {'projects': ProjectModel().ptGetAll(),
+    default_params = {'projects': ProjectModel().pt_get_all(),
                       'request': request,
                       'verb': verb,
                       'obj': obj,
                       'pt_version': __pt_version__,
-                      'project': ProjectModel.ptGetById(project_id),
+                      'project': ProjectModel.pt_get_by_id(project_id),
                       'api_ver': API_VER,
                       'screens': [('Home', '/%d/home/' % project_id),
                                   ('Regressions', '/%d/regression/' % project_id),
@@ -79,15 +78,15 @@ def ptBaseHtml(request, project_id, template, params=None, obj=None):
     return TemplateResponse(request, template, params)
 
 
-def ptHomeHtml(request, project_id):
-    return ptBaseHtml(request, project_id, 'home.html')
+def pt_home_html(request, project_id):
+    return pt_base_html(request, project_id, 'home.html')
 
 
-def ptComparisonAllHtml(request, project_id):
-    return ptBaseHtml(request, project_id, 'comparison_all.html')
+def pt_comparison_all_html(request, project_id):
+    return pt_base_html(request, project_id, 'comparison_all.html')
 
 
-def ptComparisonIdHtml(request, project_id, cmp_id):
+def pt_comparison_id_html(request, project_id, cmp_id):
     try:
         obj = ComparisonModel.objects.get(pk=cmp_id)
     except ComparisonModel.DoesNotExist:
@@ -95,20 +94,20 @@ def ptComparisonIdHtml(request, project_id, cmp_id):
 
     # register 'range' template tag
 
-    return ptBaseHtml(request, project_id, 'comparison_id.html',
+    return pt_base_html(request, project_id, 'comparison_id.html',
                       params={'jobs': obj.jobs.all(),
-                              'cmp_view': ptComparisonServSideView(obj),
-                              'ptCmpChartType': ptCmpChartType,
-                              'ptCmpTableType': ptCmpTableType
+                              'cmp_view': PTComparisonServSideView(obj),
+                              'PTCmpChartType': PTCmpChartType,
+                              'PTCmpTableType': PTCmpTableType
                               },
                       obj=obj)
 
 
-def ptRegressionAllHtml(request, project_id):
-    return ptBaseHtml(request, project_id, 'regression_all.html')
+def pt_regression_all_html(request, project_id):
+    return pt_base_html(request, project_id, 'regression_all.html')
 
 
-def ptRegressionIdHtml(request, project_id, regression_id):
+def pt_regression_id_html(request, project_id, regression_id):
     try:
         obj = RegressionModel.objects.get(pk=regression_id)
     except RegressionModel.DoesNotExist:
@@ -116,19 +115,19 @@ def ptRegressionIdHtml(request, project_id, regression_id):
 
     # register 'range' template tag
 
-    return ptBaseHtml(request, project_id, 'regression_id.html',
-                      params={'jobs': obj.ptGetJobs(),
+    return pt_base_html(request, project_id, 'regression_id.html',
+                      params={'jobs': obj.pt_get_jobs(),
                               'first_job': obj.first_job,
                               'last_job': obj.last_job,
                               'duration': pt_dur2str(obj.last_job.end - obj.first_job.end),
-                              'regr_view': ptRegressionServSideView(obj),
-                              'ptCmpChartType': ptCmpChartType,
-                              'ptCmpTableType': ptCmpTableType,
+                              'regr_view': PTRegressionServSideView(obj),
+                              'PTCmpChartType': PTCmpChartType,
+                              'PTCmpTableType': PTCmpTableType,
                               },
                       obj=obj)
 
 
-def _ptUploadJobJson(data, job_title=None, project_name=None):
+def _pt_upload_job_json(data, job_title=None, project_name=None):
     try:
         j = json.loads(data)
     except ValueError as e:
@@ -175,9 +174,9 @@ def _ptUploadJobJson(data, job_title=None, project_name=None):
 
 # @login_required
 @csrf_exempt
-def ptJobAllHtml(request, project_id):
+def pt_job_all_html(request, project_id):
     if request.method == 'POST':
-        f = ptJobUploadForm(request.POST, request.FILES)
+        f = PTJobUploadForm(request.POST, request.FILES)
         if f.is_valid():
             try:
                 project = ProjectModel.objects.get(id=project_id)
@@ -186,7 +185,7 @@ def ptJobAllHtml(request, project_id):
 
             try:
                 data = request.FILES['job_file'].read()
-                ret = _ptUploadJobJson(data, job_title=f.cleaned_data['job_title'].strip(), project_name=project.name)
+                ret = _pt_upload_job_json(data, job_title=f.cleaned_data['job_title'].strip(), project_name=project.name)
                 msg = ret.content.decode('utf-8')
                 messages.success(request, msg) if ret.status_code == http.client.OK else messages.error(request, msg)
             except UnicodeDecodeError as e:
@@ -195,12 +194,12 @@ def ptJobAllHtml(request, project_id):
             messages.error(request, 'Upload failed: ' + f.errors.as_text())
         return HttpResponseRedirect(request.get_full_path())
 
-    params = {'cmp_form': ptCmpDialogForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
-    return ptBaseHtml(request, project_id, 'job_all.html', params=params)
+    params = {'cmp_form': PTCmpDialogForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
+    return pt_base_html(request, project_id, 'job_all.html', params=params)
 
 
 # @login_required
-def ptJobIdHtml(request, project_id, job_id):
+def pt_job_id_html(request, project_id, job_id):
     try:
         job = JobModel.objects.get(pk=job_id)
     except JobModel.DoesNotExist:
@@ -209,33 +208,33 @@ def ptJobIdHtml(request, project_id, job_id):
     if request.GET.get('as_json', False):
         j = JobDetailedSerializer(job).data
         resp = JsonResponse(JobDetailedSerializer(job, allow_null=False).data, safe=False, json_dumps_params={'indent': 2})
-        resp['Content-Disposition'] = 'attachment; filename=%s.json' % job.ptGenFileName()
+        resp['Content-Disposition'] = 'attachment; filename=%s.json' % job.pt_gen_fileName()
         return resp
 
-    return ptBaseHtml(request, project_id, 'job_id.html', obj=job)
+    return pt_base_html(request, project_id, 'job_id.html', obj=job)
 
 
 # @login_required
-def ptHwFarmAllHtml(request, project_id):
-    params = {'hw_lock_form': ptHwFarmNodeLockForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
-    return ptBaseHtml(request, project_id, 'hw_farm_node_all.html', params=params)
+def pt_hwfarm_all_html(request, project_id):
+    params = {'hw_lock_form': PTHwFarmNodeLockForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
+    return pt_base_html(request, project_id, 'hw_farm_node_all.html', params=params)
 
 
 # @login_required
-def ptHwFarmIdHtml(request, project_id, id):
-    return ptBaseHtml(request, project_id, 'hw_farm_node_id.html')
+def pt_hwfarm_id_html(request, project_id, id):
+    return pt_base_html(request, project_id, 'hw_farm_node_id.html')
 
 
 # Json views ###
 
 
-def ptHomeJson(request, api_ver, project_id):
+def pt_home_json(request, api_ver, project_id):
     return JsonResponse([], safe=False)
 
 
 
 @csrf_exempt
-def ptJobAllJson(request, api_ver, project_id):
+def pt_job_all_json(request, api_ver, project_id):
 
     class JobJson(BaseDatatableView):
         # The model we're going to show
@@ -290,19 +289,19 @@ def ptJobAllJson(request, api_ver, project_id):
             return JobSimpleSerializer(qs, many=True).data
 
     if request.method == 'POST':
-        return _ptUploadJobJson(request.body.decode('utf-8'))
+        return _pt_upload_job_json(request.body.decode('utf-8'))
 
     return JobJson.as_view()(request)
 
 
-def ptJobIdJson(request, api_ver, project_id, job_id):
+def pt_job_id_json(request, api_ver, project_id, job_id):
     try:
         return JsonResponse(JobNestedSerializer(JobModel.objects.get(pk=job_id)).data, safe=False)
     except JobModel.DoesNotExist:
         return JsonResponse([], safe=False)
 
 
-def ptJobTestAllJson(request, api_ver, project_id, job_id, group_id):
+def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):
     class TestView(BaseDatatableView):
         model = TestModel
         columns = ['', 'id', 'seq_num', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin']
@@ -334,7 +333,7 @@ def ptJobTestAllJson(request, api_ver, project_id, job_id, group_id):
 
 
 @csrf_exempt
-def ptJobGroupAllJson(request, api_ver, project_id, job_id):
+def pt_job_group_all_json(request, api_ver, project_id, job_id):
     try:
         job = JobModel.objects.get(pk=job_id)
     except JobModel.DoesNotExist:
@@ -344,11 +343,11 @@ def ptJobGroupAllJson(request, api_ver, project_id, job_id):
 
     ret = []
     for g in groups:
-        ret.append(TestGroupModel.ptGetByTag(g['group']))
+        ret.append(TestGroupModel.pt_get_by_tag(g['group']))
     return JsonResponse(TestGroupSerializer(ret, many=True).data, safe=False)
 
 
-def ptJobTestIdJson(request, api_ver, project_id, job_id, group_id, test_id):
+def pt_job_test_id_json(request, api_ver, project_id, job_id, group_id, test_id):
     try:
         return JsonResponse(TestDetailedSerializer(TestModel.objects.get(id=test_id)).data, safe=False)
     except TestModel.DoesNotExist:
@@ -356,7 +355,7 @@ def ptJobTestIdJson(request, api_ver, project_id, job_id, group_id, test_id):
 
 
 @csrf_exempt
-def ptComparisonAllJson(request, api_ver, project_id):
+def pt_comparison_all_json(request, api_ver, project_id):
     class ComparisonJson(BaseDatatableView):
         # The model we're going to show
         model = ComparisonModel
@@ -404,13 +403,13 @@ def ptComparisonAllJson(request, api_ver, project_id):
         body = json.loads(body_unicode)
 
         try:
-            ComparisonModel.ptValidateJson(body)
+            ComparisonModel.pt_validate_json(body)
         except SuspiciousOperation as e:
             return HttpResponseBadRequest(e)
 
-        cmp = ComparisonModel(project=ProjectModel.ptGetById(project_id))
+        cmp = ComparisonModel(project=ProjectModel.pt_get_by_id(project_id))
         try:
-            cmp.ptUpdate(body)
+            cmp.pt_update(body)
         except SuspiciousOperation as e:
             return HttpResponseBadRequest(e)
 
@@ -419,24 +418,24 @@ def ptComparisonAllJson(request, api_ver, project_id):
     return ComparisonJson.as_view()(request)
 
 
-def ptComparisonIdJson(request, api_ver, project_id, cmp_id):
+def pt_comparison_id_json(request, api_ver, project_id, cmp_id):
     try:
         return JsonResponse(ComparisonNestedSerializer(ComparisonModel.objects.get(pk=cmp_id)).data, safe=False)
     except ComparisonModel.DoesNotExist:
         return JsonResponse([], safe=False)
 
 
-def ptComparisonTestAllJson(request, api_ver, project_id, cmp_id, group_id):
+def pt_comparison_test_all_json(request, api_ver, project_id, cmp_id, group_id):
     cmp = ComparisonModel.objects.get(pk=cmp_id)
     jobs = cmp.jobs.all()
     ret = []
     for job in jobs:
-        ret.append(ptJobTestAllJson(request, api_ver, project_id, job.id, group_id).content.decode("utf-8"))
+        ret.append(pt_job_test_all_json(request, api_ver, project_id, job.id, group_id).content.decode("utf-8"))
     return HttpResponse("[" + ",".join(ret) + "]", content_type="application/json")
 
 
 @csrf_exempt
-def ptComparisonGroupAllJson(request, api_ver, project_id, cmp_id):
+def pt_comparison_group_all_json(request, api_ver, project_id, cmp_id):
     try:
         cmp = ComparisonModel.objects.get(pk=cmp_id)
     except ComparisonModel.DoesNotExist:
@@ -453,11 +452,11 @@ def ptComparisonGroupAllJson(request, api_ver, project_id, cmp_id):
             if group in found:
                 continue
             found.add(group)
-            ret.append(TestGroupModel.ptGetByTag(group))
+            ret.append(TestGroupModel.pt_get_by_tag(group))
     return JsonResponse(TestGroupSerializer(ret, many=True).data, safe=False)
 
 
-def ptComparisonTestIdJson(request, api_ver, project_id, cmp_id, group_id, test_id):
+def pt_comparison_test_id_json(request, api_ver, project_id, cmp_id, group_id, test_id):
     cmp = ComparisonModel.objects.get(pk=cmp_id)
 
     try:
@@ -477,7 +476,7 @@ def ptComparisonTestIdJson(request, api_ver, project_id, cmp_id, group_id, test_
 
 
 @csrf_exempt
-def ptRegressionAllJson(request, api_ver, project_id):
+def pt_regression_all_json(request, api_ver, project_id):
     class RegressionJson(BaseDatatableView):
         # The model we're going to show
         model = RegressionModel
@@ -523,24 +522,24 @@ def ptRegressionAllJson(request, api_ver, project_id):
     return RegressionJson.as_view()(request)
 
 
-def ptRegressionIdJson(request, api_ver, project_id, regression_id):
+def pt_regression_id_json(request, api_ver, project_id, regression_id):
     try:
         return JsonResponse(RegressionSerializer(RegressionModel.objects.get(pk=regression_id)).data, safe=False)
     except RegressionModel.DoesNotExist:
         return JsonResponse([], safe=False)
 
 
-def ptRegressionTestAllJson(request, api_ver, project_id, regression_id, group_id):
+def pt_regression_test_all_json(request, api_ver, project_id, regression_id, group_id):
     regr = RegressionModel.objects.get(pk=regression_id)
     jobs = regr.jobs.all()
     ret = []
     for job in jobs:
-        ret.append(ptJobTestAllJson(request, api_ver, project_id, job.id, group_id).content.decode("utf-8"))
+        ret.append(pt_job_test_all_json(request, api_ver, project_id, job.id, group_id).content.decode("utf-8"))
     return HttpResponse("[" + ",".join(ret) + "]", content_type="application/json")
 
 
 @csrf_exempt
-def ptRegressionGroupAllJson(request, api_ver, project_id, regression_id):
+def pt_regression_group_all_json(request, api_ver, project_id, regression_id):
     try:
         regr = RegressionModel.objects.get(pk=regression_id)
     except RegressionModel.DoesNotExist:
@@ -561,9 +560,8 @@ def ptRegressionGroupAllJson(request, api_ver, project_id, regression_id):
     return JsonResponse(TestGroupSerializer(ret, many=True).data, safe=False)
 
 
-def ptRegressionTestIdJson(request, api_ver, project_id, regression_id, group_id, test_id):
+def pt_regression_test_id_json(request, api_ver, project_id, regression_id, group_id, test_id):
     regr = RegressionModel.objects.get(pk=regression_id)
-
     try:
         orig_test = TestModel.objects.get(id=test_id)
     except TestModel.DoesNotExist:
@@ -581,7 +579,7 @@ def ptRegressionTestIdJson(request, api_ver, project_id, regression_id, group_id
 
 
 @csrf_exempt
-def ptHwFarmNodeAllJson(request, api_ver, project_id):
+def pt_hwfarm_node_all_json(request, api_ver, project_id):
 
     class HwFarmNodeJson(BaseDatatableView):
         # The model we're going to show
@@ -622,7 +620,7 @@ def ptHwFarmNodeAllJson(request, api_ver, project_id):
     return HwFarmNodeJson.as_view()(request)
 
 
-def ptHwFarmNodeIdJson(request, api_ver, project_id, hw_id):
+def pt_hwfarm_node_id_json(request, api_ver, project_id, hw_id):
     try:
         return JsonResponse(HwFarmNodeNestedSerializer(HwFarmNodeModel.objects.get(pk=hw_id)).data, safe=False)
     except HwFarmNodeModel.DoesNotExist:
@@ -630,7 +628,7 @@ def ptHwFarmNodeIdJson(request, api_ver, project_id, hw_id):
 
 
 @csrf_exempt
-def ptHwFarmNodeLockAllJson(request, api_ver, project_id):
+def pt_hwfarm_node_lock_all_json(request, api_ver, project_id):
 
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
@@ -642,11 +640,11 @@ def ptHwFarmNodeLockAllJson(request, api_ver, project_id):
         obj = HwFarmNodeLockModel()
 
         try:
-            obj.ptValidateJson(body)
+            obj.pt_validate_json(body)
         except SuspiciousOperation as e:
             return HttpResponseBadRequest(e)
 
-        obj.ptUpdate(body)
+        obj.pt_update(body)
         return HttpResponse("OK")
 
     if request.method == 'GET':
@@ -672,7 +670,7 @@ def ptHwFarmNodeLockAllJson(request, api_ver, project_id):
 
 
 @csrf_exempt
-def ptHwFarmNodeLockIdJson(request, api_ver, project_id, id):
+def pt_hwfarm_node_lock_id_json(request, api_ver, project_id, id):
 
     try:
         obj = HwFarmNodeLockModel.objects.get(pk=id)
@@ -681,7 +679,7 @@ def ptHwFarmNodeLockIdJson(request, api_ver, project_id, id):
 
     if request.method == 'DELETE':
         # FIXME. Check owner
-        obj.ptUnlock()
+        obj.pt_unlock()
         return HttpResponse("OK")
 
     if request.method == 'PUT':
@@ -696,11 +694,11 @@ def ptHwFarmNodeLockIdJson(request, api_ver, project_id, id):
             return HttpResponseBadRequest("unable to parse JSON data. Error : {0}".format(ve))
 
         try:
-            HwFarmNodeLockModel.ptValidateJson(body)
+            HwFarmNodeLockModel.pt_validate_json(body)
         except SuspiciousOperation as e:
             return HttpResponseBadRequest(e)
 
-        obj.ptUpdate(body)
+        obj.pt_update(body)
         return HttpResponse("OK")
 
     try:

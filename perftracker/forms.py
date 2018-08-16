@@ -3,15 +3,15 @@ from django import forms
 from perftracker.models.comparison import ComparisonModel, CMP_CHARTS, CMP_TABLES, CMP_TESTS, CMP_VALUES
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel
 
-class ptCmpDialogForm(ModelForm):
+class PTCmpDialogForm(ModelForm):
     class Meta:
         model = ComparisonModel
         fields = ['title', 'charts_type', 'tables_type', 'tests_type', 'values_type']
 
 
-class ptHwFarmNodeLockForm(ModelForm):
+class PTHwFarmNodeLockForm(ModelForm):
     def __init__(self, *args, **kwargs):
-        super(ptHwFarmNodeLockForm, self).__init__(*args, **kwargs)
+        super(PTHwFarmNodeLockForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['begin'].widget.attrs['readonly'] = True
@@ -37,7 +37,7 @@ class ptHwFarmNodeLockForm(ModelForm):
         exclude = ['end']
 
 
-class ptJobUploadForm(forms.Form):
+class PTJobUploadForm(forms.Form):
     def validate_json_ext(value):
         if not value.name.endswith('.json'):
             raise ValidationError(u'Only *.json file can be uploaded')
