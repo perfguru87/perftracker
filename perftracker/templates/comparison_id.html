@@ -55,19 +55,19 @@ So we will use static HTML with couple tricks:
   {% for s_tag, s in g.sections.items %}
     <h4>{{ s.title }}</h4>
 
-    {% if s.chart_type != ptCmpChartType.NOCHART %}
+    {% if s.chart_type != PTCmpChartType.NOCHART %}
       <div class='container collapse in pt_div_cmp'>
         <div id="chart_{{ g.id }}_{{ s.id }}" class='pt_chart'>Loading chart...</div>
       </div>
     {% endif %}
-    {% if s.table_type == ptCmpTableType.SHOW %}
+    {% if s.table_type == PTCmpTableType.SHOW %}
       <div class='container collapse in pt_div_cmp' id='results_{{ g.id }}_{{ s.id }}'>
         <table id="tests_{{ g.id }}_{{ s.id }}" class="display dataTable" cellspacing="0" width="100%">
           <thead>
             <tr>
             <th colspan='4'></th>
             {% for job in jobs %}
-              <th class='pt_job' colspan='{{ forloop.counter0|add:"2"}}'>#{{ forloop.counter}} - {{ job.title }}</th>
+              <th class='pt_job' colspan='{{ forloop.counter0|add:"2" }}'>#{{ forloop.counter }} - {{ job.title }}</th>
             {% endfor %}
             </tr>
             <tr>
@@ -163,65 +163,67 @@ $(document).ready(function() {
     var lengthMenu = [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]];
 
     var columnDefs = [
-                  {
-                    "targets": "colExpander",
-                    "type": "string",
-                    "orderable": false,
-                    "className": 'pt_row_details_toggle',
-                    "render": function ( data, type, row ) {
-                      return "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
-                    }
-                  },
-                  {
-                    "targets": [ "colId", "colCategory"],
-                    "type": "string",
-                    "visible": false,
-                  },
-                  {
-                    "targets": "colTag",
-                    "type": "string",
-                    "className": 'pt_left',
-                  },
-                  {
-                    "targets": "colScore",
-                    "type": "string",
-                    "className": 'pt_lborder',
-                  },
-                  {
-                    "targets": "colDeviation",
-                    "className": "pt_lborder pt_right",
-                    "type": "float",
-                    "render": function ( data, type, row ) {
-                      return data + "%";
-                    }
-                  },
-                  {
-                    "targets": "colDiff",
-                    "width": "45px",
-                    "type": "string",
-                    "className": 'pt_diff_equal pt_right',
-                    "createdCell": function (td, cellData, rowData, rowIndex, colIndex) {
-                      var data = rowData[colIndex];
-                      var ar = data.split(" ");
-                      var diff = "";
-                      if (ar[1] == '1') {
-                        $(td).attr('class', 'pt_diff_better pt_right');
-                      } else if (ar[1] == '-1') {
-                        $(td).attr('class', 'pt_diff_worse pt_right');
-                      }
-                      diff = ar[0];
-                      if (ar[0] > 0)
-                        diff = "+" + diff;
-                      if (diff != "-")
-                        diff += "%";
-                      $(td).html(diff);
-                    },
-                  },
-                ];
+      {
+        "targets": "colExpander",
+        "type": "string",
+        "orderable": false,
+        "className": 'pt_row_details_toggle',
+        "render": function ( data, type, row ) {
+          return "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+        }
+      },
+      {
+        "targets": [ "colId", "colCategory"],
+        "type": "string",
+        "visible": false,
+      },
+      {
+        "targets": "colTag",
+        "type": "string",
+        "className": 'pt_left',
+      },
+      {
+        "targets": "colScore",
+        "type": "string",
+        "className": 'pt_lborder',
+      },
+      {
+        "targets": "colDeviation",
+        "className": "pt_lborder pt_right",
+        "type": "float",
+        "render": function ( data, type, row ) {
+          return data + "%";
+        }
+      },
+      {
+        "targets": "colDiff",
+        "width": "45px",
+        "type": "string",
+        "className": 'pt_diff_equal pt_right',
+        "createdCell": function (td, cellData, rowData, rowIndex, colIndex) {
+          var data = rowData[colIndex];
+          var ar = data.split(" ");
+          var diff = "";
+          if (ar[1] == '1') {
+            $(td).attr('class', 'pt_diff_better pt_right');
+          } else if (ar[1] == '-1') {
+            $(td).attr('class', 'pt_diff_worse pt_right');
+          }
+          diff = ar[0];
+          if (ar[0] > 0) {
+            diff = "+" + diff;
+          }
+          if (diff != "-") {
+            diff += "%";
+          }
+          $(td).html(diff);
+        },
+      },
+    ];
 
     {% for g_tag, g in cmp_view.groups.items %}
       {% for s_tag, s in g.sections.items %}
-        {% if s.chart_type != ptCmpChartType.NOCHART %}
+        {% if s.chart_type != PTCmpChartType.NOCHART %}
 
           {% for serie in s.series %}
             var data_{{ forloop.counter }} = {{ serie.data|safe }};
@@ -284,10 +286,10 @@ $(document).ready(function() {
             {% for serie in s.series %}
               {
                 name: '{{ serie.legend|safe }}',
-                {% if s.chart_type == ptCmpChartType.XYLINE %}
+                {% if s.chart_type == PTCmpChartType.XYLINE %}
                   type: 'line',
                   smooth: true,
-                {% elif s.chart_type == ptCmpChartType.BAR %}
+                {% elif s.chart_type == PTCmpChartType.BAR %}
                   type: 'bar',
                 {% endif %}
                 barGap: '0.1',
@@ -315,18 +317,18 @@ $(document).ready(function() {
             ]
           };
           chart.setOption(option);
-          {% if s.chart_type == ptCmpChartType.XYLINE %}
-          {% elif s.chart_type == ptCmpChartType.XYLINE_WITH_TREND %}
-          {% elif s.chart_type == ptCmpChartType.BAR %}
-          {% elif s.chart_type == ptCmpChartType.BAR_WITH_TREND %}
+          {% if s.chart_type == PTCmpChartType.XYLINE %}
+          {% elif s.chart_type == PTCmpChartType.XYLINE_WITH_TREND %}
+          {% elif s.chart_type == PTCmpChartType.BAR %}
+          {% elif s.chart_type == PTCmpChartType.BAR_WITH_TREND %}
           {% endif %}
         {% endif %}
-        {% if s.table_type == ptCmpTableType.SHOW %}
+        {% if s.table_type == PTCmpTableType.SHOW %}
           var data = [
           {% for t_tag, t in s.tests.items %}
             {{ t.table_data|safe }},
           {% endfor %}
-                     ];
+          ];
 
           var table_{{ g.id }}_{{ s.id }} = $('#tests_{{ g.id }}_{{ s.id }}').DataTable({
 /*          "processing": true, */
@@ -341,7 +343,7 @@ $(document).ready(function() {
             "data": data,
             "order": [[ 2, "asc" ]],
             "columnDefs": columnDefs,
-            });
+          });
 
           // Add event listener for opening and closing details
           $('#tests_{{ g.id }}_{{ s.id }}').on('click', 'td.pt_row_details_toggle', function () {

@@ -29,7 +29,7 @@ class HwChassisModel(models.Model):
         verbose_name_plural = "Hosts"
 
     @staticmethod
-    def ptGetByJson(json, parent=None):
+    def pt_get_by_json(json, parent=None):
         """ Find (or automatically create) the object by json key:values"""
         _j = {}
         for f in HwChassisModel._meta.get_fields():
@@ -80,7 +80,7 @@ class EnvNodeTypeModel(models.Model):
         verbose_name_plural = "Environment types"
 
     @staticmethod
-    def ptGetByJson(json):
+    def pt_get_by_json(json):
         if 'node_type' not in json:
             raise SuspiciousOperation("'node_type' is not set in: %s" % json)
         try:
@@ -123,7 +123,7 @@ class EnvNodeModel(models.Model):
         return ret
 
     @staticmethod
-    def ptFindEnvNodesForUpdate(job, json):
+    def pt_find_env_nodes_for_update(job, json):
         # performance optimization to avoid full nodes rewrite on each job results upload
         try:
             db_uuid2node = set([n.uuid for n in EnvNodeModel.objects.filter(job=job)])
@@ -132,13 +132,13 @@ class EnvNodeModel(models.Model):
 
         nodes_from_json = []
         for j in json:
-            EnvNodeModel._ptScanEnvNodesFromJson(j, nodes_from_json, None)
+            EnvNodeModel._pt_scan_env_nodes_from_json(j, nodes_from_json, None)
         if db_uuid2node == set([n['uuid'] for n in nodes_from_json]):
             return None
 
         return nodes_from_json
 
-    def _ptScanEnvNodesFromJson(json, result_nodes_list, parent_uuid):
+    def _pt_scan_env_nodes_from_json(json, result_nodes_list, parent_uuid):
         _j = copy.copy(json)
         if 'children' in _j:
             _j.pop('children')
@@ -147,10 +147,10 @@ class EnvNodeModel(models.Model):
         _j['parent_uuid'] = parent_uuid
         result_nodes_list.append(_j)
         for child in json.get('children', []):
-            EnvNodeModel._ptScanEnvNodesFromJson(child, result_nodes_list, _j['uuid'])
+            EnvNodeModel._pt_scan_env_nodes_from_json(child, result_nodes_list, _j['uuid'])
 
     @staticmethod
-    def ptGetByUuid(uuid, job):
+    def pt_get_by_uuid(uuid, job):
         try:
             return EnvNodeModel.objects.get(uuid=uuid)
         except EnvNodeModel.DoesNotExist:
@@ -170,18 +170,18 @@ class EnvNodeUploadSerializer(serializers.ModelSerializer):
             if 'parent_uuid' in self.initial_data:
                 uuid = self.initial_data.pop('parent_uuid')
                 if uuid:
-                    parent = EnvNodeModel.ptGetByUuid(uuid, job)
+                    parent = EnvNodeModel.pt_get_by_uuid(uuid, job)
                     self.initial_data['parent'] = parent.id if parent else None
                 else:
                     self.fields.pop('parent')
                     self.initial_data['parent'] = None
 
             if 'node_type' in self.initial_data:
-                env_node_type = EnvNodeTypeModel.ptGetByJson(self.initial_data)
+                env_node_type = EnvNodeTypeModel.pt_get_by_json(self.initial_data)
                 self.initial_data['node_type'] = env_node_type.id if env_node_type else None
 
             if 'hw_uuid' in self.initial_data:
-                hw_chassis = HwChassisModel.ptGetByJson(self.initial_data)
+                hw_chassis = HwChassisModel.pt_get_by_json(self.initial_data)
                 self.initial_data['hw_chassis'] = hw_chassis.id if hw_chassis else None
 
     class Meta:

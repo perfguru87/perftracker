@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import SuspiciousOperation
 
+
 class ProjectModel(models.Model):
     name = models.CharField(max_length=64, help_text="Project name: Browsers, Clients, Servers...")
     description = models.CharField(max_length=256, help_text="Project description")
@@ -11,12 +12,12 @@ class ProjectModel(models.Model):
         return self.name + (" (hidden)" if not self.nav_visible else "")
 
     @staticmethod
-    def ptInitialize():
+    def pt_initialize():
         if not len(ProjectModel.objects.all()):
             ProjectModel(id=1, name="Default project", description="Default PerfTracker project", nav_prio=100).save()
 
     @staticmethod
-    def ptGetById(proj_id):
+    def pt_get_by_id(proj_id):
         proj_id = int(proj_id)
 
         if proj_id == 0:
@@ -29,7 +30,7 @@ class ProjectModel(models.Model):
         try:
             return ProjectModel.objects.get(pk=proj_id)
         except ProjectModel.DoesNotExist:
-            ProjectModel.ptInitialize()
+            ProjectModel.pt_initialize()
 
         try:
             return ProjectModel.objects.get(pk=proj_id)
@@ -37,22 +38,22 @@ class ProjectModel(models.Model):
             return None
 
     @staticmethod
-    def ptGetByName(proj_name):
+    def pt_get_by_name(proj_name):
         try:
             return ProjectModel.objects.get(name=proj_name)
         except ProjectModel.DoesNotExist:
-            ProjectModel.ptInitialize()
+            ProjectModel.pt_initialize()
 
         try:
             return ProjectModel.objects.get(name=proj_name)
         except ProjectModel.DoesNotExist:
             raise SuspiciousOperation("Project '%s' doesn't exist" % proj_name)
 
-    def ptGetAll(self):
+    def pt_get_all(self):
         try:
             return ProjectModel.objects.filter(nav_visible=True).order_by('nav_prio')
         except ProjectModel.DoesNotExist:
-            self.ptInitialize()
+            self.pt_initialize()
 
         try:
             return ProjectModel.objects.filter(nav_visible=True).order_by('nav_prio')
