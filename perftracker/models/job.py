@@ -97,7 +97,10 @@ class JobModel(models.Model):
         self.tests_warnings = 0
 
         if j.get_bool('append'):
-            self.duration += end - begin
+            if self.duration:
+                self.duration += end - begin
+            else:
+                self.duration = end - begin
             if not self.begin:
                 self.begin = begin
             self.end = end
