@@ -15,7 +15,7 @@ from rest_framework import serializers
 
 from perftracker.models.project import ProjectModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
-from perftracker.helpers import ptDurationField, ptJson
+from perftracker.helpers import PTDurationField, PTJson
 
 
 class JobModel(models.Model):
@@ -52,10 +52,10 @@ class JobModel(models.Model):
     def __str__(self):
         return "#%d, %s" % (self.id, self.title)
 
-    def ptUpdate(self, json_data):
+    def pt_update(self, json_data):
         from perftracker.models.test import TestModel
 
-        j = ptJson(json_data, obj_name="job json", exception_type=SuspiciousOperation)
+        j = PTJson(json_data, obj_name="job json", exception_type=SuspiciousOperation)
 
         project_name = j.get_str('project_name', require=True)
         self.uuid = j.get_uuid('uuid', require=True)
@@ -64,7 +64,7 @@ class JobModel(models.Model):
         if not self.title:
             self.title = j.get_str('title', require=True)
         self.cmdline = j.get_str('cmdline')
-        self.project = ProjectModel.ptGetByName(j.get_str('project_name'))
+        self.project = ProjectModel.pt_get_by_name(j.get_str('project_name'))
 
         now = timezone.now()
 
@@ -75,7 +75,7 @@ class JobModel(models.Model):
             if 'uuid' not in t:
                 raise SuspiciousOperation("test doesn't have 'uuid' key: %s" % str(t))
             test = TestModel(job=self, uuid=t['uuid'])
-            test.ptUpdate(self, t, validate_only=True)  # FIXME, double ptUpdate() call (here and below)
+            test.pt_update(self, t, validate_only=True)  # FIXME, double pt_update() call (here and below)
 
         self.suite_name = j.get_str('suite_name')
         self.suite_ver  = j.get_str('suite_ver')
@@ -121,7 +121,7 @@ class JobModel(models.Model):
         self.save()
 
         # process env_nodes, try not to delete and re-create all the nodes each time because normally this is static information
-        env_nodes_to_update = EnvNodeModel.ptFindEnvNodesForUpdate(self, env_nodes_json)
+        env_nodes_to_update = EnvNodeModel.pt_find_env_nodes_for_update(self, env_nodes_json)
         if env_nodes_to_update:
             EnvNodeModel.objects.filter(job=self).delete()
             for env_node_json in env_nodes_to_update:
@@ -150,12 +150,12 @@ class JobModel(models.Model):
 
             test = uuid2test[test_uuid]
 
-            test.ptUpdate(self, t)
+            test.pt_update(self, t)
 
             self.tests_total += 1
-            if test.ptStatusIsCompleted():
+            if test.pt_status_is_completed():
                 self.tests_completed += 1
-            if test.ptStatusIsFailed():
+            if test.pt_status_is_failed():
                 self.tests_failed += 1
             if test.errors:
                 self.tests_errors += 1
@@ -164,13 +164,13 @@ class JobModel(models.Model):
             ret = uuid2test.pop(test_uuid, None)
 
         if not append:
-            TestModel.ptDeleteTests(uuid2test.keys())
+            TestModel.pt_delete_tests(uuid2test.keys())
 
         for t in uuid2test.values():
             self.tests_total += 1
-            if t.ptStatusIsCompleted():
+            if t.pt_status_is_completed():
                 self.tests_completed += 1
-            if t.ptStatusIsFailed():
+            if t.pt_status_is_failed():
                 self.tests_failed += 1
             if t.errors:
                 self.tests_errors += 1
@@ -179,7 +179,7 @@ class JobModel(models.Model):
 
         self.save()
 
-    def ptGenFileName(self):
+    def pt_gen_filename(self):
         name = self.title
         if self.id:
             name = "job-%d-%s" % (self.id, name)
@@ -188,7 +188,7 @@ class JobModel(models.Model):
     def save(self):
         from perftracker.models.regression import RegressionModel
         super(JobModel, self).save()
-        RegressionModel.ptOnJobSave(self)
+        RegressionModel.pt_on_job_save(self)
 
     class Meta:
         verbose_name = "Job"
@@ -197,7 +197,7 @@ class JobModel(models.Model):
 
 class JobBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
-    duration = ptDurationField()
+    duration = PTDurationField()
 
     def get_env_node(self, job):
         # this function is required to apply 'parent=None' filter because env_node children will be

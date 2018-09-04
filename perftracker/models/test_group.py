@@ -16,7 +16,7 @@ from django.core.exceptions import SuspiciousOperation
 from rest_framework import serializers
 
 from perftracker.models.job import JobModel
-from perftracker.helpers import ptDurationField, ptRoundedFloatField, ptRoundedFloatMKField, pt_is_valid_uuid
+from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, pt_is_valid_uuid
 
 TEST_GROUP_TAG_LENGTH = 128
 
@@ -29,7 +29,7 @@ class TestGroupModel(models.Model):
     icon        = models.URLField(max_length=256, help_text="URL of the icon to be used")
 
     @staticmethod
-    def ptGetByTag(tag):
+    def pt_get_by_tag(tag):
         try:
             return TestGroupModel.objects.get(tag=tag)
         except TestGroupModel.DoesNotExist:
