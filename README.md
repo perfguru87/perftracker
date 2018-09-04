@@ -89,6 +89,13 @@ $PERF_TRACKER_URL/admin/perftracker/hwfarmnodemodel/
 
 So then you will be able to manage hardware locking on the 'Hosts' tab
 
+### Managing the regressions
+
+1. Create a regression in Django admin panel with a TAGNAME:
+$PERF_TRACKER_URL/admin/perftracker/regressionmodel/
+
+2. Use --pt-regression-tag TAGNAME (or ptSuite(regression_name=TAGNAME, ...) in the perftracker client
+
 ### Managing custom screens
 
 TODO
