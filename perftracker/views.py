@@ -140,36 +140,25 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
 
     uuid = j.get('uuid', None)
     append = j.get('append', False)
-    replace = j.get('replace', False)
 
     if not uuid:
         raise SuspiciousOperation("job 'uuid' is no set")
     if not pt_is_valid_uuid(uuid):
         raise SuspiciousOperation("job 'uuid' '%s' is not invalid, it must be version1 UUID" % uuid)
 
-    if replace and not uuid:
-        return HttpResponseBadRequest("Job w/o uuid can't be replaced")
-
-    job = None
-    if uuid:
-        try:
-            job = JobModel.objects.get(uuid=uuid)
-            replace = True
-            j['replace'] = True
-        except JobModel.DoesNotExist:
-            pass
-
-    if not job:
-        if replace:
-            return HttpResponseBadRequest("Job with uuid %s doesn't exist" % uuid)
-        job = JobModel(title=j['job_title'], uuid=j['uuid'])
+    new = False
+    try:
+        job = JobModel.objects.get(uuid=uuid)
+    except JobModel.DoesNotExist:
+        new = True
+        job = JobModel(title=j['job_title'], uuid=uuid)
 
     try:
         job.ptUpdate(j)
     except SuspiciousOperation as e:
         return HttpResponse(str(e), status = http.client.BAD_REQUEST)
 
-    return HttpResponse("OK, job %d has been %s" % (job.id, "updated" if replace else ("appended" if append else "created")))
+    return HttpResponse("OK, job %d has been %s" % (job.id, "created" if new else ("appended" if append else "updated")))
 
 
 # @login_required

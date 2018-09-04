@@ -96,8 +96,15 @@ class JobModel(models.Model):
         self.tests_errors = 0
         self.tests_warnings = 0
 
-        if j.get_bool('append'):
-            self.duration += end - begin
+        append = False if self.deleted else j.get_bool('append')
+
+        self.deleted = False
+
+        if append:
+            if self.duration:
+                self.duration += end - begin
+            else:
+                self.duration = end - begin
             if not self.begin:
                 self.begin = begin
             self.end = end
@@ -156,7 +163,7 @@ class JobModel(models.Model):
                 self.tests_warnings += 1
             ret = uuid2test.pop(test_uuid, None)
 
-        if j.get_bool('replace'):
+        if not append:
             TestModel.pt_delete_tests(uuid2test.keys())
 
         for t in uuid2test.values():
