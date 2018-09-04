@@ -114,11 +114,20 @@ Regressions
 - Regression charts
 + Support --regression-tag in suites
 - Automated first two vs last two builds comparison for regressions
+- Automated regression creation
 
 Integrations with Jira
 - Custom fields for dashboards
 - Items hierarchy by filter
 - Jira items lifecycle on the regression chart
+
+Admin:
+- pre-defined groups and permissions and admin panel
+- hide First Job, Last Job, Jobs field in regression management
+- users management howto
+
+Mass management:
+- mass change of less_better test value to opposite value
 
 --------------
 
