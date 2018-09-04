@@ -115,6 +115,7 @@ Regressions
 + Support --regression-tag in suites
 - Automated first two vs last two builds comparison for regressions
 - Automated regression creation
+- Exclude (or include back) jobs from regression
 
 Integrations with Jira
 - Custom fields for dashboards
