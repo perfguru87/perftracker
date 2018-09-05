@@ -135,7 +135,7 @@ class PTRegressionServSideSeriesView:
         self.data.append((job.product_ver if job.product_ver is not None else '?', pt_float2human(test_obj.avg_score)))
         if not self.title:
             self.title = test_obj.metrics + " " + ("[lower is better]" if test_obj.less_better else "[bigger is better]")
-            self.less_better = test_obj.less_better:
+            self.less_better = test_obj.less_better
 
     def calc_trend(self):
         l = len(self.data)
