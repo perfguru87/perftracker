@@ -193,7 +193,9 @@ class PTRegressionServSideGroupView:
         self.series = OrderedDict()
 
     def pt_add_test(self, job, job_n, test_obj):
-        key = test_obj.tag + " " + test_obj.category
+        key = test_obj.tag
+        if test_obj:
+            key += " {%s}" % test_obj.category
         if key not in self.series:
             self.series[key] = PTRegressionServSideSeriesView(len(self.series), key)
         self.series[key].pt_add_test(job, job_n, test_obj)
