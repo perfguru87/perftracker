@@ -117,6 +117,7 @@ Regressions
 - Automated regression creation
 - Show the list of jobs in regression. Add possibility to include/exclude jobs from regression
 - Edit regression title
+- Show/Hide groups
 
 Integrations with Jira
 - Custom fields for dashboards
