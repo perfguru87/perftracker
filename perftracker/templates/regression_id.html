@@ -22,7 +22,7 @@
         <h4>Regression: {{ obj }}</h4>
         <div id='regression_details'>...<br><br></div>
         {% for job in jobs %}
-            <h4>Job: {{ job }}</h4>
+            <h4>Job: <a href='/{{ project.id }}/job/{{ job.id }}'>{{ job }}</a></h4>
             <div class='container'><div id='job_details_{{ job.id }}'></div></div>
         {% endfor %}
       </div>
