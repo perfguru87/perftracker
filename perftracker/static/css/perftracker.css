@@ -296,7 +296,7 @@ table.pt_regr_summary td {
 }
 
 .pt_regr_chart_title {
-  padding: 1px 0px 1px 15px;
+  padding: 1px 0px 1px 0px;
   font-size: 11px;
   white-space: nowrap;
   overflow-x: scroll;
