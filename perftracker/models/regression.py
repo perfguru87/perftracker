@@ -39,7 +39,7 @@ class RegressionModel(models.Model):
         super(RegressionModel, self).save()
 
     def pt_get_jobs(self):
-        return JobModel.objects.filter(regression_tag=self.tag, deleted=False).order_by('end').all()
+        return JobModel.objects.filter(regression_tag=self.tag, project=self.project, deleted=False).order_by('end').all()
 
     def pt_set_first_last_job(self):
         jobs = self.pt_get_jobs()
