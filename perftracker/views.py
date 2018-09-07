@@ -154,7 +154,7 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
         job = JobModel(title=j['job_title'], uuid=uuid)
 
     try:
-        job.ptUpdate(j)
+        job.pt_update(j)
     except SuspiciousOperation as e:
         return HttpResponse(str(e), status = http.client.BAD_REQUEST)
 
