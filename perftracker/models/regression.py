@@ -20,6 +20,7 @@ from perftracker.models.test_group import TestGroupModel
 from perftracker.models.comparison import ptCmpChartType, ptCmpTableType
 from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 
+
 class RegressionModel(models.Model):
     title     = models.CharField(max_length=512, help_text="Job title")
     tag       = models.CharField(max_length=512, help_text="MyProduct-2.0 regression", db_index=True)
@@ -38,10 +39,10 @@ class RegressionModel(models.Model):
         super(RegressionModel, self).save()
 
     def ptGetJobs(self):
-        return JobModel.objects.filter(regression_tag=self.tag, deleted=False).order_by('end').all()
+        return JobModel.objects.filter(regression=self, deleted=False).order_by('end').all()
 
     def ptSetFirstLastJob(self):
-        jobs = self.ptGetJobs()
+        jobs = JobModel.objects.filter(regression_tag=self.tag, deleted=False).order_by('end').all()
         if len(jobs):
             first = jobs[0]
             last = jobs[len(jobs) - 1]
@@ -74,7 +75,7 @@ class RegressionModel(models.Model):
 
         if r is None:
             regression_tag = job.regression_tag if job.regression_tag else "regression"
-            r = RegressionModel(title="%s regression" % job.project.name, tag=regression_tag, project=job.project, jobs=0)
+            r = RegressionModel(title="%s regression" % job.project.name, tag=regression_tag, project=job.project, jobs=1)
             r.save()
 
         regression_tag = r.tag
@@ -82,8 +83,10 @@ class RegressionModel(models.Model):
         for r in RegressionModel.objects.filter(tag=regression_tag).all():
             r.ptSetFirstLastJob()
 
+        return r
 
-class RegressionSerializer(serializers.ModelSerializer):
+
+class RegressionSimpleSerializer(serializers.ModelSerializer):
 
     first_job = serializers.SerializerMethodField()
     last_job = serializers.SerializerMethodField()
@@ -97,6 +100,19 @@ class RegressionSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegressionModel
         fields = ('id', 'title', 'tag', 'jobs', 'first_job', 'last_job')
+
+
+class RegressionNestedSerializer(serializers.ModelSerializer):
+
+    jobs_list = serializers.SerializerMethodField()
+
+    def get_jobs_list(self, regression):
+        jobs = regression.ptGetJobs()
+        return JobSimpleSerializer(jobs, many=True).data
+
+    class Meta:
+        model = RegressionModel
+        fields = ('id', 'title', 'tag', 'jobs', 'jobs_list')
 
 
 ######################################################################

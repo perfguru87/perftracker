@@ -263,15 +263,18 @@ function pt_draw_regression_details(d, err_msg)
     s += "<table class='pt_obj_details'>";
     s += "<thead><th></th><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th></thead>";
 
-    var jobs = [d.first_job, d.last_job];
+    var jobs = d.jobs_list;
 
     for (var j = 0; j < jobs.length; j++) {
         var job = jobs[j];
         s += "<tr>";
         if (j == 0)
             s += "<td>First</td>";
-        else
+        else if (j == jobs.length - 1)
             s += "<td>Last</td>";
+        else
+            s+= "<td></td>"
+
         s += "<td>{0}</td><td>{1}</td>".ptFormat(job.id, pt_date2str(job.end));
         var hw = '';
         for (var h = 0; h < job.env_node.length; h++) {

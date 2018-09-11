@@ -24,7 +24,7 @@ from django.db.models.query import QuerySet
 from perftracker import __pt_version__
 from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
-from perftracker.models.regression import RegressionModel, RegressionSerializer, ptRegressionServSideView
+from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, ptRegressionServSideView
 from perftracker.models.comparison import ptCmpTableType, ptCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
@@ -493,11 +493,7 @@ def ptRegressionAllJson(request, api_ver, project_id):
         max_display_length = 5000
 
         def render_column(self, row, column):
-            # We want to render user as a custom column
-            if column == 'tests_total':
-                return '{0} {1}'.format(row.tests_total, row.tests_completed)
-            else:
-                return super(JobJson, self).render_column(row, column)
+            return super(RegressionJson, self).render_column(row, column)
 
         def filter_queryset(self, qs):
             # use parameters passed in GET request to filter queryset
@@ -515,14 +511,14 @@ def ptRegressionAllJson(request, api_ver, project_id):
             return qs
 
         def prepare_results(self, qs):
-            return RegressionSerializer(qs, many=True).data
+            return RegressionSimpleSerializer(qs, many=True).data
 
     return RegressionJson.as_view()(request)
 
 
 def ptRegressionIdJson(request, api_ver, project_id, regression_id):
     try:
-        return JsonResponse(RegressionSerializer(RegressionModel.objects.get(pk=regression_id)).data, safe=False)
+        return JsonResponse(RegressionNestedSerializer(RegressionModel.objects.get(pk=regression_id)).data, safe=False)
     except RegressionModel.DoesNotExist:
         return JsonResponse([], safe=False)
 

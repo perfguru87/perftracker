@@ -45,6 +45,7 @@ class JobModel(models.Model):
 
     project         = models.ForeignKey(ProjectModel, help_text="Job project", on_delete=models.CASCADE)
 
+    regression      = models.ForeignKey('perftracker.RegressionModel', help_text="Regression of this job", related_name="regr", null=True, blank=True, on_delete=models.CASCADE)
     regression_tag  = models.CharField(max_length=512, help_text="MyProduct-2.0 regression", null=True, blank=True, db_index=True)
 
     deleted         = models.BooleanField(help_text="True means the Job was deleted", db_index=True, default=False)
@@ -186,9 +187,13 @@ class JobModel(models.Model):
         return re.sub(r'[^a-zA-Z0-9_-]', '_', name)
 
     def save(self):
-        from perftracker.models.regression import RegressionModel
         super(JobModel, self).save()
-        RegressionModel.ptOnJobSave(self)
+
+        from perftracker.models.regression import RegressionModel
+        r = RegressionModel.ptOnJobSave(self)
+        if r is not None:
+            self.regression = r
+            super(JobModel, self).save()
 
     class Meta:
         verbose_name = "Job"
