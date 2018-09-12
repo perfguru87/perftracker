@@ -114,7 +114,7 @@ class TestModel(models.Model):
         else:
             self.warnings = len(j.get_list('warnings'))
 
-        dur_sec = j.get_int('duration_sec', 0)
+        dur_sec = j.get_float('duration_sec', 0)
         self.duration = timedelta(seconds=int(dur_sec)) if dur_sec else self.end - self.begin
 
         self.job = job
