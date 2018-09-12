@@ -17,9 +17,11 @@
       <th class='colID'>ID</th>
       <th class='colEndDate'>Run end</th>
       <th class='colHw'>Hw</th>
-      <th class='colVersion'>Version</th>
+      <th class='colProdName'>Prod name</th>
+      <th class='colProdVer'>Prod ver</th>
       <th class='colRunTitle'>Run title</th>
-      <th class='colDuration'>Duration</th>
+      <th class='colTestVer'>Test ver</th>
+      <th class='colDuration'>Dur (sec)</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
@@ -32,9 +34,11 @@
       <th class='colID'>ID</th>
       <th class='colEndDate'>Run end</th>
       <th class='colHw'>Hw</th>
-      <th class='colVersion'>Version</th>
+      <th class='colProdName'>Prod name</th>
+      <th class='colProdVer'>Prod ver</th>
       <th class='colRunTitle'>Run title</th>
-      <th class='colDuration'>Duration</th>
+      <th class='colTestVer'>Test ver</th>
+      <th class='colDuration'>Dur (sec)</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
@@ -205,8 +209,10 @@ $(document).ready(function() {
             { "data": "id" },
             { "data": "end" },
             { "data": "env_node" },
-            { "data": "suite_ver" },
+            { "data": "product_name" },
+            { "data": "product_ver" },
             { "data": "title" },
+            { "data": "suite_ver" },
             { "data": "duration" },
             { "data": "tests_total" },
             { "data": "tests_completed" },
