@@ -274,6 +274,8 @@ $(document).ready(function() {
                 "targets": "colTests",
                 "type": "string",
                 "render": function ( data, type, row ) {
+                    if (data == row.tests_total)
+                        return data;
                     return data +' (of '+ row.tests_total+')';
                 },
             },
