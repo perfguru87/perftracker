@@ -234,6 +234,13 @@ $(document).ready(function() {
                 },
             },
             {
+                "targets": "colID",
+                "type": "integer",
+                "render": function ( data, type, row ) {
+                    return "<a href='/{{ project.id }}/job/" + row.id + "'>" + data + "</a>";
+                },
+            },
+            {
                 "targets": "colHw",
                 "type": "string",
                 "render": function ( data, type, row ) {
@@ -255,13 +262,12 @@ $(document).ready(function() {
                 "type": "string",
                 "orderData": [ 4, 1 ],
             },
-
             {
                 "targets": "colRunTitle",
                 "type": "string",
                 "orderData": [ 5, 1 ],
                 "render": function ( data, type, row ) {
-                    return "<a href='/{{ project.id }}/job/" + row.id + "'>" + data + "</a>";
+                    return data;
                 },
             },
             {
