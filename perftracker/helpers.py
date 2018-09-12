@@ -8,9 +8,7 @@ from django.utils.dateparse import parse_datetime
 
 class PTDurationField(serializers.DurationField):
     def to_representation(self, value):
-        # get rid of microseconds
-        v = super().to_representation(value)
-        return ':'.join(v.split(':')[0:2])
+        return int(round(value.total_seconds()))
 
 
 def pt_float2human(value, MK=False):
@@ -145,6 +143,9 @@ class PTJson:
             return self._get_value(key, defval, require, key_type, 'json')
         else:
             return self._get_value(key, str(defval), require, json.loads, 'json')
+
+    def get_float(self, key, defval=0, require=False):
+        return self._get_value(key, defval, require, float, 'float')
 
     def get_int(self, key, defval=0, require=False):
         return self._get_value(key, defval, require, int, 'integer')
