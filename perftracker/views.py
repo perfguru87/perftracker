@@ -291,11 +291,21 @@ def pt_job_all_json(request, api_ver, project_id):
     return JobJson.as_view()(request)
 
 
+@csrf_exempt
 def pt_job_id_json(request, api_ver, project_id, job_id):
     try:
-        return JsonResponse(JobNestedSerializer(JobModel.objects.get(pk=job_id)).data, safe=False)
+        job = JobModel.objects.get(pk=job_id)
     except JobModel.DoesNotExist:
+        return JsonResponse([], safe=False, status=http.client.NOT_FOUND)
+
+    if request.method == 'GET':
+        return JsonResponse(JobNestedSerializer(job).data, safe=False)
+    elif request.method == 'DELETE':
+        job.deleted = True
+        job.save()
+        messages.success(request, "job #%s was deleted" % str(job_id))
         return JsonResponse([], safe=False)
+    return JsonResponse([], safe=False, status=http.client.NOT_IMPLEMENTED)
 
 
 def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):

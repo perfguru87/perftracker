@@ -22,6 +22,7 @@ Jobs list:
 - job details: re-import (?)
 - job details: suite details
 + job details: rename job (name entered by user overrides the initial one)
++ job details: delete job
 + add to comparison button
 + comparison dialog
 + comparison dialog: charts types
