@@ -41,6 +41,9 @@ class RegressionModel(models.Model):
     def ptGetJobs(self):
         return JobModel.objects.filter(regression=self, deleted=False).order_by('end').all()
 
+    def ptGetShownJobs(self):
+        return JobModel.objects.filter(regression=self, deleted=False, shown=True).order_by('end').all()
+
     def ptSetFirstLastJob(self):
         jobs = JobModel.objects.filter(regression_tag=self.tag, deleted=False).order_by('end').all()
         if len(jobs):
@@ -222,7 +225,7 @@ class ptRegressionServSideGroupView:
 class ptRegressionServSideView:
     def __init__(self, regr_obj):
         self.regr_obj = regr_obj
-        self.job_objs = regr_obj.ptGetJobs()
+        self.job_objs = regr_obj.ptGetShownJobs()
         self.groups = OrderedDict()
 
         self.init()

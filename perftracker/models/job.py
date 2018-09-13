@@ -48,6 +48,8 @@ class JobModel(models.Model):
     regression      = models.ForeignKey('perftracker.RegressionModel', help_text="Regression of this job", related_name="regr", null=True, blank=True, on_delete=models.CASCADE)
     regression_tag  = models.CharField(max_length=512, help_text="MyProduct-2.0 regression", null=True, blank=True, db_index=True)
 
+    shown           = models.BooleanField(help_text="Show job in regression", db_index=True, default=True)
+
     deleted         = models.BooleanField(help_text="True means the Job was deleted", db_index=True, default=False)
 
     def __str__(self):
@@ -186,6 +188,16 @@ class JobModel(models.Model):
             name = "job-%d-%s" % (self.id, name)
         return re.sub(r'[^a-zA-Z0-9_-]', '_', name)
 
+    @staticmethod
+    def ptChangeShowStatus(job_id, new_show_status):
+        job = JobModel.objects.get(pk=job_id)
+
+        if job.shown == new_show_status:
+            raise KeyError
+
+        job.shown = new_show_status
+        job.save()
+
     def save(self):
         super(JobModel, self).save()
 
@@ -219,7 +231,7 @@ class JobSimpleSerializer(JobBaseSerializer):
         model = JobModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
-                  'product_name', 'product_ver')
+                  'product_name', 'product_ver', 'shown')
 
 
 class JobNestedSerializer(JobBaseSerializer):
