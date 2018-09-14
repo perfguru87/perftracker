@@ -45,10 +45,10 @@ class JobModel(models.Model):
 
     project         = models.ForeignKey(ProjectModel, help_text="Job project", on_delete=models.CASCADE)
 
-    regression      = models.ForeignKey('perftracker.RegressionModel', help_text="Regression of this job", related_name="regr", null=True, blank=True, on_delete=models.CASCADE)
-    regression_tag  = models.CharField(max_length=512, help_text="MyProduct-2.0 regression", null=True, blank=True, db_index=True)
-
-    shown           = models.BooleanField(help_text="Show job in regression", db_index=True, default=True)
+    regression_original = models.ForeignKey('perftracker.RegressionModel', help_text="Original regression of this job",
+                                            related_name="regr_original", null=True, blank=True, on_delete=models.SET_NULL)
+    regression_linked   = models.ForeignKey('perftracker.RegressionModel', help_text="Regression this job linked to",
+                                            related_name="regr_linked", null=True, blank=True, on_delete=models.SET_NULL)
 
     deleted         = models.BooleanField(help_text="True means the Job was deleted", db_index=True, default=False)
 
@@ -86,7 +86,7 @@ class JobModel(models.Model):
         self.product_name = j.get_str('product_name')
         self.product_ver  = j.get_str('product_ver')
         self.links = json.dumps(j.get_dict('links'))
-        self.regression_tag = json_data.get('regression_tag', '')
+        regression_tag = json_data.get('regression_tag', '')
 
         self.upload = now
 
@@ -180,6 +180,12 @@ class JobModel(models.Model):
             if t.warnings:
                 self.tests_warnings += 1
 
+        if regression_tag is not None:
+            from perftracker.models.regression import RegressionModel
+            r = RegressionModel.ptOnJobSave(self, regression_tag)
+            self.regression_original = r
+            self.regression_linked   = r
+
         self.save()
 
     def ptGenFileName(self):
@@ -189,23 +195,21 @@ class JobModel(models.Model):
         return re.sub(r'[^a-zA-Z0-9_-]', '_', name)
 
     @staticmethod
-    def ptChangeShowStatus(job_id, new_show_status):
+    def ptChangeRegressionLink(job_id, new_link_status):
         job = JobModel.objects.get(pk=job_id)
 
-        if job.shown == new_show_status:
+        curr_link_status = job.regression_linked is not None
+        if curr_link_status == new_link_status:
             raise KeyError
 
-        job.shown = new_show_status
+        job.regression_linked = None if job.regression_linked is not None else job.regression_original
         job.save()
 
     def save(self):
         super(JobModel, self).save()
 
-        from perftracker.models.regression import RegressionModel
-        r = RegressionModel.ptOnJobSave(self)
-        if r is not None:
-            self.regression = r
-            super(JobModel, self).save()
+        if self.regression_original is not None:
+            self.regression_original.ptSetFirstLastJob()
 
     class Meta:
         verbose_name = "Job"
@@ -214,7 +218,11 @@ class JobModel(models.Model):
 
 class JobBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
+    is_linked = serializers.SerializerMethodField()
     duration = ptDurationField()
+
+    def get_is_linked(self, job):
+        return job.regression_linked is not None
 
     def get_env_node(self, job):
         # this function is required to apply 'parent=None' filter because env_node children will be
@@ -231,7 +239,7 @@ class JobSimpleSerializer(JobBaseSerializer):
         model = JobModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
-                  'product_name', 'product_ver', 'shown')
+                  'product_name', 'product_ver', 'is_linked')
 
 
 class JobNestedSerializer(JobBaseSerializer):

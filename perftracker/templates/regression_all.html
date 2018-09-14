@@ -151,13 +151,16 @@ $(document).ready(function() {
         }
     });
 
-    $(document).on('click', '.pt-show-edit', function(e) {
+    /*
+     *  3. Jobs to regressions linking"
+     */
+    $(document).on('click', '.pt-link-job-edit', function(e) {
           var self = this;
           var job_id = $(this).data("id");
-          var is_shown = $(this).hasClass('pt-show-edit--shown');
+          var is_linked = $(this).hasClass('pt-link-job-edit--linked');
           var data = {
               job_id: job_id,
-              shown: !is_shown,
+              link: !is_linked,
           };
 
           $.ajax({
@@ -166,9 +169,9 @@ $(document).ready(function() {
               contentType: 'application/json; charset=utf-8',
               data: JSON.stringify(data),
               success: function(xhr) {
-                var replacement = is_shown
-                  ? '<a href="#" data-id="' + job_id + '" data-toggle="modal" class="pt-show-edit pt-show-edit--unshown glyphicon glyphicon-unchecked"></a>'
-                  : '<a href="#" data-id="' + job_id + '" data-toggle="modal" class="pt-show-edit pt-show-edit--shown glyphicon glyphicon-check"></a>'
+                var replacement = is_linked
+                  ? '<a href="#" data-id="' + job_id + '" data-toggle="modal" class="pt-link-job-edit pt-link-job-edit--unlinked glyphicon glyphicon-unchecked"></a>'
+                  : '<a href="#" data-id="' + job_id + '" data-toggle="modal" class="pt-link-job-edit pt-link-job-edit--linked glyphicon glyphicon-check"></a>'
 
                 $(self).replaceWith(replacement);
               },

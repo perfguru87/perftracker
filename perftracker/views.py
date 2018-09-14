@@ -117,7 +117,7 @@ def ptRegressionIdHtml(request, project_id, regression_id):
     # register 'range' template tag
 
     return ptBaseHtml(request, project_id, 'regression_id.html',
-                      params={'jobs': obj.ptGetShownJobs(),
+                      params={'jobs': obj.ptGetLinkedJobs(),
                               'first_job': obj.first_job,
                               'last_job': obj.last_job,
                               'duration': pt_dur2str(obj.last_job.end - obj.first_job.end),
@@ -303,12 +303,12 @@ def ptJobIdJson(request, api_ver, project_id, job_id):
 
         try:
             job_id = data['job_id']
-            show = data['shown']
+            link = data['link']
         except KeyError:
             return HttpResponseBadRequest("Wrong data in json")
 
         try:
-            JobModel.ptChangeShowStatus(job_id, show)
+            JobModel.ptChangeRegressionLink(job_id, link)
         except JobModel.DoesNotExist:
             HttpResponseBadRequest("There is no such job")
         except KeyError:

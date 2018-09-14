@@ -261,7 +261,7 @@ function pt_draw_regression_details(d, err_msg)
 
     s += "<div class='col-md-12'><h4>Jobs</h4>";
     s += "<table class='pt_obj_details'>";
-    s += "<thead><th></th><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th><th>Show in regression</th></thead>";
+    s += "<thead><th></th><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th><th>Linked</th></thead>";
 
     var jobs = d.jobs_list;
 
@@ -285,10 +285,9 @@ function pt_draw_regression_details(d, err_msg)
         s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, job.project, job.id, job.title);
         s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
 
-        console.log(job.id + ": " + job.shown);
-        var showEditIcon = job.shown
-            ? `<td><a href="#" data-id={0} data-toggle="modal" class="pt-show-edit pt-show-edit--shown glyphicon glyphicon-check"></a></td>`.ptFormat(job.id)
-            : `<td><a href="#" data-id={0} data-toggle="modal" class="pt-show-edit pt-show-edit--unshown glyphicon glyphicon-unchecked"></a></td>`.ptFormat(job.id);
+        var showEditIcon = job.is_linked
+            ? `<td><a href="#" data-id={0} data-toggle="modal" class="pt-link-job-edit pt-link-job-edit--linked glyphicon glyphicon-check"></a></td>`.ptFormat(job.id)
+            : `<td><a href="#" data-id={0} data-toggle="modal" class="pt-link-job-edit pt-link-job-edit--unlinked glyphicon glyphicon-unchecked"></a></td>`.ptFormat(job.id);
 
         s += showEditIcon;
         s += "</tr>";
