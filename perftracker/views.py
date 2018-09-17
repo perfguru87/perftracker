@@ -594,6 +594,7 @@ def pt_regression_test_id_json(request, api_ver, project_id, regression_id, grou
 
 @csrf_exempt
 def pt_hwfarm_node_all_json(request, api_ver, project_id):
+    project_id = int(project_id)
 
     class HwFarmNodeJson(BaseDatatableView):
         # The model we're going to show
