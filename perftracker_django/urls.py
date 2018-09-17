@@ -39,7 +39,7 @@ urlpatterns = [
         views.ptJobTestIdJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/(?P<group_id>\d+)/test/$', views.ptJobTestAllJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/$', views.ptJobGroupAllJson),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)$', views.ptJobIdJson),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)$', views.pt_job_id_json),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/$', views.ptJobAllJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/(?P<hw_id>\d+)$', views.ptHwFarmNodeIdJson),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/$', views.ptHwFarmNodeAllJson),

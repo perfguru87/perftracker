@@ -182,7 +182,7 @@ class JobModel(models.Model):
 
         if regression_tag is not None:
             from perftracker.models.regression import RegressionModel
-            r = RegressionModel.ptOnJobSave(self, regression_tag)
+            r = RegressionModel.pt_on_job_save(self, regression_tag)
             self.regression_original = r
             self.regression_linked   = r
 
@@ -195,7 +195,7 @@ class JobModel(models.Model):
         return re.sub(r'[^a-zA-Z0-9_-]', '_', name)
 
     @staticmethod
-    def ptChangeRegressionLink(job_id, new_link_status):
+    def pt_change_regression_link(job_id, new_link_status):
         job = JobModel.objects.get(pk=job_id)
 
         curr_link_status = job.regression_linked is not None
@@ -209,7 +209,7 @@ class JobModel(models.Model):
         super(JobModel, self).save()
 
         if self.regression_original is not None:
-            self.regression_original.ptSetFirstLastJob()
+            self.regression_original.pt_set_first_last_job()
 
     class Meta:
         verbose_name = "Job"
