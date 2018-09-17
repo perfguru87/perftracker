@@ -14,7 +14,7 @@ from django.http import JsonResponse, Http404
 from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
 from django.core.serializers import serialize
-from django.core.exceptions import SuspiciousOperation, ObjectDoesNotExist
+from django.core.exceptions import SuspiciousOperation, ObjectDoesNotExist, ValidationError
 from django.contrib.auth.decorators import login_required
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.db.models import Q
@@ -155,7 +155,7 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
 
     try:
         job.pt_update(j)
-    except SuspiciousOperation as e:
+    except (SuspiciousOperation, ValidationError) as e:
         return HttpResponse(str(e), status = http.client.BAD_REQUEST)
 
     return HttpResponse("OK, job %d has been %s" % (job.id, "created" if new else ("appended" if append else "updated")))

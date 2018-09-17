@@ -66,16 +66,31 @@ class JobModel(models.Model):
         self.cmdline = j.get_str('cmdline')
         self.project = ProjectModel.pt_get_by_name(j.get_str('project_name'))
 
+        append = False if self.deleted else j.get_bool('append')
+
         now = timezone.now()
 
         env_nodes_json = j.get_list('env_nodes')
         tests_json = j.get_list('tests', require=True)
+
+        key2test = {}
+        uuid2test = {}
+        test_seq_num = 0
+
+        # process existing tests
+        if self.id:
+            for t in TestModel.objects.filter(job=self):
+                uuid2test[str(t.uuid)] = t
+                test_seq_num = max(t.seq_num, test_seq_num)
+                if append:
+                    t.pt_validate_uniqueness(key2test)
 
         for t in tests_json:
             if 'uuid' not in t:
                 raise SuspiciousOperation("test doesn't have 'uuid' key: %s" % str(t))
             test = TestModel(job=self, uuid=t['uuid'])
             test.pt_update(self, t, validate_only=True)  # FIXME, double pt_update() call (here and below)
+            test.pt_validate_uniqueness(key2test)
 
         self.suite_name = j.get_str('suite_name')
         self.suite_ver  = j.get_str('suite_ver')
@@ -95,8 +110,6 @@ class JobModel(models.Model):
         self.tests_failed = 0
         self.tests_errors = 0
         self.tests_warnings = 0
-
-        append = False if self.deleted else j.get_bool('append')
 
         self.deleted = False
 
@@ -130,15 +143,6 @@ class JobModel(models.Model):
                     serializer.save()
                 else:
                     raise SuspiciousOperation(str(serializer.errors) + ", original json: " + str(env_node_json))
-
-        # process tests
-        tests = TestModel.objects.filter(job=self)
-        test_seq_num = 0
-        uuid2test = {}
-        for t in tests:
-            uuid2test[str(t.uuid)] = t
-            if test_seq_num <= t.seq_num:
-                test_seq_num = t.seq_num
 
         for t in tests_json:
             test_uuid = t['uuid']
