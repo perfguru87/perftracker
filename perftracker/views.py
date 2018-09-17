@@ -23,7 +23,7 @@ from django.db.models.query import QuerySet
 
 from perftracker import __pt_version__
 from perftracker.models.project import ProjectModel
-from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, ptComparisonServSideView
+from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, PTComparisonServSideView
 from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, PTRegressionServSideView
 from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer

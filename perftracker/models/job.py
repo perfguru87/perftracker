@@ -219,7 +219,7 @@ class JobModel(models.Model):
 class JobBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
     is_linked = serializers.SerializerMethodField()
-    duration = ptDurationField()
+    duration = PTDurationField()
 
     def get_is_linked(self, job):
         return job.regression_linked is not None
