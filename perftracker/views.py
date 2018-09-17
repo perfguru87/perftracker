@@ -626,14 +626,27 @@ def pt_hwfarm_node_all_json(request, api_ver, project_id):
             if project_id != 0:
                 qs = qs.filter(Q(projects=project_id))
 
+            f = 0
+            while True:
+                _filter = self.request.GET.get(u'filter[%d][column]' % f, None)
+                if not _filter:
+                    break
+                value = self.request.GET.get(u'filter[%d][value]' % f, None)
+                if not value:
+                    value = None
+                qs = qs.filter(Q(**{_filter: value}))
+                f += 1
+
             qs = qs.filter(Q(hidden=False))
             return qs
 
         def prepare_results(self, qs):
             return HwFarmNodeSimpleSerializer(qs, many=True).data
 
-    return HwFarmNodeJson.as_view()(request)
-
+    try:
+        return HwFarmNodeJson.as_view()(request)
+    except ValueError:
+        return HttpResponseBadRequest('bad request')
 
 def pt_hwfarm_node_id_json(request, api_ver, project_id, hw_id):
     try:
