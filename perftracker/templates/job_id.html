@@ -18,9 +18,10 @@
         <th class='colExpander'></th>
         <th class='colId'></th>
         <th class='colSeqNum'>#</th>
+        <th class='colGroup'>Group</th>
         <th class='colTag'>Tag</th>
         <th class='colCategory'></th>
-        <th class='colDuration'>Duration</th>
+        <th class='colDuration'>Duration (sec)</th>
         <th class='colScore'>Score</th>
         <th class='colPlusmin'>&plusmn; %</th>
       </tr>
@@ -30,9 +31,10 @@
         <th class='colExpander'></th>
         <th class='colId'></th>
         <th class='colSeqNum'>#</th>
+        <th class='colGroup'>Group</th>
         <th class='colTag'>Tag</th>
         <th class='colCategory'></th>
-        <th class='colDuration'>Duration</th>
+        <th class='colDuration'>Duration (sec)</th>
         <th class='colScore'>Score</th>
         <th class='colPlusmin'>&plusmn; %</th>
       </tr>
@@ -125,6 +127,7 @@ $(document).ready(function() {
             },
             { "data": "id" },
             { "data": "seq_num" },
+            { "data": "group" },
             { "data": "tag" },
             { "data": "category" },
             { "data": "duration" },
@@ -132,6 +135,14 @@ $(document).ready(function() {
             { "data": "avg_plusmin" },
         ],
         "columnDefs": [
+            {
+                "targets": "colGroup",
+                "className": 'pt_left',
+                "type": "string",
+                "render": function ( data, type, row ) {
+                    return data;
+                }
+            },
             {
                 "targets": "colTag",
                 "className": 'pt_left',

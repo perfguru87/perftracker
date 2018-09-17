@@ -24,7 +24,7 @@ from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, E
 from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 
 
-class ptCmpChartType:
+class PTCmpChartType:
     AUTO = 0
     NOCHART = 1
     XYLINE = 2
@@ -34,27 +34,27 @@ class ptCmpChartType:
 
 
 CMP_CHARTS = (
-    (ptCmpChartType.AUTO, 'Auto'),
-    (ptCmpChartType.NOCHART, 'No charts'),
-    (ptCmpChartType.XYLINE, 'XY-line'),
-    (ptCmpChartType.XYLINE_WITH_TREND, 'XY-line + trend'),
-    (ptCmpChartType.BAR, 'Bar charts'),
-    (ptCmpChartType.BAR_WITH_TREND, 'Bar + trend'))
+    (PTCmpChartType.AUTO, 'Auto'),
+    (PTCmpChartType.NOCHART, 'No charts'),
+    (PTCmpChartType.XYLINE, 'XY-line'),
+    (PTCmpChartType.XYLINE_WITH_TREND, 'XY-line + trend'),
+    (PTCmpChartType.BAR, 'Bar charts'),
+    (PTCmpChartType.BAR_WITH_TREND, 'Bar + trend'))
 
 
-class ptCmpTableType:
+class PTCmpTableType:
     AUTO = 0
     HIDE = 1
     SHOW = 2
 
 
 CMP_TABLES = (
-    (ptCmpTableType.AUTO, 'Auto'),
-    (ptCmpTableType.HIDE, 'Hide all tables'),
-    (ptCmpTableType.SHOW, 'Show all tables'))
+    (PTCmpTableType.AUTO, 'Auto'),
+    (PTCmpTableType.HIDE, 'Hide all tables'),
+    (PTCmpTableType.SHOW, 'Show all tables'))
 
 
-class ptCmpTestsType:
+class PTCmpTestsType:
     AUTO = 0
     TESTS_WO_WARNINGS = 1
     TESTS_WO_ERRORS = 2
@@ -62,13 +62,13 @@ class ptCmpTestsType:
 
 
 CMP_TESTS = (
-    (ptCmpTestsType.AUTO, 'Auto'),
-    (ptCmpTestsType.TESTS_WO_WARNINGS, 'Tests w/o warnings'),
-    (ptCmpTestsType.TESTS_WO_ERRORS, 'Tests w/o errors'),
-    (ptCmpTestsType.ALL_TESTS, 'All tests'))
+    (PTCmpTestsType.AUTO, 'Auto'),
+    (PTCmpTestsType.TESTS_WO_WARNINGS, 'Tests w/o warnings'),
+    (PTCmpTestsType.TESTS_WO_ERRORS, 'Tests w/o errors'),
+    (PTCmpTestsType.ALL_TESTS, 'All tests'))
 
 
-class ptCmpValueType:
+class PTCmpValueType:
     AUTO = 0
     AVERAGE = 1
     MIN = 2
@@ -76,10 +76,10 @@ class ptCmpValueType:
 
 
 CMP_VALUES = (
-    (ptCmpValueType.AUTO, 'Auto'),
-    (ptCmpValueType.AVERAGE, 'Average values'),
-    (ptCmpValueType.MIN, 'Min values'),
-    (ptCmpValueType.MAX, 'Max values'))
+    (PTCmpValueType.AUTO, 'Auto'),
+    (PTCmpValueType.AVERAGE, 'Average values'),
+    (PTCmpValueType.MIN, 'Min values'),
+    (PTCmpValueType.MAX, 'Max values'))
 
 
 class ComparisonModel(models.Model):
@@ -100,7 +100,7 @@ class ComparisonModel(models.Model):
     jobs        = models.ManyToManyField(JobModel, help_text="Jobs")
 
     @staticmethod
-    def ptValidateJson(json_data):
+    def pt_validate_json(json_data):
         if 'title' not in json_data:
             raise SuspiciousOperation("Comparison title is not specified: it must be 'title': '...'")
         if 'jobs' not in json_data:
@@ -109,7 +109,7 @@ class ComparisonModel(models.Model):
             raise SuspiciousOperation("Comparison jobs must be a list: 'jobs': [1, 3, ...] ")
 
     @staticmethod
-    def _ptGetType(types, json_data, key):
+    def _pt_get_type(types, json_data, key):
         if key not in json_data:
             return 0
 
@@ -121,12 +121,12 @@ class ComparisonModel(models.Model):
             raise SuspiciousOperation("Unknown type: %s, acceptable types are: %s" % (json_data[key], ",".join(type2id.keys())))
         return id
 
-    def ptUpdate(self, json_data):
+    def pt_update(self, json_data):
         self.title = json_data['title']
-        self.charts_type = self._ptGetType(CMP_CHARTS, json_data, 'charts_type')
-        self.tables_type = self._ptGetType(CMP_TABLES, json_data, 'tables_type')
-        self.tests_type = self._ptGetType(CMP_TESTS, json_data, 'tests_type')
-        self.values_type = self._ptGetType(CMP_VALUES, json_data, 'values_type')
+        self.charts_type = self._pt_get_type(CMP_CHARTS, json_data, 'charts_type')
+        self.tables_type = self._pt_get_type(CMP_TABLES, json_data, 'tables_type')
+        self.tests_type = self._pt_get_type(CMP_TESTS, json_data, 'tests_type')
+        self.values_type = self._pt_get_type(CMP_VALUES, json_data, 'values_type')
 
         jobs = []
 
@@ -173,38 +173,38 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
 
         return EnvNodeSimpleSerializer(objs, many=True).data
 
-    def _ptGetJobsAttr(self, cmp, attr):
+    def _pt_get_jobs_attr(self, cmp, attr):
         ret = set()
         for job in cmp.jobs.all():
             ret.add(job.__dict__[attr])
         return ", ".join(sorted(ret))
 
-    def _ptGetJobsSum(self, cmp, attr):
+    def _pt_get_jobs_sum(self, cmp, attr):
         ret = 0
         for job in cmp.jobs.all():
             ret += job.__dict__[attr]
         return ret
 
     def get_suite_ver(self, cmp):
-        return self._ptGetJobsAttr(cmp, 'suite_ver')
+        return self._pt_get_jobs_attr(cmp, 'suite_ver')
 
     def get_suite_name(self, cmp):
-        return self._ptGetJobsAttr(cmp, 'suite_name')
+        return self._pt_get_jobs_attr(cmp, 'suite_name')
 
     def get_tests_total(self, cmp):
-        return self._ptGetJobsSum(cmp, 'tests_total')
+        return self._pt_get_jobs_sum(cmp, 'tests_total')
 
     def get_tests_completed(self, cmp):
-        return self._ptGetJobsSum(cmp, 'tests_completed')
+        return self._pt_get_jobs_sum(cmp, 'tests_completed')
 
     def get_tests_failed(self, cmp):
-        return self._ptGetJobsSum(cmp, 'tests_failed')
+        return self._pt_get_jobs_sum(cmp, 'tests_failed')
 
     def get_tests_errors(self, cmp):
-        return self._ptGetJobsSum(cmp, 'tests_errors')
+        return self._pt_get_jobs_sum(cmp, 'tests_errors')
 
     def get_tests_warnings(self, cmp):
-        return self._ptGetJobsSum(cmp, 'tests_warnings')
+        return self._pt_get_jobs_sum(cmp, 'tests_warnings')
 
 
 class ComparisonSimpleSerializer(ComparisonBaseSerializer):
@@ -232,14 +232,14 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 ######################################################################
 
 
-class ptComparisonServSideTestView:
+class PTComparisonServSideTestView:
     def __init__(self, jobs):
         self.tests = [None] * len(jobs)
         self.title = ''
         self.id = 0
         self.seq_num = 0
 
-    def ptAddTest(self, job, job_n, test_obj):
+    def pt_add_test(self, job, job_n, test_obj):
         self.tests[job_n] = test_obj
         if not self.id:
             self.title = ('%s {%s}' % (test_obj.tag, test_obj.category)) if test_obj.category else test_obj.tag
@@ -292,18 +292,18 @@ class ptComparisonServSideTestView:
         return ret
 
 
-class ptComparisonServSideSeriesView:
+class PTComparisonServSideSeriesView:
     def __init__(self, sect, legend):
         self.series = []
         self.sect = sect
         self.legend = legend
 
-    def ptAddTest(self, job, job_n, test_obj):
+    def pt_add_test(self, job, job_n, test_obj):
         self.series.append(pt_float2human(test_obj.avg_score))
 
     @property
     def data(self):
-        if self.sect.chart_type == ptCmpChartType.BAR:
+        if self.sect.chart_type == PTCmpChartType.BAR:
             return self.series
 
         ret = []
@@ -312,16 +312,16 @@ class ptComparisonServSideSeriesView:
         return ret
 
 
-class ptComparisonServSideSectView:
+class PTComparisonServSideSectView:
     def __init__(self, id, cmp_obj, jobs, title):
         self.cmp_obj = cmp_obj
         self.title = "Tests results" if title == "" else title
         self.jobs = jobs
         self.tests = OrderedDict()
         self.tests_tags = set()
-        self.chart_type = ptCmpChartType.NOCHART
+        self.chart_type = PTCmpChartType.NOCHART
         self.chart_trend_line = False
-        self.table_type = ptCmpTableType.HIDE
+        self.table_type = PTCmpTableType.HIDE
         self.categories = []
         self.x_axis_name = ''
         self.x_axis_type = 'category'
@@ -332,38 +332,38 @@ class ptComparisonServSideSectView:
         self.legends = [j.title for j in jobs]
         if len(set(self.legends)) != len(self.legends):
             self.legends = ["%d - %s" % (j.id, j.title) for j in jobs]
-        self.series = [ptComparisonServSideSeriesView(self, l) for l in self.legends]
+        self.series = [PTComparisonServSideSeriesView(self, l) for l in self.legends]
 
-    def ptAddTest(self, job, job_n, test_obj):
+    def pt_add_test(self, job, job_n, test_obj):
         key = "%s %s" % (test_obj.tag, test_obj.category)
         if key not in self.tests:
-            self.tests[key] = ptComparisonServSideTestView(self.jobs)
+            self.tests[key] = PTComparisonServSideTestView(self.jobs)
             self.categories.append(test_obj.category)
             self.y_axis_name = test_obj.metrics
-        self.series[job_n].ptAddTest(job, job_n, test_obj)
-        self.tests[key].ptAddTest(job, job_n, test_obj)
+        self.series[job_n].pt_add_test(job, job_n, test_obj)
+        self.tests[key].pt_add_test(job, job_n, test_obj)
         self.tests_tags.add(test_obj.tag)
 
-    def _ptInitChartType(self):
-        if self.cmp_obj.charts_type == ptCmpChartType.XYLINE_WITH_TREND:
-            self.chart_type = ptCmpChartType.XYLINE
+    def _pt_init_chart_type(self):
+        if self.cmp_obj.charts_type == PTCmpChartType.XYLINE_WITH_TREND:
+            self.chart_type = PTCmpChartType.XYLINE
             self.chart_trend_line = True
             self.legends += [("%s (trend)" % l) for l in self.legends]
             return
 
-        if self.cmp_obj.charts_type == ptCmpChartType.BAR_WITH_TREND:
-            self.chart_type = ptCmpChartType.BAR
+        if self.cmp_obj.charts_type == PTCmpChartType.BAR_WITH_TREND:
+            self.chart_type = PTCmpChartType.BAR
             self.chart_trend_line = True
             return
 
-        if self.cmp_obj.charts_type != ptCmpChartType.AUTO:
+        if self.cmp_obj.charts_type != PTCmpChartType.AUTO:
             return
 
         if len(self.tests_tags) != 1:
-            self.chart_type = ptCmpChartType.NOCHART
+            self.chart_type = PTCmpChartType.NOCHART
             return
 
-        self.chart_type = ptCmpChartType.BAR
+        self.chart_type = PTCmpChartType.BAR
         if len(self.tests) <= 3:
             return
 
@@ -376,51 +376,51 @@ class ptComparisonServSideSectView:
                   self.x_axis_rotate = 45
                return
         self.x_axis_type = 'value'
-        self.chart_type = ptCmpChartType.XYLINE
+        self.chart_type = PTCmpChartType.XYLINE
 
-    def ptInitChartAndTable(self):
+    def pt_init_chart_and_table(self):
         self.x_axis_name, self.categories = pt_cut_common_sfx(self.categories)
 
-        self._ptInitChartType()
+        self._pt_init_chart_type()
 
         if len(self.tests_tags) == 1:
-            if self.cmp_obj.tables_type == ptCmpTableType.AUTO:
-                self.table_type = ptCmpTableType.HIDE if len(self.tests) > 10 else ptCmpTableType.SHOW
+            if self.cmp_obj.tables_type == PTCmpTableType.AUTO:
+                self.table_type = PTCmpTableType.HIDE if len(self.tests) > 10 else PTCmpTableType.SHOW
         else:
-            if self.cmp_obj.tables_type == ptCmpTableType.AUTO:
-                self.table_type = ptCmpTableType.SHOW
+            if self.cmp_obj.tables_type == PTCmpTableType.AUTO:
+                self.table_type = PTCmpTableType.SHOW
 
     @property
     def pageable(self):
         return len(self.tests) > 10
 
 
-class ptComparisonServSideGroupView:
+class PTComparisonServSideGroupView:
     def __init__(self, id, cmp_obj, jobs, test_obj):
         self.cmp_obj = cmp_obj
         self.jobs = jobs
-        self.group_obj = TestGroupModel.ptGetByTag(test_obj.group)
+        self.group_obj = TestGroupModel.pt_get_by_tag(test_obj.group)
         self.sections = OrderedDict()
         self.test_results = [[]] * len(jobs)
         self.id = id
 
-    def ptAddTest(self, job, job_n, test_obj):
+    def pt_add_test(self, job, job_n, test_obj):
         key = test_obj.tag if test_obj.category else ""
         if key not in self.sections:
-            self.sections[key] = ptComparisonServSideSectView(len(self.sections), self.cmp_obj, self.jobs, key)
-        self.sections[key].ptAddTest(job, job_n, test_obj)
+            self.sections[key] = PTComparisonServSideSectView(len(self.sections), self.cmp_obj, self.jobs, key)
+        self.sections[key].pt_add_test(job, job_n, test_obj)
         self.test_results[job_n].append(test_obj.avg_score)
 
-    def ptInitChartAndTable(self):
+    def pt_init_chart_and_table(self):
         for s in self.sections.values():
-            s.ptInitChartAndTable()
+            s.pt_init_chart_and_table()
         if len(self.sections) > 1:
             for s in self.sections.values():
                 if s.title == "":
                     s.title = "Tests results"
 
 
-class ptComparisonServSideView:
+class PTComparisonServSideView:
     def __init__(self, cmp_obj):
         self.cmp_obj = cmp_obj
         self.job_objs = self.cmp_obj.jobs.all()
@@ -428,17 +428,16 @@ class ptComparisonServSideView:
 
         self.init()
 
-    def ptAddTest(self, job, job_n, test_obj):
+    def pt_add_test(self, job, job_n, test_obj):
         if test_obj.group not in self.groups:
-            self.groups[test_obj.group] = ptComparisonServSideGroupView(len(self.groups), self.cmp_obj, self.job_objs, test_obj)
-        self.groups[test_obj.group].ptAddTest(job, job_n, test_obj)
+            self.groups[test_obj.group] = PTComparisonServSideGroupView(len(self.groups), self.cmp_obj, self.job_objs, test_obj)
+        self.groups[test_obj.group].pt_add_test(job, job_n, test_obj)
 
     def init(self):
-        for job_n in range(0, len(self.job_objs)):
-            j = self.job_objs[job_n]
-            tests = TestModel.objects.filter(job=j).order_by('seq_num')
+        for i, job in enumerate(self.job_objs):
+            tests = TestModel.objects.filter(job=job).order_by('seq_num')
             for t in tests:
-                self.ptAddTest(j, job_n, t)
+                self.pt_add_test(job, i, t)
 
         for g in self.groups.values():
-            g.ptInitChartAndTable()
+            g.pt_init_chart_and_table()

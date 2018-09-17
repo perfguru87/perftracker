@@ -135,6 +135,7 @@ function pt_draw_job_details(d, err_msg)
 
     s += "<div class='pt_obj_management'>" +
          "<a href='/admin/perftracker/jobmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
+         "<a href='#' onclick=\"return pt_ajax_job_delete({0})\">Delete</a><span>|</span>".ptFormat(d.id) +
          "<a href='/0/job/{0}?as_json=1'>Download JSON</a><span>|</span>".ptFormat(d.id) +
          "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
 
@@ -192,6 +193,27 @@ function pt_ajax_job_details(api_ver, project_id, job_id)
             $('#job_details_slider_{0}'.ptFormat(job_id)).slideDown();
         }
     });
+}
+
+function pt_ajax_job_delete(job_id)
+{
+    if (!confirm('Are you sure you want to delete job #' + job_id + '?'))
+        return false;
+
+    $.ajax({
+        url: '/api/v1.0/0/job/{0}'.ptFormat(job_id),
+        cache: true,
+        data: null,
+        type: 'DELETE',
+        timeout: 2000,
+        success: function(data, status) {
+            window.location.reload();
+        },
+        error: function(data, status, error) {
+            alert("can't delete job #" + job_id + ", " + error);
+        }
+    });
+    return false;
 }
 
 function pt_draw_comparison_details(d, err_msg)

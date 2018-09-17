@@ -18,7 +18,7 @@ from rest_framework import serializers
 
 from perftracker.models.job import JobModel
 from perftracker.models.test_group import TestGroupModel, TEST_GROUP_TAG_LENGTH
-from perftracker.helpers import ptDurationField, ptRoundedFloatField, ptRoundedFloatMKField, ptJson
+from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, PTJson
 
 from pyecharts import Bar
 
@@ -70,8 +70,8 @@ class TestModel(models.Model):
     min_plusmin = models.FloatField("Deviation in % of min score: 0.01", null=True)
     max_plusmin = models.FloatField("Deviation in % of max score: 0.03", null=True)
 
-    def ptUpdate(self, job, json_data, validate_only=False):
-        j = ptJson(json_data, obj_name="test json", exception_type=SuspiciousOperation)
+    def pt_update(self, job, json_data, validate_only=False):
+        j = PTJson(json_data, obj_name="test json", exception_type=SuspiciousOperation)
 
         if 'seq_num' in json_data:
             self.seq_num = json_data['seq_num']
@@ -114,12 +114,12 @@ class TestModel(models.Model):
         else:
             self.warnings = len(j.get_list('warnings'))
 
-        dur_sec = j.get_int('duration_sec', 0)
+        dur_sec = j.get_float('duration_sec', 0)
         self.duration = timedelta(seconds=int(dur_sec)) if dur_sec else self.end - self.begin
 
         self.job = job
         self.group = j.get_str('group')
-        TestGroupModel.ptGetByTag(self.group)  # ensure appropriate TestGroupModel object exists
+        TestGroupModel.pt_get_by_tag(self.group)  # ensure appropriate TestGroupModel object exists
 
         self.samples = j.get_int('samples', len(scores))
 
@@ -146,20 +146,20 @@ class TestModel(models.Model):
             except TestModel.DoesNotExist:
                 obj = None
 
-            if obj is None or not self.ptIsEqualTo(obj):
+            if obj is None or not self.pt_is_equal_to(obj):
                 self.save()
 
     def __str__(self):
         return self.tag
 
-    def ptStatusIsCompleted(self):
+    def pt_status_is_completed(self):
         return self.status in ("SUCCESS", "FAILED")
 
-    def ptStatusIsFailed(self):
+    def pt_status_is_failed(self):
         return self.status == "FAILED"
 
     @staticmethod
-    def ptDeleteTests(tests_uuids):
+    def pt_delete_tests(tests_uuids):
         """ Delete Test objects from the tests_uuids by 100 elements at once"""
         if not tests_uuids:
             return
@@ -171,7 +171,7 @@ class TestModel(models.Model):
         for uuids in grouper(100, tests_uuids):
             TestModel.objects.filter(reduce(lambda x, y: x | y, [Q(uuid=uuid) for uuid in uuids])).delete()
 
-    def ptIsEqualTo(self, test):
+    def pt_is_equal_to(self, test):
         # FIXME, XXX - not sure this is right way to manage the problem of data object update in the database
         for f in self._meta.get_fields():
             if getattr(test, f.name) != getattr(self, f.name):
@@ -179,7 +179,7 @@ class TestModel(models.Model):
         return True
 
     @staticmethod
-    def ptCreateSimpleBar(self):
+    def pt_create_simple_bar(self):
         bar = Bar("My First Chart", "Here's the subtitle")
         bar.add("clothing", ["shirt", "sweater", "chiffon shirt", "pants", "high heels", "socks"], [5, 20, 36, 10, 75, 90])
         return bar
@@ -190,9 +190,9 @@ class TestModel(models.Model):
 
 
 class TestSimpleSerializer(serializers.ModelSerializer):
-    duration = ptDurationField()
-    avg_score = ptRoundedFloatMKField()
-    avg_plusmin = ptRoundedFloatField()
+    duration = PTDurationField()
+    avg_score = PTRoundedFloatMKField()
+    avg_plusmin = PTRoundedFloatField()
 
     class Meta:
         model = TestModel

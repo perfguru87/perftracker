@@ -1,16 +1,14 @@
-import uuid
 import os
+import uuid
 import json
 
 from rest_framework import serializers
 from django.utils.dateparse import parse_datetime
 
 
-class ptDurationField(serializers.DurationField):
+class PTDurationField(serializers.DurationField):
     def to_representation(self, value):
-        # get rid of microseconds
-        v = super().to_representation(value)
-        return ':'.join(v.split(':')[0:2])
+        return int(round(value.total_seconds()))
 
 
 def pt_float2human(value, MK=False):
@@ -35,12 +33,12 @@ def pt_float2human(value, MK=False):
         return float(fmt % (val)) * (1 if value > 0 else -1)
 
 
-class ptRoundedFloatField(serializers.FloatField):
+class PTRoundedFloatField(serializers.FloatField):
     def to_representation(self, value):
         return pt_float2human(value)
 
 
-class ptRoundedFloatMKField(serializers.FloatField):
+class PTRoundedFloatMKField(serializers.FloatField):
     def to_representation(self, value):
         return pt_float2human(value, MK=True)
 
@@ -100,7 +98,7 @@ def pt_cut_common_sfx(lines, separators=None):
     return common_sfx, ret
 
 
-class ptJson:
+class PTJson:
     def __init__(self, json_data, obj_name="json", exception_type=None, known_nones=None):
         self.json_data = json_data
         self.obj_name = obj_name
@@ -145,6 +143,9 @@ class ptJson:
             return self._get_value(key, defval, require, key_type, 'json')
         else:
             return self._get_value(key, str(defval), require, json.loads, 'json')
+
+    def get_float(self, key, defval=0, require=False):
+        return self._get_value(key, defval, require, float, 'float')
 
     def get_int(self, key, defval=0, require=False):
         return self._get_value(key, defval, require, int, 'integer')

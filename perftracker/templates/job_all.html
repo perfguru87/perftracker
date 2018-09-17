@@ -15,11 +15,13 @@
     <tr>
       <th class='colExpander'></th>
       <th class='colID'>ID</th>
-      <th class='colEndDate'>Run end</th>
+      <th class='colEndDate'>Test run end</th>
       <th class='colHw'>Hw</th>
-      <th class='colVersion'>Version</th>
-      <th class='colRunTitle'>Run title</th>
-      <th class='colDuration'>Duration</th>
+      <th class='colProdName'>Product name</th>
+      <th class='colProdVer'>Product ver</th>
+      <th class='colRunTitle'>Test run title</th>
+      <th class='colTestVer'>Test ver</th>
+      <th class='colDuration'>Dur (sec)</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
@@ -30,11 +32,13 @@
     <tr>
       <th class='colExpander'></th>
       <th class='colID'>ID</th>
-      <th class='colEndDate'>Run end</th>
+      <th class='colEndDate'>Test run end</th>
       <th class='colHw'>Hw</th>
-      <th class='colVersion'>Version</th>
-      <th class='colRunTitle'>Run title</th>
-      <th class='colDuration'>Duration</th>
+      <th class='colProdName'>Product name</th>
+      <th class='colProdVer'>Product ver</th>
+      <th class='colRunTitle'>Test run title</th>
+      <th class='colTestVer'>Test ver</th>
+      <th class='colDuration'>Dur (sec)</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
@@ -92,9 +96,9 @@ $(function() {
           <ul id='pt_jobs_to_compare'>
           </ul>
           <div>
-            <button type="cancel" class="btn btn-default">Cancel</button>   
-            <button type="submit" class="btn btn-primary pt_right" id='pt_btn_save'>Save</button>   
-            <button type="submit" class="btn btn-default pt_right" id='pt_btn_preview'>Preview</button>   
+            <button type="cancel" class="btn btn-default">Cancel</button>
+            <button type="submit" class="btn btn-primary pt_right" id='pt_btn_save'>Save</button>
+            <button type="submit" class="btn btn-default pt_right" id='pt_btn_preview'>Preview</button>
           </div>
         </div>
 
@@ -175,7 +179,7 @@ $(function() {
               </ul>
             </div>
           </div>
-        
+
         </div>
       </div> <!-- form //-->
     </form>
@@ -205,8 +209,10 @@ $(document).ready(function() {
             { "data": "id" },
             { "data": "end" },
             { "data": "env_node" },
-            { "data": "suite_ver" },
+            { "data": "product_name" },
+            { "data": "product_ver" },
             { "data": "title" },
+            { "data": "suite_ver" },
             { "data": "duration" },
             { "data": "tests_total" },
             { "data": "tests_completed" },
@@ -228,6 +234,13 @@ $(document).ready(function() {
                 },
             },
             {
+                "targets": "colID",
+                "type": "integer",
+                "render": function ( data, type, row ) {
+                    return "<a href='/{{ project.id }}/job/" + row.id + "'>" + data + "</a>";
+                },
+            },
+            {
                 "targets": "colHw",
                 "type": "string",
                 "render": function ( data, type, row ) {
@@ -245,23 +258,24 @@ $(document).ready(function() {
                 },
             },
             {
-                "targets": "colVersion",
-                "type": "string",
-                "orderData": [ 4, 1 ],
-            },
-
-            {
                 "targets": "colRunTitle",
                 "type": "string",
-                "orderData": [ 5, 1 ],
+                "orderData": [ 6, 1 ],
                 "render": function ( data, type, row ) {
-                    return "<a href='/{{ project.id }}/job/" + row.id + "'>" + data + "</a>";
+                    return data;
                 },
+            },
+            {
+                "targets": "colTestVer",
+                "type": "string",
+                "orderData": [ 7, 1 ],
             },
             {
                 "targets": "colTests",
                 "type": "string",
                 "render": function ( data, type, row ) {
+                    if (data == row.tests_total)
+                        return data;
                     return data +' (of '+ row.tests_total+')';
                 },
             },
@@ -384,7 +398,7 @@ $(document).ready(function() {
      */
 
     $('div.input-group ul.dropdown-menu li a').click(function (e) {
-        var $div = $(this).parent().parent().parent(); 
+        var $div = $(this).parent().parent().parent();
         var $btn = $div.find('button');
         $btn.html($(this).text() + ' <span class="caret"></span>');
         $div.removeClass('open');
@@ -406,8 +420,10 @@ $(document).ready(function() {
         var payload = {}
 
         payload.title = $("#pt_comparison_title").val();
-        if (payload.title == "")
+        if (payload.title == "") {
             payload.title = $("#pt_comparison_title").attr("placeholder");
+        }
+
         payload.charts_type = $.trim($("#pt_charts_type").text());
         payload.tables_type = $.trim($("#pt_tables_type").text());
         payload.tests_type = $.trim($("#pt_tests_type").text());
@@ -415,23 +431,24 @@ $(document).ready(function() {
         payload.jobs = Array();
 
         var elements = $('#pt_jobs_to_compare').find('input');
-        for (var i = 0; i < elements.length; i++)
-	    payload.jobs.push(parseInt(elements[i].value));
+        for (var i = 0; i < elements.length; i++) {
+	        payload.jobs.push(parseInt(elements[i].value));
+        }
 
         $.ajax({
-                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
-                type : "POST",
-                contentType: "application/json; charset=utf-8",
-                dataType : 'json',
-                data : JSON.stringify(payload),
-                success : function(result) {
-                    window.location.replace("/{{ project.id }}/comparison/" + result.id)
-                },
-                error: function(xhr, resp, text) {
-                    console.log("Form comparison sumbit failed", xhr, resp, text);
-                    alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
-                }
-            })
+            url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
+            type : "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType : 'json',
+            data : JSON.stringify(payload),
+            success : function(result) {
+                window.location.replace("/{{ project.id }}/comparison/" + result.id)
+            },
+            error: function(xhr, resp, text) {
+                console.log("Form comparison sumbit failed", xhr, resp, text);
+                alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
+            }
+        })
 
         return false;
     });

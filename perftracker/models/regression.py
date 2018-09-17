@@ -17,7 +17,7 @@ from perftracker.models.project import ProjectModel
 from perftracker.models.job import JobModel, JobSimpleSerializer
 from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
-from perftracker.models.comparison import ptCmpChartType, ptCmpTableType
+from perftracker.models.comparison import PTCmpChartType, PTCmpTableType
 from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 
 
@@ -111,7 +111,7 @@ TREND_RATIO_THR = [[0.5, 'pt_regr_neg2'],
                    [0, 'pt_regr_pos2']]
 
 
-class ptRegressionServSideSeriesView:
+class PTRegressionServSideSeriesView:
     def __init__(self, id, key):
         self.id = id
         self.key = key
@@ -127,17 +127,16 @@ class ptRegressionServSideSeriesView:
         self.trend_ratio = 1
         self.show_regression = False
 
-    def ptAddTest(self, job, job_n, test_obj):
+    def pt_add_test(self, job, job_n, test_obj):
         if not test_obj.avg_score:
             return
 
         self.data.append((job.product_ver if job.product_ver is not None else '?', pt_float2human(test_obj.avg_score)))
-        if not self.title:
+        if not self.title or test_obj.less_better != self.less_better:
             self.title = test_obj.metrics + " " + ("[lower is better]" if test_obj.less_better else "[bigger is better]")
-            if test_obj.less_better:
-                self.less_better = True
+            self.less_better = test_obj.less_better
 
-    def calcTrend(self):
+    def calc_trend(self):
         l = len(self.data)
 
         if l <= 1:
@@ -187,23 +186,25 @@ class ptRegressionServSideSeriesView:
         return ret
 
 
-class ptRegressionServSideGroupView:
+class PTRegressionServSideGroupView:
     def __init__(self, id):
         self.id = id
         self.series = OrderedDict()
 
-    def ptAddTest(self, job, job_n, test_obj):
-        key = test_obj.tag + " " + test_obj.category
+    def pt_add_test(self, job, job_n, test_obj):
+        key = test_obj.tag
+        if test_obj:
+            key += " {%s}" % test_obj.category
         if key not in self.series:
-            self.series[key] = ptRegressionServSideSeriesView(len(self.series), key)
-        self.series[key].ptAddTest(job, job_n, test_obj)
+            self.series[key] = PTRegressionServSideSeriesView(len(self.series), key)
+        self.series[key].pt_add_test(job, job_n, test_obj)
 
-    def calcTrends(self):
+    def calc_trends(self):
         for s in self.series.values():
-            s.calcTrend()
+            s.calc_trend()
 
 
-class ptRegressionServSideView:
+class PTRegressionServSideView:
     def __init__(self, regr_obj):
         self.regr_obj = regr_obj
         self.job_objs = regr_obj.pt_get_linked_jobs()
@@ -211,10 +212,10 @@ class ptRegressionServSideView:
 
         self.init()
 
-    def ptAddTest(self, job, job_n, test_obj):
+    def pt_add_test(self, job, job_n, test_obj):
         if test_obj.group not in self.groups:
-            self.groups[test_obj.group] = ptRegressionServSideGroupView(len(self.groups))
-        self.groups[test_obj.group].ptAddTest(job, job_n, test_obj)
+            self.groups[test_obj.group] = PTRegressionServSideGroupView(len(self.groups))
+        self.groups[test_obj.group].pt_add_test(job, job_n, test_obj)
 
     def init(self):
         for job_n in range(0, len(self.job_objs)):
@@ -222,10 +223,10 @@ class ptRegressionServSideView:
 
             tests = TestModel.objects.filter(job=job).order_by('seq_num')
             for test_obj in tests:
-                self.ptAddTest(job, job_n, test_obj)
+                self.pt_add_test(job, job_n, test_obj)
 
         for g in self.groups.values():
-            g.calcTrends()
+            g.calc_trends()
 
         # FIXME, crap
         self.info = OrderedDict()

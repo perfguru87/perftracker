@@ -22,6 +22,7 @@ Jobs list:
 - job details: re-import (?)
 - job details: suite details
 + job details: rename job (name entered by user overrides the initial one)
++ job details: delete job
 + add to comparison button
 + comparison dialog
 + comparison dialog: charts types
@@ -114,11 +115,24 @@ Regressions
 - Regression charts
 + Support --regression-tag in suites
 - Automated first two vs last two builds comparison for regressions
+- Automated regression creation
+- Show the list of jobs in regression. Add possibility to include/exclude jobs from regression
+- Edit regression title
+- Show/Hide groups
+- Exclude tests from regressions
 
 Integrations with Jira
 - Custom fields for dashboards
 - Items hierarchy by filter
 - Jira items lifecycle on the regression chart
+
+Admin:
+- pre-defined groups and permissions and admin panel
+- hide First Job, Last Job, Jobs field in regression management
+- users management howto
+
+Mass management:
+- mass change of less_better test value to opposite value
 
 --------------
 

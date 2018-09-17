@@ -51,7 +51,7 @@ class HwFarmNodeLockModel(models.Model):
 
     # Fixme. This is bad idea to write own validator
     @staticmethod
-    def ptValidateJson(json_data):
+    def pt_validate_json(json_data):
         if 'title' not in json_data:
             raise SuspiciousOperation("'title' is not specified: it must be 'title': '...'")
         if 'planned_dur_hrs' not in json_data:
@@ -63,7 +63,7 @@ class HwFarmNodeLockModel(models.Model):
         except ValueError:
             raise SuspiciousOperation("'planned_dur_hrs' must be an int")
 
-    def ptUpdate(self, json_data):
+    def pt_update(self, json_data):
         self.title = json_data['title']
         self.planned_dur_hrs = int(json_data['planned_dur_hrs'])
 
@@ -88,7 +88,7 @@ class HwFarmNodeLockModel(models.Model):
             self.hw_nodes.add(node)
         self.save()
 
-    def ptUnlock(self):
+    def pt_unlock(self):
         self.end = timezone.now()
         self.deleted = False
         self.save()
@@ -133,14 +133,18 @@ class HwFarmNodesTimeline:
 
         d = ptDoc(header=" ", footer=" ")
         s = d.add_section(ptSection())
-        t = s.add_timeline(ptTimeline(title=None, begin=range_begin, end=range_end, groups_title='Hosts',
-                                      js_opts={
-                                               'groupsTitle': "'Host'",
-                                               'groupsWidth': "'100px'",
-                                               'groupsComments': "'host_status'",
-                                               'axisOnTop': 'true',
-                                               'showNavigation': 'true',
-                                              }))
+        t = s.add_timeline(
+            ptTimeline(
+                title=None,
+                begin=range_begin,
+                end=range_end,
+                groups_title='Hosts',
+                js_opts={
+                    'groupsTitle': "'Host'",
+                    'groupsWidth': "'100px'",
+                    'groupsComments': "'host_status'",
+                    'axisOnTop': 'true',
+                    'showNavigation': 'true',}))
 
         since = range_begin - datetime.timedelta(days=60)
         default_end = now + datetime.timedelta(days=1)
