@@ -477,10 +477,15 @@ def pt_comparison_test_id_json(request, api_ver, project_id, cmp_id, group_id, t
     ret = []
     for job in jobs:
         try:
-            test = TestModel.objects.get(job=job.id, tag=orig_test.tag, category=orig_test.category)
+            test = TestModel.objects.get(job=job.id, tag=orig_test.tag, group=orig_test.group, category=orig_test.category)
             ret.append(TestDetailedSerializer(test).data)
         except TestModel.DoesNotExist:
             ret.append({})
+        except TestModel.MultipleObjectsReturned:
+            # w/a for bug in versions < 0.3 where it was possible to upload tests with identical tag and category
+            tests = TestModel.objects.filter(job=job.id, tag=orig_test.tag, group=orig_test.group, category=orig_test.category)
+            for t in tests:
+                ret.append(TestDetailedSerializer(t).data)
     return JsonResponse(ret, safe=False)
 
 
