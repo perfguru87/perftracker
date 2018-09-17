@@ -12,7 +12,7 @@ from django.db import models
 from django.utils.dateparse import parse_datetime
 from django.apps import apps
 from django.db.models import Q
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import SuspiciousOperation, ValidationError
 
 from rest_framework import serializers
 
@@ -175,6 +175,24 @@ class TestModel(models.Model):
             if getattr(test, f.name) != getattr(self, f.name):
                 return False
         return True
+
+    def pt_gen_unique_key(self):
+        return "%s %s {%s}" % (self.group, self.tag, self.category)
+
+    def pt_validate_uniqueness(self, key2test):
+        key = self.pt_gen_unique_key()
+        if key not in key2test:
+            key2test[key] = self
+            return
+
+        print("key", key)
+        test = key2test[key]
+        if self.uuid == test.uuid:
+            return
+        if test.group != self.group or test.tag != self.tag or test.category != self.category:
+            return
+        raise ValidationError("test with given group ('%s'), tag ('%s') and category ('%s') already exists" %
+                              (self.group, self.tag, self.category))
 
     class Meta:
         verbose_name = "Test result"
