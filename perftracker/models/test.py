@@ -20,8 +20,6 @@ from perftracker.models.job import JobModel
 from perftracker.models.test_group import TestGroupModel, TEST_GROUP_TAG_LENGTH
 from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, PTJson
 
-from pyecharts import Bar
-
 TEST_STATUSES = ['NOTTESTED', 'SKIPPED', 'INPROGRESS', 'SUCCESS', 'FAILED']
 
 
@@ -177,12 +175,6 @@ class TestModel(models.Model):
             if getattr(test, f.name) != getattr(self, f.name):
                 return False
         return True
-
-    @staticmethod
-    def pt_create_simple_bar(self):
-        bar = Bar("My First Chart", "Here's the subtitle")
-        bar.add("clothing", ["shirt", "sweater", "chiffon shirt", "pants", "high heels", "socks"], [5, 20, 36, 10, 75, 90])
-        return bar
 
     class Meta:
         verbose_name = "Test result"

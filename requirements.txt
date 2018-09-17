@@ -8,6 +8,5 @@ python-dateutil
 djangorestframework
 django-bootstrap3
 django-group-by
-pyecharts
 perftrackerlib
 pillow
