@@ -229,7 +229,9 @@ $(document).ready(function() {
                     $('#lockAction').attr("disabled", $("#lockTitle").val().trim() == "" || !$("#lockNodes :selected").length);
                 });
 
-                $.getJSON("/api/v{{ api_ver }}/{{ project.id }}/hw_farm/", function( data ) {
+                $.getJSON("/api/v{{ api_ver }}/{{ project.id }}/hw_farm/?start=0&length=1000" +
+                          "&column[0][data]=order&column[1][data]=name&column[2][data]=id" + 
+                          "&order[0][column]=1&order[0][column]=2&order[0][column]=3", function( data ) {
                     var hw_nodes = $(".modal-body #lockNodes").empty();
                     $.each(data.data, function() {
                         var o = $("<option></option>").val(this['id']).text("#{0} - {1}".ptFormat(this['id'], this['name']));
