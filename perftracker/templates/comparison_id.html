@@ -372,13 +372,13 @@ $(document).ready(function() {
                   row.child(pt_test_details_draw(data, null)).show();
                   tr.next('tr').children().toggleClass('pt_row_details');
                   tr.addClass('shown');
-                  $('#test_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                  tr.next('tr').children().find('.pt_slider').slideDown();
                 },
                 error: function(data, status, error) {
                   row.child(pt_test_details_draw(row.data(), error)).show();
                   tr.next('tr').children().toggleClass('pt_row_details');
                   tr.addClass('shown');
-                  $('#test_details_slider_{0}'.ptFormat(id), row.child()).slideDown();
+                  tr.next('tr').children().find('.pt_slider').slideDown();
                 }
               });
             }
