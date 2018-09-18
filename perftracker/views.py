@@ -508,13 +508,6 @@ def pt_regression_all_json(request, api_ver, project_id):
         # and make it return huge amount of data
         max_display_length = 5000
 
-        def render_column(self, row, column):
-            # We want to render user as a custom column
-            if column == 'tests_total':
-                return '{0} {1}'.format(row.tests_total, row.tests_completed)
-            else:
-                return super(JobJson, self).render_column(row, column)
-
         def filter_queryset(self, qs):
             # use parameters passed in GET request to filter queryset
 
