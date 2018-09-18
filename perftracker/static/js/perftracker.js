@@ -283,17 +283,20 @@ function pt_draw_regression_details(d, err_msg)
 
     s += "<div class='col-md-12'><h4>Jobs</h4>";
     s += "<table class='pt_obj_details'>";
-    s += "<thead><th></th><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th></thead>";
+    s += "<thead><th></th><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th><th>Linked</th></thead>";
 
-    var jobs = [d.first_job, d.last_job];
+    var jobs = d.jobs_list;
 
     for (var j = 0; j < jobs.length; j++) {
         var job = jobs[j];
         s += "<tr>";
         if (j == 0)
             s += "<td>First</td>";
-        else
+        else if (j == jobs.length - 1)
             s += "<td>Last</td>";
+        else
+            s+= "<td></td>"
+
         s += "<td>{0}</td><td>{1}</td>".ptFormat(job.id, pt_date2str(job.end));
         var hw = '';
         for (var h = 0; h < job.env_node.length; h++) {
@@ -303,6 +306,12 @@ function pt_draw_regression_details(d, err_msg)
         }
         s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, job.project, job.id, job.title);
         s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
+
+        var showEditIcon = job.is_linked
+            ? `<td><a href="#" data-id={0} data-toggle="modal" class="pt-link-job-edit pt-link-job-edit--linked glyphicon glyphicon-check"></a></td>`.ptFormat(job.id)
+            : `<td><a href="#" data-id={0} data-toggle="modal" class="pt-link-job-edit pt-link-job-edit--unlinked glyphicon glyphicon-unchecked"></a></td>`.ptFormat(job.id);
+
+        s += showEditIcon;
         s += "</tr>";
     }
     s += "</table></div>";

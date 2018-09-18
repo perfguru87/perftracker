@@ -38,11 +38,14 @@ class RegressionModel(models.Model):
     def save(self):
         super(RegressionModel, self).save()
 
-    def pt_get_jobs(self):
-        return JobModel.objects.filter(regression_tag=self.tag, project=self.project, deleted=False).order_by('end').all()
+    def pt_get_all_jobs(self):
+        return JobModel.objects.filter(regression_original=self, deleted=False).order_by('end').all()
+
+    def pt_get_linked_jobs(self):
+        return JobModel.objects.filter(regression_linked=self, deleted=False).order_by('end').all()
 
     def pt_set_first_last_job(self):
-        jobs = self.pt_get_jobs()
+        jobs = self.pt_get_all_jobs()
         if len(jobs):
             first = jobs[0]
             last = jobs[len(jobs) - 1]
@@ -57,34 +60,17 @@ class RegressionModel(models.Model):
             self.save()
 
     @staticmethod
-    def pt_on_job_save(job):
-        for r in RegressionModel.objects.filter(first_job=job).all():
-            r.pt_set_first_last_job()
-        for r in RegressionModel.objects.filter(last_job=job).all():
-            r.pt_set_first_last_job()
-
-        if not job.regression_tag:
-            return
-
-        r = None
-        if job.regression_tag:
-            try:
-                r = RegressionModel.objects.get(tag=job.regression_tag, project=job.project)
-            except RegressionModel.DoesNotExist:
-                pass
-
-        if r is None:
-            regression_tag = job.regression_tag if job.regression_tag else "regression"
+    def pt_on_job_save(job, regression_tag):
+        try:
+            r = RegressionModel.objects.get(tag=regression_tag, project=job.project)
+        except RegressionModel.DoesNotExist:
             r = RegressionModel(title="%s regression" % job.project.name, tag=regression_tag, project=job.project, jobs=0)
             r.save()
 
-        regression_tag = r.tag
-
-        for r in RegressionModel.objects.filter(tag=regression_tag).all():
-            r.pt_set_first_last_job()
+        return r
 
 
-class RegressionSerializer(serializers.ModelSerializer):
+class RegressionSimpleSerializer(serializers.ModelSerializer):
 
     first_job = serializers.SerializerMethodField()
     last_job = serializers.SerializerMethodField()
@@ -98,6 +84,19 @@ class RegressionSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegressionModel
         fields = ('id', 'title', 'tag', 'jobs', 'first_job', 'last_job')
+
+
+class RegressionNestedSerializer(serializers.ModelSerializer):
+
+    jobs_list = serializers.SerializerMethodField()
+
+    def get_jobs_list(self, regression):
+        jobs = regression.pt_get_all_jobs()
+        return JobSimpleSerializer(jobs, many=True).data
+
+    class Meta:
+        model = RegressionModel
+        fields = ('id', 'title', 'tag', 'jobs', 'jobs_list')
 
 
 ######################################################################
@@ -208,7 +207,7 @@ class PTRegressionServSideGroupView:
 class PTRegressionServSideView:
     def __init__(self, regr_obj):
         self.regr_obj = regr_obj
-        self.job_objs = regr_obj.pt_get_jobs()
+        self.job_objs = regr_obj.pt_get_linked_jobs()
         self.groups = OrderedDict()
 
         self.init()
