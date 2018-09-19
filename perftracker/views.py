@@ -24,7 +24,7 @@ from django.db.models.query import QuerySet
 from perftracker import __pt_version__
 from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, PTComparisonServSideView
-from perftracker.models.regression import RegressionModel, RegressionSerializer, PTRegressionServSideView
+from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, PTRegressionServSideView
 from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
@@ -116,7 +116,7 @@ def pt_regression_id_html(request, project_id, regression_id):
     # register 'range' template tag
 
     return pt_base_html(request, project_id, 'regression_id.html',
-                      params={'jobs': obj.pt_get_jobs(),
+                      params={'jobs': obj.pt_get_linked_jobs(),
                               'first_job': obj.first_job,
                               'last_job': obj.last_job,
                               'duration': pt_dur2str(obj.last_job.end - obj.first_job.end),
@@ -295,18 +295,42 @@ def pt_job_all_json(request, api_ver, project_id):
 
 @csrf_exempt
 def pt_job_id_json(request, api_ver, project_id, job_id):
-    try:
-        job = JobModel.objects.get(pk=job_id)
-    except JobModel.DoesNotExist:
-        return JsonResponse([], safe=False, status=http.client.NOT_FOUND)
 
-    if request.method == 'GET':
-        return JsonResponse(JobNestedSerializer(job).data, safe=False)
-    elif request.method == 'DELETE':
-        job.deleted = True
-        job.save()
-        messages.success(request, "job #%s was deleted" % str(job_id))
-        return JsonResponse([], safe=False)
+    if request.method == 'PATCH':
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest("Wrong json")
+
+        try:
+            job_id = data['job_id']
+            link = data['link']
+        except KeyError:
+            return HttpResponseBadRequest("Wrong data in json")
+
+        try:
+            JobModel.pt_change_regression_link(job_id, link)
+        except JobModel.DoesNotExist:
+            HttpResponseBadRequest("There is no such job")
+        except KeyError:
+            return HttpResponseBadRequest("Job has already been in this status")
+
+        return HttpResponse("OK")
+
+    if request.method == 'GET' or request.method == 'DELETE':
+        try:
+            job = JobModel.objects.get(pk=job_id)
+        except JobModel.DoesNotExist:
+            return JsonResponse([], safe=False, status=http.client.NOT_FOUND)
+
+        if request.method == 'GET':
+            return JsonResponse(JobNestedSerializer(job).data, safe=False)
+        else:
+            job.deleted = True
+            job.save()
+            messages.success(request, "job #%s was deleted" % str(job_id))
+            return JsonResponse([], safe=False)
+
     return JsonResponse([], safe=False, status=http.client.NOT_IMPLEMENTED)
 
 
@@ -524,14 +548,14 @@ def pt_regression_all_json(request, api_ver, project_id):
             return qs
 
         def prepare_results(self, qs):
-            return RegressionSerializer(qs, many=True).data
+            return RegressionSimpleSerializer(qs, many=True).data
 
     return RegressionJson.as_view()(request)
 
 
 def pt_regression_id_json(request, api_ver, project_id, regression_id):
     try:
-        return JsonResponse(RegressionSerializer(RegressionModel.objects.get(pk=regression_id)).data, safe=False)
+        return JsonResponse(RegressionNestedSerializer(RegressionModel.objects.get(pk=regression_id)).data, safe=False)
     except RegressionModel.DoesNotExist:
         return JsonResponse([], safe=False)
 
