@@ -4,17 +4,6 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
-def linkJobToRegression(apps, schema_editor):
-    JobModel        = apps.get_model('perftracker', 'JobModel')
-    RegressionModel = apps.get_model('perftracker', 'RegressionModel')
-
-    for regression in RegressionModel.objects.all():
-        for job in JobModel.objects.filter(regression_tag=regression.tag).all():
-            job.regression_original = regression
-            job.regression_linked   = regression
-            job.save()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -31,12 +20,5 @@ class Migration(migrations.Migration):
             model_name='jobmodel',
             name='regression_original',
             field=models.ForeignKey(blank=True, help_text='Original regression of this job', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='regr_original', to='perftracker.RegressionModel'),
-        ),
-        migrations.RunPython(
-            linkJobToRegression
-        ),
-        migrations.RemoveField(
-            model_name='jobmodel',
-            name='regression_tag',
         ),
     ]
