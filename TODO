@@ -116,7 +116,7 @@ Regressions
 + Support --regression-tag in suites
 - Automated first two vs last two builds comparison for regressions
 - Automated regression creation
-- Show the list of jobs in regression. Add possibility to include/exclude jobs from regression
++ Show the list of jobs in regression. Add possibility to include/exclude jobs from regression
 - Edit regression title
 - Show/Hide groups
 - Exclude tests from regressions
