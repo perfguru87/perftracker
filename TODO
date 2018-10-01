@@ -96,7 +96,7 @@ Artifacts management
 + manual update/deletion
 - automated garbage collection
 - links in the test details
-- links in the job details
++ links in the job details
 
 Hosts view
 - hosts status

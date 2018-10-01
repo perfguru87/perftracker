@@ -15,6 +15,7 @@ from rest_framework import serializers
 
 from perftracker.models.project import ProjectModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
+from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
 from perftracker.helpers import PTDurationField, PTJson
 
 
@@ -223,6 +224,7 @@ class JobModel(models.Model):
 class JobBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
     is_linked = serializers.SerializerMethodField()
+    artifacts = serializers.SerializerMethodField()
     duration = PTDurationField()
 
     def get_is_linked(self, job):
@@ -236,6 +238,16 @@ class JobBaseSerializer(serializers.ModelSerializer):
             return EnvNodeSimpleSerializer(objs, many=True).data
         else:
             return EnvNodeNestedSerializer(objs, many=True).data
+
+    def get_artifacts(self, job):
+        objs = ArtifactLinkModel.objects.filter(linked_uuid=job.uuid, deleted=False).all()
+        artifacts = []
+        for obj in objs:
+            try:
+                artifacts.append(obj.artifact)
+            except ArtifactMetaModel.DoesNotExist:
+                continue
+        return ArtifactMetaSerializer(artifacts, many=True).data
 
 
 class JobSimpleSerializer(JobBaseSerializer):
@@ -252,7 +264,7 @@ class JobNestedSerializer(JobBaseSerializer):
         fields = ('id', 'title', 'cmdline', 'uuid', 'suite_name', 'suite_ver', 'product_name', 'product_ver',
                   'links', 'env_node', 'begin', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
-                  'product_name', 'product_ver')
+                  'product_name', 'product_ver', 'artifacts')
 
 
 class JobDetailedSerializer(serializers.ModelSerializer):
