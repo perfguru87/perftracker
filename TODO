@@ -89,8 +89,14 @@ Job Upload
 - return job id in upload results
 - proper error message format in case of upload failure
 
-Custom upload
-- custom test data upload (blob)
+Artifacts management
++ custom test artifact upload (logs, dumps, etc)
++ on-flight compression
++ inline or as-attachment view in the browser
++ manual update/deletion
+- automated garbage collection
+- links in the test details
+- links in the job details
 
 Hosts view
 - hosts status

@@ -46,6 +46,10 @@ urlpatterns = [
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/(?P<id>\d+)$', views.pt_hwfarm_node_lock_id_json),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/$', views.pt_hwfarm_node_lock_all_json),
 
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/artifact/$', views.pt_artifact_meta_all_json),
+    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/artifact/(?P<uuid>[0-9a-fA-F-]+)$', views.pt_artifact_meta_id_json),
+    url(r'^api/v\d+.\d+/(?P<project_id>\d+)/artifact_content/(?P<uuid>[0-9a-fA-F-]+)$', views.pt_artifact_content_id),
+
     path('<int:project_id>/home/', views.pt_home_html, name='Home'),
     path('<int:project_id>/regression/<int:regression_id>', views.pt_regression_id_html, name='Regressions'),
     path('<int:project_id>/regression/', views.pt_regression_all_html, name='Regressions'),
@@ -55,6 +59,8 @@ urlpatterns = [
     path('<int:project_id>/job/', views.pt_job_all_html, name='Jobs'),
     path('<int:project_id>/hw_farm/<int:hw_id>', views.pt_hwfarm_id_html, name='Hosts'),
     path('<int:project_id>/hw_farm/', views.pt_hwfarm_all_html, name='Hosts'),
+
+    path('<int:project_id>/artifact_content/<uuid:uuid>', views.pt_artifact_content_id),
 
     path('', RedirectView.as_view(url='/1/comparison/')),
     path('redirect/', views.pt_redirect),
