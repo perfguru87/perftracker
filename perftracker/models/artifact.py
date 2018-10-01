@@ -24,12 +24,6 @@ from perftracker.rest import pt_rest_err, pt_rest_bad_req, pt_rest_ok
 
 # Artifact is a file (tgz, txt, log, html, etc) which can be linked (many to many) to some object (Test, Job, Regression, Host, etc)
 
-class ArtifactLinkModel(models.Model):
-    artifact_uuid   = models.UUIDField(editable=False, help_text="artifact uuid", db_index=True, blank=False)
-    linked_uuid = models.UUIDField(editable=False, help_text="any object uuid", db_index=True, blank=False)
-    deleted     = models.BooleanField(help_text="Artifact link is deleted", db_index=True, default=False, blank=True)
-
-
 class ArtifactMetaModel(models.Model):
     uuid        = models.UUIDField(editable=False, help_text="Artifact file uuid", db_index=True)
     filename    = models.CharField(max_length=128, default="artifact", help_text="Artifact file name (for download)")
@@ -128,18 +122,18 @@ class ArtifactMetaModel(models.Model):
 
         for uuid in linked_uuids:
             try:
-                al = ArtifactLinkModel.objects.get(artifact_uuid=self.uuid, linked_uuid=uuid)
+                al = ArtifactLinkModel.objects.get(artifact=self, linked_uuid=uuid)
                 if al.deleted:
                    al.deleted = False
                    al.save()
                 continue
             except ArtifactLinkModel.DoesNotExist as e:
-                al = ArtifactLinkModel(artifact_uuid=self.uuid, linked_uuid=uuid)
+                al = ArtifactLinkModel(artifact=self, linked_uuid=uuid)
                 al.save()
 
         for uuid in unlinked_uuids:
             try:
-                al = ArtifactLinkModel.objects.get(artifact_uuid=self.uuid, linked_uuid=uuid)
+                al = ArtifactLinkModel.objects.get(artifact=self, linked_uuid=uuid)
             except ArtifactLinkModel.DoesNotExist as e:
                 continue
             al.deleted = True
@@ -184,6 +178,12 @@ class ArtifactMetaModel(models.Model):
         return resp
 
 
+class ArtifactLinkModel(models.Model):
+    artifact    = models.ForeignKey(ArtifactMetaModel, help_text="Artifact", on_delete=models.CASCADE)
+    linked_uuid = models.UUIDField(editable=False, help_text="any object uuid", db_index=True, blank=False)
+    deleted     = models.BooleanField(help_text="Artifact link is deleted", db_index=True, default=False, blank=True)
+
+
 class ArtifactLinkSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -196,7 +196,7 @@ class ArtifactMetaSerializer(serializers.ModelSerializer):
     links = serializers.SerializerMethodField()
 
     def get_links(self, artifact):
-        links = [a.linked_uuid for a in ArtifactLinkModel.objects.filter(deleted=False, artifact_uuid=artifact.uuid)]
+        links = [a.linked_uuid for a in ArtifactLinkModel.objects.filter(deleted=False, artifact=artifact)]
         return links
 
     class Meta:

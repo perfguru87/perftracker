@@ -158,6 +158,19 @@ function pt_draw_job_details(d, err_msg)
          pt_date2str(d.begin), pt_date2str(d.end), d.duration, pt_date2str(d.upload))
     if (d.cmdline)
         s += "<tr><td>Cmdline</td><td class='pt_ellipsis'>{0}</td></tr>".ptFormat(d.cmdline)
+
+    if (d.artifacts) {
+        s += "<tr><td>Artifacts</td><td>";
+        var artifacts = [];
+
+        for (var n = 0; n < d.artifacts.length; n++) {
+            var a = d.artifacts[n];
+            artifacts.push("<a target=_blank href='/0/artifact_content/{0}'>{1}</a>".ptFormat(a.uuid, a.filename));
+        }
+        s += artifacts.join(" | ");
+        s += "</td></tr>";
+    }
+
     s += "</table></div>";
     s += "</div>";
 
