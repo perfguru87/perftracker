@@ -123,7 +123,7 @@ class PTJson:
                 self._raise("%s: key '%s' type must be '%s', got '%s'; %s" % (self.obj_name, key, type(v), type(v), str(e)))
                 ret = defval
             except ValueError as e:
-                self._raise("%s: fetching '%s' key of type '%s', got unexpected: %s" % (self.obj_name, key, type(v), v))
+                self._raise("%s: fetching '%s' key of type '%s', got unexpected: %s (of type '%s')" % (self.obj_name, key, type_str, v, type(v)))
                 ret = defval
 
         if ret == defval and require:
@@ -157,7 +157,9 @@ class PTJson:
         return self._get_value(key, defval, require, parse_datetime, 'datetime')
 
     def get_bool(self, key, defval=False, require=False):
-        return self._get_value(key, defval, require, bool, 'boolean')
+        def _bool(v):
+            return v in ("True", "true", True, "Yes", "yes", "y", 1)
+        return self._get_value(key, defval, require, _bool, 'boolean')
 
     def get_list(self, key, defval=None, require=False):
         return self._get_structure(key, [] if defval is None else defval, require, list)
