@@ -32,9 +32,11 @@ from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNode
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
+from perftracker.models.artifact import ArtifactMetaModel, ArtifactLinkModel, ArtifactMetaSerializer
 
 from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
+from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
 
 API_VER = 1.0
 
@@ -144,7 +146,7 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
     if not uuid:
         raise SuspiciousOperation("job 'uuid' is no set")
     if not pt_is_valid_uuid(uuid):
-        raise SuspiciousOperation("job 'uuid' '%s' is not invalid, it must be version1 UUID" % uuid)
+        raise SuspiciousOperation("job 'uuid' value '%s' is not valid, it must be version1 UUID" % uuid)
 
     new = False
     try:
@@ -750,3 +752,74 @@ def pt_hwfarm_node_lock_id_json(request, api_ver, project_id, id):
         return JsonResponse(HwFarmNodeLockNestedSerializer(HwFarmNodeLockModel.objects.get(pk=id)).data, safe=False)
     except HwFarmNodeLockModel.DoesNotExist:
         return JsonResponse([], safe=False)
+
+
+@csrf_exempt
+def pt_artifact_meta_all_json(request, api_ver, project_id):
+    project_id = int(project_id)
+
+    if not ArtifactMetaModel.pt_artifacts_enabled():
+        return pt_rest_err(http.client.NOT_IMPLEMENTED, "Artifacts management is not configured, set the ARTIFACTS_STORAGE_DIR setting")
+
+    if request.method == "GET":
+        if project_id:
+            qs = ArtifactMetaModel.objects.filter(project_id=project_id, deleted=False)
+        else:
+            qs = ArtifactMetaModel.objects.filter(deleted=False)
+        try:
+            start = int(request.GET.get('start', 0))
+            length = int(request.GET.get('length', 10))
+        except ValueError:
+            raise SuspiciousOperation("start and length must be integer")
+
+        qs = qs.order_by('-uploaded_dt')[start:(start+length)]
+        return pt_rest_ok(ArtifactMetaSerializer(qs, many=True).data)
+
+    raise pt_rest_method_not_allowed(request)
+
+
+@csrf_exempt
+def pt_artifact_meta_id_json(request, api_ver, project_id, uuid):
+    project_id = int(project_id)
+
+    if not pt_is_valid_uuid(uuid):
+        return pt_rest_bad_req("Invalid artifact UUID %s" % uuid)
+
+    if not ArtifactMetaModel.pt_artifacts_enabled():
+        return pt_rest_err(http.client.NOT_IMPLEMENTED, "Artifacts management is not configured, set the ARTIFACTS_STORAGE_DIR setting")
+
+    try:
+        artifact = ArtifactMetaModel.objects.get(uuid=uuid)
+    except ArtifactMetaModel.DoesNotExist:
+        artifact = None
+
+    if request.method == "POST":
+        if artifact is None:
+            artifact = ArtifactMetaModel(uuid=uuid)
+        return artifact.pt_update(request.POST, request.FILES)
+
+    if artifact is None:
+        return pt_rest_not_found("Artifact with UUID %s is not found" % uuid)
+
+    if request.method == "PATCH":
+        data = json.loads(request.body.decode("utf-8"))
+        return artifact.pt_update(data)
+    elif request.method == "DELETE":
+        return artifact.pt_delete()
+    elif request.method == "GET":
+        return pt_rest_ok(ArtifactMetaSerializer(artifact).data)
+
+    return pt_rest_method_not_allowed(request)
+
+
+@csrf_exempt
+def pt_artifact_content_id(request, project_id, uuid):
+    if not ArtifactMetaModel.pt_artifacts_enabled():
+        return pt_rest_err(http.client.NOT_IMPLEMENTED, "Artifacts management is not configured, set the ARTIFACTS_STORAGE_DIR setting")
+
+    try:
+        artifact = ArtifactMetaModel.objects.get(uuid=uuid)
+    except ArtifactMetaModel.DoesNotExist:
+        return Http404
+
+    return artifact.pt_get_http_content()

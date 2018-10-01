@@ -105,3 +105,32 @@ TODO
 
 See [http://www.perftracker.org/server/#Release_Notes](http://www.perftracker.org/server/#Release_Notes)
 See [http://www.perftracker.org/server/#ToDo](http://www.perftracker.org/server/#ToDo)
+
+# Perftracker Configuration
+
+There are two configuration files:
+- perftracker_django/settings.py - standard
+- perftracker_django/settings_local.py - custom settings file
+
+To keep the 'git' diff empty it's recommended to create and maintain all the custom parameters such as timezone
+or artifacts storage location in the perftracker_django/settings_local.py file
+
+## Timezone
+
+Add to the settings_local.py:
+TIME_ZONE = 'Europe/London'
+
+## Artifacts storage
+
+Perftracker can be configured to support artifacts (binary/text files) storage. It can be useful to store
+logs or any arbitrary files and link them to the jobs or tests. Single artifact can be linked to multiple
+tests or jobs and vice versa
+
+To enable artifacts management add to the settings_local.py:
+
+ ARTIFACTS_STORAGE_DIR = '/var/perftracker/pt-artifact'
+
+Tune the max allowed upload file size in the settings_local.py:
+
+ DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
+ MAX_UPLOAD_SIZE = 104857600
