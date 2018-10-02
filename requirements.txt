@@ -10,3 +10,4 @@ django-bootstrap3
 django-group-by
 perftrackerlib
 pillow
+psycopg2
