@@ -44,6 +44,15 @@ sudo yum -y install python36u
 sudo yum -y install python36u-pip
 ```
 
+### Install pycurl (example for CentOS-7)
+
+```
+sudo yum -y install openssl-devel
+export PYCURL_SSL_LIBRARY=openssl
+export LDFLAGS=-L/usr/local/opt/openssl/lib;export CPPFLAGS=-I/usr/local/opt/openssl/include;
+sudo pip3.6 install pycurl
+```
+
 ### Install Django and other requirements
 
 ```
