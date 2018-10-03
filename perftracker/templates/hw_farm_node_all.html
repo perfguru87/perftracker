@@ -81,7 +81,7 @@
         </select>
     </div>
     <div class='pt_button_group'>
-    <button type="submit" id="lockSave" class="btn btn-primary">Save</button>
+    <button type="submit" id="lockUnlock" class="btn btn-primary">Unlock</button>
     <button type="submit" id="lockAction" class="btn btn-primary pull-right float-right">Action</button>
     </div>
 </form>
@@ -167,8 +167,8 @@ $(document).ready(function() {
             $(".pt-lock-edit").on("click", function () {
                 var lockId = parseInt($(this).data('id'));
 
-                $('#lockAction').html('Unlock');
-                $('#lockSave').show();
+                $('#lockAction').html('Save');
+                $('#lockUnlock').show();
                 $('#lockBeginGroup').show();
 
                 $("#lockLabel").html("Hardware lock <a href='/admin/perftracker/hwfarmnodelockmodel/{0}/change/'>#{1}</a>".ptFormat(lockId, lockId));
@@ -186,7 +186,7 @@ $(document).ready(function() {
                         hw_nodes.append(o);
                     });
 
-                    $('#lockAction').on('click', function () {
+                    $('#lockUnlock').on('click', function () {
                         console.log("LOG", data);
                         $.ajax({
                             url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
@@ -196,7 +196,7 @@ $(document).ready(function() {
                         });
                         return false;
                     });
-                    $('#lockSave').on('click', function () {
+                    $('#lockAction').on('click', function () {
                         data = updateLockData(data);
                         $.ajax({
                             url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
@@ -216,7 +216,7 @@ $(document).ready(function() {
 
                 $('#lockAction').html('Lock');
                 $('#lockAction').attr("disabled", true);
-                $('#lockSave').hide();
+                $('#lockUnlock').hide();
                 $('#lockBeginGroup').hide();
 
                 $("#lockLabel").html("New hardware lock");
