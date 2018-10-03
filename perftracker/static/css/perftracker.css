@@ -311,13 +311,18 @@ table.pt_regr_summary td {
 .pt_timeline_task_auto .timeline-event-content {
   background-color: #339;
   color: #fff;
-  text-align: right;
+  text-align: left;
 }
 
 div.pt_timeline_task_manual .timeline-event-content {
   background-color: #777;
   color: #fff;
-  text-align: right;
+  text-align: left;
+}
+
+.pt_timeline_task_auto .timeline-event-content span,
+div.pt_timeline_task_manual .timeline-event-content span {
+  padding-left: 3px;
 }
 
 .pt_timeline_task_auto,
