@@ -175,6 +175,7 @@ $(document).ready(function() {
                 $.getJSON("/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}".ptFormat(lockId), function( data ) {
                     $("#lockId").val(lockId);
                     $("#lockTitle").val(data.title);
+                    $('#lockAction').attr("disabled", false);
                     $("#lockBegin").val(pt_date2str(data.begin));
                     $("#lockDur").val(data.planned_dur_hrs);
                     var hw_nodes = $(".modal-body #lockNodes").empty();
