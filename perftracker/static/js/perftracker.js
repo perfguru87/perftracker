@@ -345,7 +345,7 @@ function pt_draw_hw_farm_node_details(d, err_msg)
     s += "<div class='row'>";
 
     s += "<div class='pt_obj_management'>" +
-         "<a href='/admin/perftracker/hwfarmnodemodel/2/change/'>Edit</a></div>".ptFormat(d.id); 
+         "<a href='/admin/perftracker/hwfarmnodemodel/{0}/change/'>Edit</a></div>".ptFormat(d.id);
 
     s += "<div class='col-md-12'><h4>Hardware node</h4>";
     s += "<table class='pt_obj_details'>";
