@@ -13,7 +13,7 @@ from django.contrib import admin
 from django import forms
 from django.db.models import Q
 
-# This is required to limit the list of displayed hosts which can be locked
+# This is required to filter out the locked hosts from the list of hosts available for the lock
 class HwFarmNodeLockForm(forms.ModelForm):
 
     class Meta:
