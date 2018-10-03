@@ -146,8 +146,8 @@ $(document).ready(function() {
                         return "<a data-toggle='modal' data-id='" + data +
                                "' class='pt-lock-edit glyphicon glyphicon-lock' href='#hwLockDialog'></a>";
                     else
-                        return "<a data-toggle='modal' data-id='0' " +
-                               "class='pt-lock-create glyphicon glyphicon-unchecked' href='#hwLockDialog''></a>";
+                        return "<a data-toggle='modal' data-id='" + row.id +
+                               "' class='pt-lock-create glyphicon glyphicon-unchecked' href='#hwLockDialog''></a>";
                 },
             },
         ],
@@ -212,7 +212,7 @@ $(document).ready(function() {
             });
 
             $(".pt-lock-create").on("click", function () {
-                var lockId = parseInt($(this).data('id'));
+                var hostId = parseInt($(this).data('id'));
 
                 $('#lockAction').html('Lock');
                 $('#lockAction').attr("disabled", true);
@@ -237,7 +237,7 @@ $(document).ready(function() {
                     var hw_nodes = $(".modal-body #lockNodes").empty();
                     $.each(data.data, function() {
                         var o = $("<option></option>").val(this['id']).text("#{0} - {1}".ptFormat(this['id'], this['name']));
-                        if (lockId == this['locked_by'])
+                        if (hostId == this['id'])
                             o.attr("selected", "selected");
                         hw_nodes.append(o);
                     });
