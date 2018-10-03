@@ -1,9 +1,9 @@
 import os
 import bz2
-import fcntl
 import uuid
 import mimetypes
 import http.client
+import sys
 
 from distutils.dir_util import mkpath
 
@@ -21,6 +21,10 @@ from django.http import HttpResponse
 from rest_framework import serializers
 from perftracker.helpers import PTJson, pt_is_valid_uuid
 from perftracker.rest import pt_rest_err, pt_rest_bad_req, pt_rest_ok
+
+IS_WINDOWS = sys.platform.startswith('win')
+if not IS_WINDOWS:
+    import fcntl
 
 # Artifact is a file (tgz, txt, log, html, etc) which can be linked (many to many) to some object (Test, Job, Regression, Host, etc)
 
@@ -67,11 +71,14 @@ class ArtifactMetaModel(models.Model):
         if not self.id:
             flags |= os.O_CREAT
 
+        do_locks = not sys.platform.startswith('win')
+
         try:
-            f = os.fdopen(os.open(p, flags), "wb")
-            fcntl.flock(f, fcntl.LOCK_EX)
+            if not IS_WINDOWS:  # FIXME
+                fcntl.flock(f, fcntl.LOCK_EX)
             f.write(bytes)
-            fcntl.flock(f, fcntl.LOCK_UN)
+            if not IS_WINDOWS:  # FIXME
+                fcntl.flock(f, fcntl.LOCK_UN)
             f.close()
         except IOError as e:
             return pt_rest_err(http.client.INTERNAL_SERVER_ERROR, "Can't store artifact to file %s, %s" % (p, str(e)))
