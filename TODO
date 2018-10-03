@@ -46,6 +46,7 @@ Comparisons
 - comparison edit dialog
 + comparison auto title generator
 - delete comparison
+- comparison items ordering
 
 Comparison view:
 - highlights / thumbnails
@@ -103,6 +104,8 @@ Hosts view
 - short grafana-like CPU usage
 + manual hosts locking form
 + host locking API
+- show locks history in the host details view
+- lock color
 
 Links view
 - custom link group
