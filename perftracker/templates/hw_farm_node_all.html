@@ -186,7 +186,7 @@ $(document).ready(function() {
                         hw_nodes.append(o);
                     });
 
-                    $('#lockUnlock').on('click', function () {
+                    $('#lockUnlock').off('click').on('click', function () {
                         console.log("LOG", data);
                         $.ajax({
                             url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
@@ -196,8 +196,9 @@ $(document).ready(function() {
                         });
                         return false;
                     });
-                    $('#lockAction').on('click', function () {
+                    $('#lockAction').off('click').on('click', function () {
                         data = updateLockData(data);
+                        console.log("LOCK", data);
                         $.ajax({
                             url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
                             type: 'PUT',
@@ -242,7 +243,7 @@ $(document).ready(function() {
                         hw_nodes.append(o);
                     });
 
-                    $('#lockAction').on('click', function () {
+                    $('#lockAction').off('click').on('click', function () {
                         data = updateLockData({});
                         $.ajax({
                             url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/',
@@ -262,7 +263,7 @@ $(document).ready(function() {
      * 2. Job deails opening / closing
      */
 
-    $('#hws').on('click', 'td.pt_row_details_toggle', function () {
+    $('#hws').off('click').on('click', 'td.pt_row_details_toggle', function () {
         var tr = $(this).closest('tr');
         var row = table.row( tr );
         var id = row.data().id;
