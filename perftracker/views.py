@@ -97,7 +97,7 @@ def pt_comparison_id_html(request, project_id, cmp_id):
     # register 'range' template tag
 
     return pt_base_html(request, project_id, 'comparison_id.html',
-                      params={'jobs': obj.jobs.all(),
+                      params={'jobs': obj.pt_get_jobs(),
                               'cmp_view': PTComparisonServSideView(obj),
                               'PTCmpChartType': PTCmpChartType,
                               'PTCmpTableType': PTCmpTableType
@@ -462,7 +462,7 @@ def pt_comparison_id_json(request, api_ver, project_id, cmp_id):
 
 def pt_comparison_test_all_json(request, api_ver, project_id, cmp_id, group_id):
     cmp = ComparisonModel.objects.get(pk=cmp_id)
-    jobs = cmp.jobs.all()
+    jobs = cmp.pt_get_jobs()
     ret = []
     for job in jobs:
         ret.append(pt_job_test_all_json(request, api_ver, project_id, job.id, group_id).content.decode("utf-8"))
@@ -476,7 +476,7 @@ def pt_comparison_group_all_json(request, api_ver, project_id, cmp_id):
     except ComparisonModel.DoesNotExist:
         raise Http404
 
-    jobs = cmp.jobs.all()
+    jobs = cmp.pt_get_jobs()
 
     found = set()
     ret = []
@@ -499,7 +499,7 @@ def pt_comparison_test_id_json(request, api_ver, project_id, cmp_id, group_id, t
     except TestModel.DoesNotExist:
         return JsonResponse([], safe=False)
 
-    jobs = cmp.jobs.all()
+    jobs = cmp.pt_get_jobs()
     ret = []
     for job in jobs:
         try:

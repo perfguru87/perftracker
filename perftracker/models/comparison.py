@@ -96,7 +96,8 @@ class ComparisonModel(models.Model):
     tests_type  = models.IntegerField(help_text="Tests type", default=0, choices=CMP_TESTS)
     values_type = models.IntegerField(help_text="Values type", default=0, choices=CMP_VALUES)
 
-    jobs        = models.ManyToManyField(JobModel, help_text="Jobs")
+    _jobs       = models.ManyToManyField(JobModel, help_text="Jobs")
+    _job_ids    = models.TextField(help_text="Id's of the jobs (needed for proper jobs ordering)")
 
     @staticmethod
     def pt_validate_json(json_data):
@@ -136,11 +137,27 @@ class ComparisonModel(models.Model):
                 raise SuspiciousOperation("Job with id = '%d' doesn't exist" % jid)
             jobs.append(job)
 
+        self._job_ids = ",".join([str(j.id) for j in jobs])
+
         self.save()
-        self.jobs.clear()
+        self._jobs.clear()
         for job in jobs:
-            self.jobs.add(job)
+            self._jobs.add(job)
         self.save()
+
+    def pt_get_jobs(self):
+        # the method is required to order the jobs according to the order specified by user
+        if not self._job_ids:
+            return self._jobs.all()
+
+        jobs = []
+        for jid in self._job_ids.split(","):
+            try:
+                id = int(jid)
+            except ValueError:
+                return self._jobs.all()
+            jobs.append(JobModel.objects.get(id=id))
+        return jobs
 
     def __str__(self):
         return "#%d, %s" % (self.id, self.title)
@@ -163,7 +180,7 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
     def get_env_node(self, cmp):
         objs = []
         visited = set()
-        for job in cmp.jobs.all():
+        for job in cmp.pt_get_jobs():
             for obj in EnvNodeModel.objects.filter(job=job.id, parent=None).all():
                 if obj.name in visited:
                     continue
@@ -174,13 +191,13 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
 
     def _pt_get_jobs_attr(self, cmp, attr):
         ret = set()
-        for job in cmp.jobs.all():
+        for job in cmp.pt_get_jobs():
             ret.add(job.__dict__[attr])
         return ", ".join(sorted(ret))
 
     def _pt_get_jobs_sum(self, cmp, attr):
         ret = 0
-        for job in cmp.jobs.all():
+        for job in cmp.pt_get_jobs():
             ret += job.__dict__[attr]
         return ret
 
@@ -207,6 +224,12 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
 
 
 class ComparisonSimpleSerializer(ComparisonBaseSerializer):
+    jobs = serializers.SerializerMethodField()
+
+    def get_jobs(self, cmp):
+        # jobs = JobModel.objects.filter(jobejob.id, parent=None).all()
+        return [j.id for j in cmp.pt_get_jobs()]
+
     class Meta:
         model = ComparisonModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
@@ -218,7 +241,7 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 
     def get_jobs(self, cmp):
         # jobs = JobModel.objects.filter(jobejob.id, parent=None).all()
-        return JobSimpleSerializer(cmp.jobs.all(), many=True).data
+        return JobSimpleSerializer(cmp.pt_get_jobs(), many=True).data
 
     class Meta:
         model = ComparisonModel
@@ -422,7 +445,7 @@ class PTComparisonServSideGroupView:
 class PTComparisonServSideView:
     def __init__(self, cmp_obj):
         self.cmp_obj = cmp_obj
-        self.job_objs = self.cmp_obj.jobs.all()
+        self.job_objs = self.cmp_obj.pt_get_jobs()
         self.groups = OrderedDict()
 
         self.init()
