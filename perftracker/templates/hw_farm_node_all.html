@@ -70,6 +70,31 @@
         <label for="inputBegin">Locked since</label>
         <input type="begin" class="form-control" id="lockBegin" placeholder="inputBegin" disabled="disabled" value=''>
     </div>
+
+    <div class="form-group">
+      <label for="inputDur">Lock type</label>
+      <div class="dropdown lock-type-picker">
+        <button class="btn btn-default btn-block dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          <span class="selected-lock-type" style="
+                    background-color: {{ hw_lock_types.0.bg_color }};
+                    color: {{ hw_lock_types.0.fg_color }};">{{ hw_lock_types.0.name }}</span>
+          <span class="caret"></span>
+        </button>
+
+        <ul class="dropdown-menu lock-type-panel" aria-labelledby="dropdown-lock-types">
+          <li class="dropdown-header text-uppercase">Choose Lock Type</li>
+
+          {% for t in hw_lock_types %}
+            <li role="separator" class="divider"></li>
+            <li class="lock-types">
+              <a href="#" class="lock-type" style="background-color: {{ t.bg_color }}; color: {{ t.fg_color }};">{{ t.name }}</a>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
     <div class="form-group">
         <label for="inputDur">Planned lock duration (hours)</label>
         <input type="number" class="form-control" id="lockDur" data-bind="value:replyNumber" placeholder="inputDur" value=''>
@@ -161,6 +186,10 @@ $(document).ready(function() {
                 $("#lockNodes").find('option:selected').each(function() {
                     data.hw_nodes.push($(this).val());
                 });
+                data.lock_type = {}
+                data.lock_type.name = $(".selected-lock-type").text();
+                data.lock_type.bg_color = $(".selected-lock-type").css('.background-color');
+                data.lock_type.fg_color = $(".selected-lock-type").css('.color');
                 return data;
             };
 
@@ -178,6 +207,9 @@ $(document).ready(function() {
                     $('#lockAction').attr("disabled", false);
                     $("#lockBegin").val(pt_date2str(data.begin));
                     $("#lockDur").val(data.planned_dur_hrs);
+                    $(".selected-lock-type").text(data.lock_type.name);
+                    $(".selected-lock-type").css('background-color', data.lock_type.bg_color);
+                    $(".selected-lock-type").css('color', data.lock_type.fg_color);
                     var hw_nodes = $(".modal-body #lockNodes").empty();
                     $.each(data.hw_nodes, function() {
                         var o = $("<option></option>").val(this['id']).text("#{0} - {1}".ptFormat(this['id'], this['name']));
@@ -198,7 +230,6 @@ $(document).ready(function() {
                     });
                     $('#lockAction').off('click').on('click', function () {
                         data = updateLockData(data);
-                        console.log("LOCK", data);
                         $.ajax({
                             url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
                             type: 'PUT',
@@ -299,6 +330,15 @@ $(document).ready(function() {
                 }
             });
         }
+    });
+
+    /*
+     * 3. Update selected lock
+     */
+    $('.lock-type').click(function() {
+        $('.selected-lock-type').css('background-color', $(this).css('background-color'));
+        $('.selected-lock-type').css('color', $(this).css('color'));
+        $('.selected-lock-type').text($(this).text());
     });
 });
 </script>

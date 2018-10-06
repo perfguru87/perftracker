@@ -12,6 +12,58 @@ from rest_framework import serializers
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeNestedSerializer
 from perftrackerlib.helpers.timeline import ptTimeline, ptDoc, ptSection, ptTask
 
+class HwFarmNodeLockTypeModel(models.Model):
+    name     = models.CharField(max_length=128, help_text="Lock type name", blank=False)
+    bg_color = models.CharField(max_length=7, help_text="The background color: #003399")
+    fg_color = models.CharField(max_length=7, help_text="The foreground color: #ffffff")
+    order    = models.IntegerField(default=1, help_text="Priority in the list")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Hw Node Lock Type"
+        verbose_name_plural = "Hw Node Lock Types"
+
+    @staticmethod
+    def _pt_get_default():
+        return HwFarmNodeLockTypeModel(name="Default lock type", bg_color="#777", fg_color="#fff")
+
+    @staticmethod
+    def pt_get_by_id(id):
+        if isinstance(id, HwFarmNodeLockTypeModel):
+            return id
+
+        if not id:
+            return HwFarmNodeLockTypeModel._pt_get_default()
+        try:
+            return HwFarmNodeLockTypeModel.objects.get(id=id)
+        except HwFarmNodeLockTypeModel.DoesNotExist:
+            return HwFarmNodeLockTypeModel._pt_get_default()
+
+    @staticmethod
+    def pt_get_by_name(name):
+        if not name:
+            return HwFarmNodeLockTypeModel._pt_get_default()
+        try:
+            return HwFarmNodeLockTypeModel.objects.get(name=name)
+        except HwFarmNodeLockTypeModel.DoesNotExist:
+            return HwFarmNodeLockTypeModel._pt_get_default()
+
+    @staticmethod
+    def pt_get_all():
+        all = HwFarmNodeLockTypeModel.objects.all().order_by('order')
+        if len(all):
+            return all
+        return [HwFarmNodeLockTypeModel._pt_get_default()]
+
+
+class HwFarmNodeLockTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HwFarmNodeLockTypeModel
+        fields = ('name', 'bg_color', 'fg_color')
+
+
 class HwFarmNodeLockModel(models.Model):
     title           = models.CharField(blank=True, max_length=128, help_text="My product perf job #123")
     owner           = models.CharField(blank=True, max_length=64, help_text="Jenkins")
@@ -25,6 +77,9 @@ class HwFarmNodeLockModel(models.Model):
     hw_nodes        = models.ManyToManyField(HwFarmNodeModel, help_text="Host", limit_choices_to={'locked_by': None})
 
     planned_dur_hrs = models.IntegerField(default=24, help_text="Planned lock duration (hours)")
+
+    lock_type       = models.ForeignKey(HwFarmNodeLockTypeModel, help_text="Lock type", blank=True, default=None,
+                                        null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return "#%s, %s" % (str(self.id), self.title)
@@ -58,6 +113,8 @@ class HwFarmNodeLockModel(models.Model):
             raise SuspiciousOperation("'planned_dur_hrs' is not specified: it must be 'planned_dur_hrs': 12")
         if type(json_data['hw_nodes']) is not list:
             raise SuspiciousOperation("'hw_nodes' must be a list: 'hw_nodes': [1, 3, ...] ")
+        if (type(json_data['lock_type']) is not dict) or 'name' not in json_data['lock_type']:
+            raise SuspiciousOperation("'lock_type.name' is not set")
         try:
             x = int(json_data['planned_dur_hrs'])
         except ValueError:
@@ -68,6 +125,8 @@ class HwFarmNodeLockModel(models.Model):
         self.planned_dur_hrs = int(json_data['planned_dur_hrs'])
 
         hw_nodes = []
+
+        self.lock_type = HwFarmNodeLockTypeModel.pt_get_by_name(json_data['lock_type']['name'])
 
         for id in json_data['hw_nodes']:
             id = int(id)
@@ -94,27 +153,39 @@ class HwFarmNodeLockModel(models.Model):
         self.save()
 
 
-class HwFarmNodeLockNestedSerializer(serializers.ModelSerializer):
+class HwFarmNodeLockSimpleSerializer(serializers.ModelSerializer):
+    lock_type = serializers.SerializerMethodField()
+
+    def get_lock_type(self, lock):
+        lock_type = HwFarmNodeLockTypeModel.pt_get_by_id(lock.lock_type)
+        return HwFarmNodeLockTypeSerializer(lock_type).data
+
+    class Meta:
+        model = HwFarmNodeLockModel
+        fields = ('title', 'owner', 'begin', 'end', 'manual', 'planned_dur_hrs', 'hw_nodes', 'lock_type')
+
+
+class HwFarmNodeLockNestedSerializer(HwFarmNodeLockSimpleSerializer):
     hw_nodes = serializers.SerializerMethodField()
 
     def get_hw_nodes(self, lock):
         nodes = HwFarmNodeModel.objects.filter(Q(locked_by=lock.id) | Q(locked_by=None))
         return HwFarmNodeNestedSerializer(nodes, many=True).data
 
-    class Meta:
-        model = HwFarmNodeLockModel
-        fields = ('title', 'owner', 'begin', 'end', 'manual', 'hw_nodes', 'planned_dur_hrs')
-
-
-class HwFarmNodeLockSimpleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HwFarmNodeLockModel
-        fields = ('title', 'owner', 'begin', 'end', 'manual', 'planned_dur_hrs')
-
 
 class HwFarmNodesTimeline:
     def __init__(self, project_id):
         self.project_id = project_id
+
+    def gen_lock_types_css(self):
+        ret = ["<style type='text/css'>"]
+        for t in HwFarmNodeLockTypeModel.pt_get_all():
+            ret.append("div.pt_timeline_task_%d .timeline-event-content {" % t.id)
+            ret.append(" background-color: %s;" % t.bg_color)
+            ret.append(" color: %s;" % t.fg_color)
+            ret.append("}")
+        ret.append("</style>")
+        return "\n".join(ret)
 
     def gen_html(self):
         if self.project_id:
@@ -132,6 +203,9 @@ class HwFarmNodesTimeline:
         range_end = (now + datetime.timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
 
         d = ptDoc(header=" ", footer=" ")
+
+        d.add_body(self.gen_lock_types_css())
+
         s = d.add_section(ptSection())
         t = s.add_timeline(
             ptTimeline(
@@ -173,6 +247,6 @@ class HwFarmNodesTimeline:
                        end = default_end
 
                 t.add_task(ptTask(l.begin, end, group=n.name, hint=hint, title=l.title,
-                                  cssClass='pt_timeline_task_manual' if l.manual else 'pt_timeline_task_auto'))
+                                  cssClass='pt_timeline_task_%s' % (l.lock_type.id if l.lock_type else 'default')))
 
         return d.gen_html()
