@@ -180,6 +180,8 @@ class HwFarmNodesTimeline:
     def gen_lock_types_css(self):
         ret = ["<style type='text/css'>"]
         for t in HwFarmNodeLockTypeModel.pt_get_all():
+            if t.id is None:
+                continue
             ret.append("div.pt_timeline_task_%d .timeline-event-content {" % t.id)
             ret.append(" background-color: %s;" % t.bg_color)
             ret.append(" color: %s;" % t.fg_color)
