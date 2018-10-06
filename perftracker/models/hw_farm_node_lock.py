@@ -139,6 +139,7 @@ class HwFarmNodesTimeline:
                 begin=range_begin,
                 end=range_end,
                 groups_title='Hosts',
+                cluster=False,
                 js_opts={
                     'groupsTitle': "'Host'",
                     'groupsWidth': "'100px'",
