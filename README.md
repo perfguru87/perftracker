@@ -1,9 +1,10 @@
 # The perftracker
 
-PerfTracker - performance regression tracking server for your CI:
+PerfTracker - performance results, comparisons and build to build regression tracking server
+for your R&D performance continuous integration (CI):
 - Run your tests job in your jenkins/whatever
 - use client library to upload job results to perftracker
-- manage the jobs and compare tests results on the perftracker
+- manage the jobs, compare tests results and track regressions on the perftracker
 
 Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) to upload your jobs
 
