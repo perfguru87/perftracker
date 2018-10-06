@@ -28,7 +28,8 @@ from perftracker.models.regression import RegressionModel, RegressionSimpleSeria
 from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesTimeline
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesTimeline
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
@@ -207,7 +208,12 @@ def pt_job_id_html(request, project_id, job_id):
 
 # @login_required
 def pt_hwfarm_all_html(request, project_id):
-    params = {'hw_lock_form': PTHwFarmNodeLockForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
+    params = {
+               'hw_lock_form': PTHwFarmNodeLockForm(),
+               'hw_lock_types': HwFarmNodeLockTypeModel.pt_get_all(),
+               'timeline': HwFarmNodesTimeline(project_id).gen_html()
+             }
+
     return pt_base_html(request, project_id, 'hw_farm_node_all.html', params=params)
 
 

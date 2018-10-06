@@ -99,6 +99,13 @@ $PERF_TRACKER_URL/admin/perftracker/hwfarmnodemodel/
 
 So then you will be able to manage hardware locking on the 'Hosts' tab
 
+### Configuring the hardware lock types
+
+Perftracker lets you mark the hosts as locked. You can configure needed lock types in the admin panel:
+$PERF_TRACKER_URL/admin/perftracker/hwfarmnodelocktypemodel/
+
+For example it can be useful to have the types like: Under maintenance; Autotest; Manual test; Permanent assignment; etc
+
 ### Managing the regressions
 
 1. Create a regression in Django admin panel with a TAGNAME:

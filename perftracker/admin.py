@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import admin
 
 from perftracker.models.project import ProjectModel
@@ -7,14 +9,14 @@ from perftracker.models.comparison import ComparisonModel
 from perftracker.models.test_group import TestGroupModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeTypeModel
 from perftracker.models.hw_farm_node import HwFarmNodeModel
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
 
 from django.contrib import admin
 from django import forms
 from django.db.models import Q
 
 # This is required to filter out the locked hosts from the list of hosts available for the lock
-class HwFarmNodeLockForm(forms.ModelForm):
+class HwFarmNodeLockModelForm(forms.ModelForm):
 
     class Meta:
         model = HwFarmNodeLockModel
@@ -46,8 +48,36 @@ class HwFarmNodeLockForm(forms.ModelForm):
         return l
 
 
-class HwFarmNodeLockAdmin(admin.ModelAdmin):
-    form = HwFarmNodeLockForm
+class HwFarmNodeLockModelAdmin(admin.ModelAdmin):
+    form = HwFarmNodeLockModelForm
+
+
+# This form is required to validate the color
+class HwFarmNodeLockTypeForm(forms.ModelForm):
+
+    class Meta:
+        model = HwFarmNodeLockTypeModel
+        fields = ('name', 'bg_color', 'fg_color')
+
+        r = re.compile(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$')
+
+        def is_hex_color(input_string):
+            if r.search(input_string):
+                return True
+            return False
+
+        def clean(self):
+            if not is_hex_color(self.cleaned_data.get('bg_color')):
+                raise forms.ValidationError("Background color is invalid, must be #000000")
+            if not is_hex_color(self.cleaned_data.get('gg_color')):
+                raise forms.ValidationError("Foreground color is invalid, must be #000000")
+
+            return self.cleaned_data
+
+
+class HwFarmNodeLockTypeAdmin(admin.ModelAdmin):
+    form = HwFarmNodeLockTypeForm
+
 
 admin.site.register(ProjectModel)
 admin.site.register(JobModel)
@@ -57,4 +87,5 @@ admin.site.register(TestGroupModel)
 admin.site.register(EnvNodeModel)
 admin.site.register(EnvNodeTypeModel)
 admin.site.register(HwFarmNodeModel)
-admin.site.register(HwFarmNodeLockModel, HwFarmNodeLockAdmin)
+admin.site.register(HwFarmNodeLockModel, HwFarmNodeLockModelAdmin)
+admin.site.register(HwFarmNodeLockTypeModel, HwFarmNodeLockTypeAdmin)
