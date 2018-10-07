@@ -9,26 +9,38 @@ for your R&D performance continuous integration (CI):
 Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) to upload your jobs
 
 ## Features
-Version 0.1 (current):
+Version 0.4.1 (current):
 - performance tests jobs uploader
 - jobs list view
-- jobs details view
-- jobs comparison dialog
+- job details view
 - job tests view
 - job tests details
+- jobs comparison with tables and charts
+- automated regressions
+- hardware locking
+- ...
+See [more deatils](http://www.perftracker.org/server/#Features_set)
 
 ## Todo
+- authentication/authorisation
 - fixtures
-- jobs & tests comparisons
-- charts (lines/columns/trends) in comparisons
-- nodes management (lock/unlock/see status)
 - custom screens support
 - regressions AI
+- integration with JIRA
+- ...
+See [more deatils](http://www.perftracker.org/server/#ToDo)
 
 ## Versions convention
 Versions before 1.0 are considered as early alpha and will not guarantee upgrade from each other
 
 Versions after 1.0 will guarantee backward compatibility and upgrade steps
+
+Primary criteria for version 1.0 are:
+- REST API documentation
+- email notifications about newly detected regressions/improvements
+- integration with JIRA
+- CPU/RAM usage chart from Prometheus on the hosts view
+- Change SSH login message on a host when it is locked
 
 ## Requirements
 
@@ -68,6 +80,25 @@ CentOS-7:
 ```
 yum -y install uwsgi uwsgi-plugin-python3
 ```
+
+### Connecting to a database
+By default django uses the sqlite database, but you can define the connection to your database in the perftracker_django/settings_local.py file:
+```
+cat >> perftracker_django/settings_local.py << EOD
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'pt',
+        'USER': 'pt',
+        'PASSWORD': 'my secret password',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
+}
+EOF
+```
+
+NOTE: please refere to Django [documentation](https://docs.djangoproject.com/en/2.1/ref/databases/) to see which databases are supported. For example Django 2.1 supports PosgtreSQL-9.4 and higher so it will not work on default CentOS-7 which has PostgreSQL-9.2 out of the box
 
 ### Create DB schema (apply migrations)
 ```
