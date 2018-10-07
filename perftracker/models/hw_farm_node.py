@@ -16,6 +16,7 @@ from perftracker.models.env_node import EnvNodeModel, EnvNodeNestedSerializer
 class HwFarmNodeModel(models.Model):
     name            = models.CharField(max_length=64, help_text="s1")
     hostname        = models.CharField(max_length=256, help_text="s1.perfteam.example.com")
+    purpose         = models.CharField(max_length=256, help_text="a test server")
     ip              = models.CharField(blank=True, max_length=64, help_text="10.0.0.1")
     projects        = models.ManyToManyField(ProjectModel, related_name="hw_node_projects", help_text="Project")
     hidden          = models.BooleanField(help_text="Set to True to hide from the nodes list", default=False)
@@ -81,10 +82,12 @@ class HwFarmNodeBaseSerializer(serializers.ModelSerializer):
 class HwFarmNodeSimpleSerializer(HwFarmNodeBaseSerializer):
     class Meta:
         model = HwFarmNodeModel
-        fields = ('order', 'id', 'name', 'os', 'hostname', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'notes', 'locked_by')
+        fields = ('order', 'id', 'name', 'os', 'hostname', 'purpose', 'vendor', 'model',
+                  'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'notes', 'locked_by')
 
 
 class HwFarmNodeNestedSerializer(HwFarmNodeBaseSerializer):
     class Meta:
         model = HwFarmNodeModel
-        fields = ('order', 'id', 'name', 'os', 'hostname', 'ip', 'vendor', 'model', 'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'notes', 'locked_by')
+        fields = ('order', 'id', 'name', 'os', 'hostname', 'purpose', 'ip', 'vendor', 'model',
+                  'cpus_count', 'ram_gb', 'storage_tb', 'network_gbs', 'notes', 'locked_by')

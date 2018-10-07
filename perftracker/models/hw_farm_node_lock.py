@@ -206,6 +206,13 @@ class HwFarmNodesLocksTimeline:
 
         d = ptDoc(header=" ", footer=" ")
 
+        def gen_group(node):
+            return "%s%s" % (n.name, " (%s)" % n.purpose if n.purpose else "") 
+
+        width = 100  # an ugly hack...
+        for n in nodes:
+            width = max(width, len(gen_group(n)) * 6.5)
+
         s = d.add_section(ptSection())
         t = s.add_timeline(
             ptTimeline(
@@ -216,7 +223,7 @@ class HwFarmNodesLocksTimeline:
                 cluster=False,
                 js_opts={
                     'groupsTitle': "'Host'",
-                    'groupsWidth': "'100px'",
+                    'groupsWidth': "'%dpx'" % int(width),
                     'groupsComments': "'host_status'",
                     'axisOnTop': 'true',
                     'showNavigation': 'true',}))
@@ -226,8 +233,10 @@ class HwFarmNodesLocksTimeline:
 
         groups = OrderedDict()
         for n in nodes:
-            groups[n.id] = n.name
-            t.add_task(ptTask("1970-01-01 00:00:00", "1970-01-01 00:00:00", group=n.name))
+            group = gen_group(n);
+
+            groups[n.id] = group
+            t.add_task(ptTask("1970-01-01 00:00:00", "1970-01-01 00:00:00", group=group))
 
             locks = HwFarmNodeLockModel.objects.filter(Q(begin__gte=since) | Q(end=None), hw_nodes=n.pk, deleted=False)
             for l in locks:
@@ -246,7 +255,7 @@ class HwFarmNodesLocksTimeline:
                    if end < now_utc:
                        end = default_end
 
-                t.add_task(ptTask(l.begin, end, group=n.name, hint=hint, title=l.title, data_id=l.id,
+                t.add_task(ptTask(l.begin, end, group=group, hint=hint, title=l.title, data_id=l.id,
                                   cssClass='pt_timeline_task_%s' % (l.lock_type.id if l.lock_type else 'default')))
 
         return d.gen_html()
