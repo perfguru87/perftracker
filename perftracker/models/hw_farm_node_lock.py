@@ -84,6 +84,9 @@ class HwFarmNodeLockModel(models.Model):
     def __str__(self):
         return "#%s, %s" % (str(self.id), self.title)
 
+    def is_active(self):
+        return self.end is None or (self.end > timezone.now())
+
     class Meta:
         verbose_name = "Hw Node Lock"
         verbose_name_plural = "Hw Node Locks"
@@ -122,11 +125,18 @@ class HwFarmNodeLockModel(models.Model):
 
     def pt_update(self, json_data):
         self.title = json_data['title']
+        self.deleted = False
+        self.lock_type = HwFarmNodeLockTypeModel.pt_get_by_name(json_data['lock_type']['name'])
+        if self.lock_type.id is None:
+            self.lock_type = None
+
+        if not self.is_active():
+            super(HwFarmNodeLockModel, self).save()
+            return
+
         self.planned_dur_hrs = int(json_data['planned_dur_hrs'])
 
         hw_nodes = []
-
-        self.lock_type = HwFarmNodeLockTypeModel.pt_get_by_name(json_data['lock_type']['name'])
 
         for id in json_data['hw_nodes']:
             id = int(id)
@@ -138,8 +148,6 @@ class HwFarmNodeLockModel(models.Model):
             except HwFarmNodeModel.DoesNotExist:
                 raise SuspiciousOperation("Hw node #%d doesn't exist" % id)
             hw_nodes.append(hw_node)
-
-        self.deleted = False
 
         self.save()
         self.hw_nodes.clear()
@@ -155,6 +163,10 @@ class HwFarmNodeLockModel(models.Model):
 
 class HwFarmNodeLockSimpleSerializer(serializers.ModelSerializer):
     lock_type = serializers.SerializerMethodField()
+    active = serializers.SerializerMethodField()
+
+    def get_active(self, lock):
+        return lock.is_active()
 
     def get_lock_type(self, lock):
         lock_type = HwFarmNodeLockTypeModel.pt_get_by_id(lock.lock_type)
@@ -162,7 +174,7 @@ class HwFarmNodeLockSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HwFarmNodeLockModel
-        fields = ('title', 'owner', 'begin', 'end', 'manual', 'planned_dur_hrs', 'hw_nodes', 'lock_type')
+        fields = ('title', 'owner', 'begin', 'end', 'manual', 'planned_dur_hrs', 'hw_nodes', 'lock_type', 'active')
 
 
 class HwFarmNodeLockNestedSerializer(HwFarmNodeLockSimpleSerializer):
@@ -173,21 +185,9 @@ class HwFarmNodeLockNestedSerializer(HwFarmNodeLockSimpleSerializer):
         return HwFarmNodeNestedSerializer(nodes, many=True).data
 
 
-class HwFarmNodesTimeline:
+class HwFarmNodesLocksTimeline:
     def __init__(self, project_id):
         self.project_id = project_id
-
-    def gen_lock_types_css(self):
-        ret = ["<style type='text/css'>"]
-        for t in HwFarmNodeLockTypeModel.pt_get_all():
-            if t.id is None:
-                continue
-            ret.append("div.pt_timeline_task_%d .timeline-event-content {" % t.id)
-            ret.append(" background-color: %s;" % t.bg_color)
-            ret.append(" color: %s;" % t.fg_color)
-            ret.append("}")
-        ret.append("</style>")
-        return "\n".join(ret)
 
     def gen_html(self):
         if self.project_id:
@@ -205,8 +205,6 @@ class HwFarmNodesTimeline:
         range_end = (now + datetime.timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
 
         d = ptDoc(header=" ", footer=" ")
-
-        d.add_body(self.gen_lock_types_css())
 
         s = d.add_section(ptSection())
         t = s.add_timeline(
@@ -248,7 +246,7 @@ class HwFarmNodesTimeline:
                    if end < now_utc:
                        end = default_end
 
-                t.add_task(ptTask(l.begin, end, group=n.name, hint=hint, title=l.title,
+                t.add_task(ptTask(l.begin, end, group=n.name, hint=hint, title=l.title, data_id=l.id,
                                   cssClass='pt_timeline_task_%s' % (l.lock_type.id if l.lock_type else 'default')))
 
         return d.gen_html()

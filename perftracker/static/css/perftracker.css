@@ -318,6 +318,10 @@ div .timeline-event-content span {
   padding-left: 3px;
 }
 
+div .timeline-event-content span:hover {
+  cursor: pointer;
+}
+
 .pt_button_group {
   min-height: 30px;
 }

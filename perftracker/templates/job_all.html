@@ -4,10 +4,8 @@
 
 {% block content %}
 
-{% if timeline %}
-  <div class='pt_timeline'>
-    {{ timeline|safe }}
-  </div>
+{% if hw_lock_timeline %}
+  {% include '_hw_lock_timeline.html' %}
 {% endif %}
 
 <table id="jobs" class="display dataTable" cellspacing="0" width="100%">
