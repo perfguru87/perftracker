@@ -74,6 +74,7 @@ class ArtifactMetaModel(models.Model):
         do_locks = not sys.platform.startswith('win')
 
         try:
+            f = os.fdopen(os.open(p, flags), "wb")
             if not IS_WINDOWS:  # FIXME
                 fcntl.flock(f, fcntl.LOCK_EX)
             f.write(bytes)
