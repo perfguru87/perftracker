@@ -30,7 +30,6 @@ class PTHwFarmNodeLockForm(ModelForm):
         else:
             return self.cleaned_data['end']
 
-
     class Meta:
         model = HwFarmNodeLockModel
         fields = ['title', 'begin', 'end', 'hw_nodes', 'planned_dur_hrs']

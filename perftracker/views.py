@@ -29,7 +29,7 @@ from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesTimeline
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesLocksTimeline
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.env_node import EnvNodeModel
@@ -39,7 +39,7 @@ from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUpload
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
 
-API_VER = 1.0
+API_VER = '1.0'
 
 
 def pt_handle_500(request):
@@ -186,7 +186,12 @@ def pt_job_all_html(request, project_id):
             messages.error(request, 'Upload failed: ' + f.errors.as_text())
         return HttpResponseRedirect(request.get_full_path())
 
-    params = {'cmp_form': PTCmpDialogForm(), 'timeline': HwFarmNodesTimeline(project_id).gen_html()}
+    params = {
+               'cmp_form': PTCmpDialogForm(),
+               'hw_lock_form': PTHwFarmNodeLockForm(),
+               'hw_lock_types': HwFarmNodeLockTypeModel.pt_get_all(),
+               'hw_lock_timeline': HwFarmNodesLocksTimeline(project_id).gen_html()
+             }
     return pt_base_html(request, project_id, 'job_all.html', params=params)
 
 
@@ -211,7 +216,7 @@ def pt_hwfarm_all_html(request, project_id):
     params = {
                'hw_lock_form': PTHwFarmNodeLockForm(),
                'hw_lock_types': HwFarmNodeLockTypeModel.pt_get_all(),
-               'timeline': HwFarmNodesTimeline(project_id).gen_html()
+               'hw_lock_timeline': HwFarmNodesLocksTimeline(project_id).gen_html()
              }
 
     return pt_base_html(request, project_id, 'hw_farm_node_all.html', params=params)

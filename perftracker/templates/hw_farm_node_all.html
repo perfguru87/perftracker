@@ -4,10 +4,8 @@
 
 {% block content %}
 
-{% if timeline %}
-  <div class='pt_timeline'>
-    {{ timeline|safe }}
-  </div>
+{% if hw_lock_timeline %}
+  {% include '_hw_lock_timeline.html' %}
 {% endif %}
 
 <table id="hws" class="display dataTable" cellspacing="0" width="100%">
@@ -44,79 +42,6 @@
     </tr>
   </tfoot>
 </table>
-
-
-<!-- The modal -->
-<div class="modal fade-scale" id="hwLockDialog" tabindex="-1" role="dialog" aria-labelledby="modalLabelSmall" aria-hidden="true">
-<div class="modal-dialog modal-sm">
-<div class="modal-content">
-
-<div class="modal-header">
-<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-<span aria-hidden="true">&times;</span>
-</button>
-<h4 class="modal-title" id="lockLabel"></h4>
-</div>
-
-<div class="modal-body">
-
-<form id="lockForm">
-    <div class="form-group">
-        <label for="Lock Title">Title</label>
-        <input type="hidden" id="lockId">
-        <input type="title" class="form-control" id="lockTitle" placeholder="Lock Title" value="">
-    </div>
-    <div class="form-group" id="lockBeginGroup">
-        <label for="inputBegin">Locked since</label>
-        <input type="begin" class="form-control" id="lockBegin" placeholder="inputBegin" disabled="disabled" value=''>
-    </div>
-
-    <div class="form-group">
-      <label for="inputDur">Lock type</label>
-      <div class="dropdown lock-type-picker">
-        <button class="btn btn-default btn-block dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-          <span class="selected-lock-type" style="
-                    background-color: {{ hw_lock_types.0.bg_color }};
-                    color: {{ hw_lock_types.0.fg_color }};">{{ hw_lock_types.0.name }}</span>
-          <span class="caret"></span>
-        </button>
-
-        <ul class="dropdown-menu lock-type-panel" aria-labelledby="dropdown-lock-types">
-          <li class="dropdown-header text-uppercase">Choose Lock Type</li>
-
-          {% for t in hw_lock_types %}
-            <li role="separator" class="divider"></li>
-            <li class="lock-types">
-              <a href="#" class="lock-type" style="background-color: {{ t.bg_color }}; color: {{ t.fg_color }};">{{ t.name }}</a>
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-
-    <div class="form-group">
-        <label for="inputDur">Planned lock duration (hours)</label>
-        <input type="number" class="form-control" id="lockDur" data-bind="value:replyNumber" placeholder="inputDur" value=''>
-    </div>
-    <div class="form-group">
-        <label for="inputNodes">Locked nodes</label>
-        <select multiple class="form-control" id="lockNodes" placeholder="inputNodes">
-          <option></option>
-        </select>
-    </div>
-    <div class='pt_button_group'>
-    <button type="submit" id="lockUnlock" class="btn btn-primary">Unlock</button>
-    <button type="submit" id="lockAction" class="btn btn-primary pull-right float-right">Action</button>
-    </div>
-</form>
-
-</div>
-
-</div>
-</div>
-</div>
-
 
 <script>
 $(document).ready(function() {
@@ -168,124 +93,21 @@ $(document).ready(function() {
                 "targets": "colLock",
                 "render": function ( data, type, row ) {
                     if (data)
-                        return "<a data-toggle='modal' data-id='" + data +
-                               "' class='pt-lock-edit glyphicon glyphicon-lock' href='#hwLockDialog'></a>";
+                        return "<a data-id='{0}' class='pt-lock-edit glyphicon glyphicon-lock' href='#hwLockDialog'></a>".
+                               ptFormat(data);
                     else
-                        return "<a data-toggle='modal' data-id='" + row.id +
-                               "' class='pt-lock-create glyphicon glyphicon-unchecked' href='#hwLockDialog''></a>";
+                        return "<a data-id='{0}' class='pt-lock-create glyphicon glyphicon-unchecked' href='#hwLockDialog''></a>".
+                               ptFormat(row.id);
                 },
             },
         ],
         "drawCallback": function(settings) {
-
-            var updateLockData = function(data) {
-                data.planned_dur_hrs = parseInt($("#lockDur").val());
-                data.title = $("#lockTitle").val();
-                data.planned_dur_hrs = parseInt($(".modal-body #lockDur").val());
-                data.hw_nodes = [];
-                $("#lockNodes").find('option:selected').each(function() {
-                    data.hw_nodes.push($(this).val());
-                });
-                data.lock_type = {}
-                data.lock_type.name = $(".selected-lock-type").text();
-                data.lock_type.bg_color = $(".selected-lock-type").css('.background-color');
-                data.lock_type.fg_color = $(".selected-lock-type").css('.color');
-                return data;
-            };
-
             $(".pt-lock-edit").on("click", function () {
-                var lockId = parseInt($(this).data('id'));
-
-                $('#lockAction').html('Save');
-                $('#lockUnlock').show();
-                $('#lockBeginGroup').show();
-
-                $("#lockLabel").html("Hardware lock <a href='/admin/perftracker/hwfarmnodelockmodel/{0}/change/'>#{1}</a>".ptFormat(lockId, lockId));
-                $.getJSON("/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}".ptFormat(lockId), function( data ) {
-                    $("#lockId").val(lockId);
-                    $("#lockTitle").val(data.title);
-                    $('#lockAction').attr("disabled", false);
-                    $("#lockBegin").val(pt_date2str(data.begin));
-                    $("#lockDur").val(data.planned_dur_hrs);
-                    $(".selected-lock-type").text(data.lock_type.name);
-                    $(".selected-lock-type").css('background-color', data.lock_type.bg_color);
-                    $(".selected-lock-type").css('color', data.lock_type.fg_color);
-                    var hw_nodes = $(".modal-body #lockNodes").empty();
-                    $.each(data.hw_nodes, function() {
-                        var o = $("<option></option>").val(this['id']).text("#{0} - {1}".ptFormat(this['id'], this['name']));
-                        if (lockId == this['locked_by'])
-                            o.attr("selected", "selected");
-                        hw_nodes.append(o);
-                    });
-
-                    $('#lockUnlock').off('click').on('click', function () {
-                        console.log("LOG", data);
-                        $.ajax({
-                            url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
-                            type: 'DELETE',
-                            success: function(xhr) { location.reload(); },
-                            error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
-                        });
-                        return false;
-                    });
-                    $('#lockAction').off('click').on('click', function () {
-                        data = updateLockData(data);
-                        $.ajax({
-                            url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/{0}'.ptFormat(lockId),
-                            type: 'PUT',
-                            contentType: "application/json",
-                            data: JSON.stringify(data),
-                            success: function(xhr) { location.reload(); },
-                            error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
-                        });
-                        return false;
-                    });
-                });
-            });
+                pt_hw_lock_edit_cb(parseInt($(this).data('id')));
+            })
 
             $(".pt-lock-create").on("click", function () {
-                var hostId = parseInt($(this).data('id'));
-
-                $('#lockAction').html('Lock');
-                $('#lockAction').attr("disabled", true);
-                $('#lockUnlock').hide();
-                $('#lockBeginGroup').hide();
-
-                $("#lockLabel").html("New hardware lock");
-                $("#lockTitle").val("");
-                $("#lockDur").val("24");
-
-                $("#lockTitle").on("change paste keyup", function() {
-                    $('#lockAction').attr("disabled", $("#lockTitle").val().trim() == "" || !$("#lockNodes :selected").length);
-                });
-                $("#lockNodes").change(function() {
-                    $('#lockAction').attr("disabled", $("#lockTitle").val().trim() == "" || !$("#lockNodes :selected").length);
-                });
-
-                $.getJSON("/api/v{{ api_ver }}/{{ project.id }}/hw_farm/?start=0&length=1000" +
-                          "&filter[0][column]=locked_by&filter[0][value]=" +
-                          "&column[0][data]=order&column[1][data]=name&column[2][data]=id" + 
-                          "&order[0][column]=1&order[0][column]=2&order[0][column]=3", function( data ) {
-                    var hw_nodes = $(".modal-body #lockNodes").empty();
-                    $.each(data.data, function() {
-                        var o = $("<option></option>").val(this['id']).text("#{0} - {1}".ptFormat(this['id'], this['name']));
-                        if (hostId == this['id'])
-                            o.attr("selected", "selected");
-                        hw_nodes.append(o);
-                    });
-
-                    $('#lockAction').off('click').on('click', function () {
-                        data = updateLockData({});
-                        $.ajax({
-                            url: '/api/v{{ api_ver }}/{{ project.id }}/hw_lock/',
-                            type: 'POST',
-                            data: JSON.stringify(data),
-                            success: function(xhr) { location.reload(); },
-                            error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
-                        });
-                        return false;
-                    });
-                });
+                pt_hw_lock_create_cb(parseInt($(this).data('id')));
             });
         },
     });
@@ -293,7 +115,6 @@ $(document).ready(function() {
     /*
      * 2. Job deails opening / closing
      */
-
     $('#hws').off('click').on('click', 'td.pt_row_details_toggle', function () {
         var tr = $(this).closest('tr');
         var row = table.row( tr );
@@ -330,15 +151,6 @@ $(document).ready(function() {
                 }
             });
         }
-    });
-
-    /*
-     * 3. Update selected lock
-     */
-    $('.lock-type').click(function() {
-        $('.selected-lock-type').css('background-color', $(this).css('background-color'));
-        $('.selected-lock-type').css('color', $(this).css('color'));
-        $('.selected-lock-type').text($(this).text());
     });
 });
 </script>
