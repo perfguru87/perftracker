@@ -154,7 +154,8 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
         job = JobModel.objects.get(uuid=uuid)
     except JobModel.DoesNotExist:
         new = True
-        job = JobModel(title=j['job_title'], uuid=uuid)
+        title = j['job_title'] if 'job_title' in j else j['title']
+        job = JobModel(title=title, uuid=uuid)
 
     try:
         job.pt_update(j)
