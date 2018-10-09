@@ -654,7 +654,9 @@ def pt_hwfarm_node_all_json(request, api_ver, project_id):
             # simple example:
             search = self.request.GET.get(u'search[value]', None)
             if search:
-                qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
+                qs = qs.filter(Q(name__icontains=search) | Q(os__icontains=search) |
+                               Q(hostname__icontains=search) | Q(purpose__icontains=search) |
+                               Q(model__icontains=search))
 
             if project_id != 0:
                 qs = qs.filter(Q(projects=project_id))
