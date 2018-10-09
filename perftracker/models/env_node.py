@@ -32,8 +32,9 @@ class HwChassisModel(models.Model):
     def pt_get_by_json(json, parent=None):
         """ Find (or automatically create) the object by json key:values"""
         _j = {}
+        o = HwChassisModel()
         for f in HwChassisModel._meta.get_fields():
-            if f.name in json and f.validate(json[key.name]):
+            if f.name in json and f.validate(json[f.name], o):
                 _j[f.name] = json[f.name]
 
         if not _j:
@@ -50,7 +51,7 @@ class HwChassisModel(models.Model):
 
             f = HwChassisModel._meta.get_field(key)
             try:
-                f.validate(_j[key])
+                f.validate(_j[key], o)
             except ValidationError as e:
                 raise SuspiciousOperation(e)
 
