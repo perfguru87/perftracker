@@ -16,7 +16,7 @@ from perftracker.models.env_node import EnvNodeModel, EnvNodeNestedSerializer
 class HwFarmNodeModel(models.Model):
     name            = models.CharField(max_length=64, help_text="s1")
     hostname        = models.CharField(max_length=256, help_text="s1.perfteam.example.com")
-    purpose         = models.CharField(max_length=256, help_text="a test server")
+    purpose         = models.CharField(max_length=256, help_text="a test server", default=None, blank=True, null=True)
     ip              = models.CharField(blank=True, max_length=64, help_text="10.0.0.1")
     projects        = models.ManyToManyField(ProjectModel, related_name="hw_node_projects", help_text="Project")
     hidden          = models.BooleanField(help_text="Set to True to hide from the nodes list", default=False)
