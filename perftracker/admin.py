@@ -23,14 +23,14 @@ class HwFarmNodeLockModelForm(forms.ModelForm):
         fields = ('title', 'owner', 'hw_nodes', 'begin', 'end', 'planned_dur_hrs', 'manual', 'deleted')
 
     def __init__(self, *args, **kwargs):
-        super(HwFarmNodeLockForm, self).__init__(*args, **kwargs)
+        super(HwFarmNodeLockModelForm, self).__init__(*args, **kwargs)
         if self.instance:
             self.fields['hw_nodes'].queryset = HwFarmNodeModel.objects.filter(Q(locked_by=self.instance.id) | Q(locked_by=None))
         else:
             self.fields['hw_nodes'].queryset = HwFarmNodeModel.objects.filter(locked_by=None)
 
     def save(self, commit=True):
-        l = super(HwFarmNodeLockForm, self).save(commit=commit)
+        l = super(HwFarmNodeLockModelForm, self).save(commit=commit)
 
         hw_nodes_ids = self.cleaned_data['hw_nodes']
 
