@@ -129,6 +129,7 @@ Regressions
 - Edit regression title
 - Show/Hide groups
 - Exclude tests from regressions
+- Show total number of jobs in the regression on the regression view
 
 Integrations with Jira
 - Custom fields for dashboards
