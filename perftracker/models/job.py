@@ -75,7 +75,7 @@ class JobModel(models.Model):
         now = timezone.now()
 
         env_nodes_json = j.get_list('env_nodes')
-        tests_json = j.get_list('tests', require=True)
+        tests_json = j.get_list('tests')
 
         key2test = {}
         uuid2test = {}
