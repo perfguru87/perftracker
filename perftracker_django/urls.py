@@ -19,6 +19,7 @@ from django.conf.urls import url
 from django.views.generic import RedirectView
 
 from perftracker import views
+from perftracker import test_endpoint_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -59,6 +60,13 @@ urlpatterns = [
     path('<int:project_id>/job/', views.pt_job_all_html, name='Jobs'),
     path('<int:project_id>/hw_farm/<int:hw_id>', views.pt_hwfarm_id_html, name='Hosts'),
     path('<int:project_id>/hw_farm/', views.pt_hwfarm_all_html, name='Hosts'),
+
+    path('test_endpoint/', test_endpoint_view.pt_test_endpoint_home, name='Home'),
+    path('test_endpoint/news/', test_endpoint_view.pt_test_endpoint_news, name='News'),
+    path('test_endpoint/blog/', test_endpoint_view.pt_test_endpoint_blog, name='Blog'),
+    path('test_endpoint/contact/', test_endpoint_view.pt_test_endpoint_contact, name='Contact'),
+    path('test_endpoint/about/', test_endpoint_view.pt_test_endpoint_about, name='About'),
+    path('test_endpoint/empty/', test_endpoint_view.pt_test_endpoint_empty, name='Empty'),
 
     path('<int:project_id>/artifact_content/<uuid:uuid>', views.pt_artifact_content_id),
 

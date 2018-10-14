@@ -1,0 +1,49 @@
+{% extends '_base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+<h3>The test endpoint &laquo;{{ title }}&raquo; page</h3>
+<p>&nbsp;</p>
+
+<p>This is a test endpoint page which can be used for simple performance testing example,
+see more information in the perftracker <a href='http://www.perftracker.org/workflow/'>workflow example</a></p>
+
+{% for s in screens %}
+   {% if s.0 == title %}
+       <p>You are on the <b>&laquo;{{ title }}&raquo;</b> page - {{ s.2 }}</p>
+   {% endif %}
+{% endfor %}
+
+<hr>
+
+{% if title == 'Home' %}
+
+
+    <p>There are 4 pages in this test endpoint example which have different performance and scalability patterns:
+    <ul>
+
+    {% for s in screens %}
+        {% if s.2 is not None %}
+            <li><a href='{{ s.1 }}'>{{ s.0 }}</a> page - {{ s.2 }}</li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+    </p>
+
+{% else %}
+
+    {% for l in lorems %}
+
+    <h3>{{ l.title }}</h3>
+    <h5>By {{ l.author }} - {{ l.date }}</h5>
+    <p>{{ l.message }}</p>
+
+    {% endfor %}
+
+{% endif %}
+
+</div>
+
+{% endblock %}
