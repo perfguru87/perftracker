@@ -281,7 +281,7 @@ def pt_job_all_json(request, api_ver, project_id):
             if search:
                 qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
 
-            if project_id != 0:
+            if int(project_id) != 0:
                 qs = qs.filter(Q(project_id=project_id))
 
             qs = qs.filter(Q(deleted=False))
@@ -435,7 +435,7 @@ def pt_comparison_all_json(request, api_ver, project_id):
             if search:
                 qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
 
-            if project_id != 0:
+            if int(project_id) != 0:
                 qs = qs.filter(Q(project_id=project_id))
 
             qs = qs.filter(Q(deleted=False))
@@ -554,7 +554,7 @@ def pt_regression_all_json(request, api_ver, project_id):
             if search:
                 qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
 
-            if project_id != 0:
+            if int(project_id) != 0:
                 qs = qs.filter(Q(project_id=project_id))
 
             qs = qs.filter(Q(deleted=False))
@@ -658,7 +658,7 @@ def pt_hwfarm_node_all_json(request, api_ver, project_id):
                                Q(hostname__icontains=search) | Q(purpose__icontains=search) |
                                Q(model__icontains=search))
 
-            if project_id != 0:
+            if int(project_id) != 0:
                 qs = qs.filter(Q(projects=project_id))
 
             f = 0
