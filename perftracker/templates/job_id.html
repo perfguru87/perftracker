@@ -62,6 +62,7 @@ function pt_test_details_draw(d, err_msg)
     s += "<thead><th>Parameter</th><th>Value</th></thead></tbody>";
     s += "<tr><td>Raw scores</td><td>{0} {1}</td></tr>".ptFormat(d.scores, d.metrics);
     s += "<tr><td>&plusmn; %</td><td>{0}</td></tr>".ptFormat(d.avg_plusmin);
+    s += "<tr><td>Errors</td><td>{0}</td></tr>".ptFormat(d.errors);
     s += "<tr><td>Raw devs</td><td>{0}</td></tr>".ptFormat(d.deviations);
     s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : '');
     s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin), pt_date2str(d.end));
@@ -77,12 +78,8 @@ function pt_test_details_draw(d, err_msg)
     s += "<tr><td>Cmdline</td><td><span class='pt_ellipsis'>{0}</td></tr>".ptFormat(d.cmdline);
     s += "<tr><td>Description</td><td>{0}</td></tr>".ptFormat(d.description);
 
-    if (d.group && d.category)
-        s += "<tr><td>Group {category}</td><td>" + d.group + " {" + d.category + "}</td></tr>";
-    else if (d.category)
-        s += "<tr><td>Category</td><td>{0}</td></tr>".ptFormat(d.category);
-    else
-        s += "<tr><td>Group</td><td>{0}</td></tr>".ptFormat(d.group);
+    s += "<tr><td>Group</td><td>{0}</td></tr>".ptFormat(d.group);
+    s += "<tr><td>Category</td><td>{0}</td></tr>".ptFormat(d.category);
 
     s += "<tr><td>Attributes</td><td>{0}</td></tr>".ptFormat(d.attribs ? pt_draw_attribs(d.attribs) : "");
     s += "<tr><td>Links</td><td>{0}</td></tr>".ptFormat(d.links ? pt_draw_links(d.links) : "");

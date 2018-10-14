@@ -119,15 +119,11 @@ function pt_test_details_draw(ar, err_msg)
     s += pt_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
     s += "<tr><td>Metrics</td><td colspan='" + ar.length + "'>" + "{0} ({1})".ptFormat(
            d.metrics, d.less_better ? 'smaller is better' : 'bigger is better') + "</td></tr>";
-    if (d.group && d.category)
-        s += "<tr><td>Group {category}</td><td colspan='" + ar.length + "'>" +
-             "{0}".ptFormat(d.group) + " {" + "{0}".ptFormat(d.category) + "}</td></tr>";
-    else if (d.category)
-        s += "<tr><td>Category</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.category);
-    else
-        s += "<tr><td>Group</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.group);
+    s += "<tr><td>Group</td><td colspan='" + ar.length + "'>" + "{0}</td></tr>".ptFormat(d.group);
+    s += "<tr><td>Category</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.category);
     s += pt_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
     s += pt_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
+    s += pt_test_details_draw_row('Errors', ar, function(d) { return "{0}".ptFormat(d.errors); });
     s += pt_test_details_draw_row('Raw devs', ar, function(d) { return "{0}".ptFormat(d.deviations); });
     s += pt_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
     s += pt_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin), pt_date2str(d.end)); });
