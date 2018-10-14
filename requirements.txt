@@ -11,3 +11,4 @@ django-group-by
 perftrackerlib>=0.0.36
 pillow
 psycopg2
+lorem
