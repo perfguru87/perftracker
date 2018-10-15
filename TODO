@@ -39,6 +39,7 @@ Job view:
 + job details
 + results table
 + test details
+- link jobs to real hosts
 
 Comparisons
 + table
@@ -105,7 +106,8 @@ Hosts view
 + manual hosts locking form
 + host locking API
 - show locks history in the host details view
-- lock color
++ cusom lock types/colors
+- daily host hardware profile update (if ssh credentials/key provided)
 
 Links view
 - custom link group
@@ -121,15 +123,19 @@ DB access
 
 Regressions
 - New regression (title, tag)
-- Regression charts
++ Regression charts
 + Support --regression-tag in suites
 - Automated first two vs last two builds comparison for regressions
-- Automated regression creation
++ Automated regression creation
 + Show the list of jobs in regression. Add possibility to include/exclude jobs from regression
 - Edit regression title
 - Show/Hide groups
 - Exclude tests from regressions
 - Show total number of jobs in the regression on the regression view
+- Manual recognition of regression test drop
+- Regression details: full screen width regression view
+- Regression details: show the performance bugs timings below the regression chart
+- Regression details: show the commits below the regression chart
 
 Integrations with Jira
 - Custom fields for dashboards
