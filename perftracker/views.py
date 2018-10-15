@@ -252,15 +252,15 @@ def pt_job_all_json(request, api_ver, project_id):
         model = JobModel
 
         # define the columns that will be returned
-        columns = ['', 'id', 'end', 'env_node', 'product_name', 'product_ver', 'title', 'suite_ver', 'duration',
-                   'tests_total', 'tests_completed', 'tests_failed']
+        columns = ['', 'id', 'end', 'project', 'env_node', 'product_name', 'product_ver', 'title',
+                   'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_failed']
 
         # define column names that will be used in sorting
         # order is important and should be same as order of columns
         # displayed by datatables. For non sortable columns use empty
         # value like ''
-        order_columns = ['', 'id', 'end', 'env_node', 'product_name', 'product_ver', 'title', 'suite_ver', 'duration',
-                         'tests_total', 'tests_completed', 'tests_failed']
+        order_columns = ['', 'id', 'end', 'project', 'env_node', 'product_name', 'product_ver', 'title',
+                         'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_failed']
 
         # set max limit of records returned, this is used to protect our site if someone tries to attack our site
         # and make it return huge amount of data
@@ -408,13 +408,15 @@ def pt_comparison_all_json(request, api_ver, project_id):
         model = ComparisonModel
 
         # define the columns that will be returned
-        columns = ['', 'id', 'updated', 'env_node', 'suite_ver', 'title', 'jobs', 'tests_total', 'tests_completed', 'tests_failed']
+        columns = ['', 'id', 'updated', 'project', 'env_node', 'suite_ver', 'title', 'jobs',
+                   'tests_total', 'tests_completed', 'tests_failed']
 
         # define column names that will be used in sorting
         # order is important and should be same as order of columns
         # displayed by datatables. For non sortable columns use empty
         # value like ''
-        order_columns = ['', 'id', 'updated', 'env_node', 'suite_ver', 'title', 'jobs', 'tests_total', 'tests_completed', 'tests_failed']
+        order_columns = ['', 'id', 'updated', 'project', 'env_node', 'suite_ver', 'title', 'jobs',
+                         'tests_total', 'tests_completed', 'tests_failed']
 
         # set max limit of records returned, this is used to protect our site if someone tries to attack our site
         # and make it return huge amount of data
@@ -534,13 +536,13 @@ def pt_regression_all_json(request, api_ver, project_id):
         model = RegressionModel
 
         # define the columns that will be returned
-        columns = ['', 'id', 'title', 'tag', 'jobs', 'first_job', 'last_job']
+        columns = ['', 'id', 'project', 'title', 'tag', 'jobs', 'first_job', 'last_job']
 
         # define column names that will be used in sorting
         # order is important and should be same as order of columns
         # displayed by datatables. For non sortable columns use empty
         # value like ''
-        order_columns = ['', 'id', 'title', 'tag', 'jobs', 'first_job', 'last_job']
+        order_columns = ['', 'id', 'project', 'title', 'tag', 'jobs', 'first_job', 'last_job']
 
         # set max limit of records returned, this is used to protect our site if someone tries to attack our site
         # and make it return huge amount of data

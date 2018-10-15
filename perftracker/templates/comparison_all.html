@@ -10,6 +10,7 @@
       <th class='colExpander'></th>
       <th class='colID'>ID</th>
       <th class='colUpdated'>Updated</th>
+      <th class='colProject'>Project</th>
       <th class='colEnv'>Env</th>
       <th class='colVersion'>Version</th>
       <th class='colRunTitle'>Run title</th>
@@ -25,7 +26,8 @@
       <th class='colExpander'></th>
       <th class='colID'>ID</th>
       <th class='colUpdated'>Updated</th>
-      <th class='colEn'>Env</th>
+      <th class='colProject'>Project</th>
+      <th class='colEnv'>Env</th>
       <th class='colVersion'>Version</th>
       <th class='colRunTitle'>Run title</th>
       <th class='colJobs'>Jobs</th>
@@ -60,6 +62,7 @@ $(document).ready(function() {
             },
             { "data": "id" },
             { "data": "updated" },
+            { "data": "project" },
             { "data": "env_node" },
             { "data": "suite_ver" },
             { "data": "title" },
@@ -84,6 +87,16 @@ $(document).ready(function() {
                 },
             },
             {
+                "targets": "colProject",
+                "type": "string",
+                {% if project.id != 0 %}
+                    "visible": false,
+                {% endif %}
+                "render": function ( data, type, row ) {
+                    return data.name;
+                },
+            },
+            {
                 "targets": "colEnv",
                 "type": "string",
                 "render": function ( data, type, row ) {
@@ -103,15 +116,15 @@ $(document).ready(function() {
             {
                 "targets": "colVersion",
                 "type": "string",
-                "orderData": [ 4, 1 ],
+                "orderData": [ 5, 1 ],
             },
 
             {
                 "targets": "colRunTitle",
                 "type": "string",
-                "orderData": [ 5, 1 ],
+                "orderData": [ 6, 1 ],
                 "render": function ( data, type, row ) {
-                    return "<a href='/{{ project.id }}/comparison/" + row.id + "'>" + data + "</a>";
+                    return "<a href='/{0}/comparison/{1}'>{2}</a>".ptFormat(row.project, row.id, data);
                 },
             },
             {

@@ -13,7 +13,7 @@ from django.core.exceptions import SuspiciousOperation
 
 from rest_framework import serializers
 
-from perftracker.models.project import ProjectModel
+from perftracker.models.project import ProjectModel, ProjectSerializer
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
 from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
 from perftracker.helpers import PTDurationField, PTJson
@@ -225,10 +225,14 @@ class JobBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
     is_linked = serializers.SerializerMethodField()
     artifacts = serializers.SerializerMethodField()
+    project = serializers.SerializerMethodField()
     duration = PTDurationField()
 
     def get_is_linked(self, job):
         return job.regression_linked is not None
+
+    def get_project(self, job):
+        return ProjectSerializer(job.project).data
 
     def get_env_node(self, job):
         # this function is required to apply 'parent=None' filter because env_node children will be

@@ -13,7 +13,7 @@ from django.db import models
 
 from rest_framework import serializers
 
-from perftracker.models.project import ProjectModel
+from perftracker.models.project import ProjectModel, ProjectSerializer
 from perftracker.models.job import JobModel, JobSimpleSerializer
 from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
@@ -70,7 +70,14 @@ class RegressionModel(models.Model):
         return r
 
 
-class RegressionSimpleSerializer(serializers.ModelSerializer):
+class RegressionBaseSerializer(serializers.ModelSerializer):
+    project = serializers.SerializerMethodField()
+
+    def get_project(self, regression):
+        return ProjectSerializer(regression.project).data
+
+
+class RegressionSimpleSerializer(RegressionBaseSerializer):
 
     first_job = serializers.SerializerMethodField()
     last_job = serializers.SerializerMethodField()
@@ -83,10 +90,10 @@ class RegressionSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RegressionModel
-        fields = ('id', 'title', 'tag', 'jobs', 'first_job', 'last_job')
+        fields = ('id', 'title', 'tag', 'jobs', 'project', 'first_job', 'last_job')
 
 
-class RegressionNestedSerializer(serializers.ModelSerializer):
+class RegressionNestedSerializer(RegressionBaseSerializer):
 
     jobs_list = serializers.SerializerMethodField()
 
@@ -96,7 +103,7 @@ class RegressionNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RegressionModel
-        fields = ('id', 'title', 'tag', 'jobs', 'jobs_list')
+        fields = ('id', 'title', 'tag', 'jobs', 'project', 'project', 'jobs_list')
 
 
 ######################################################################

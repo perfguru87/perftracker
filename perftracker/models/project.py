@@ -1,3 +1,4 @@
+from rest_framework import serializers
 from django.db import models
 from django.core.exceptions import SuspiciousOperation
 
@@ -64,3 +65,10 @@ class ProjectModel(models.Model):
     class Meta:
         verbose_name = "PerfTracker Project"
         verbose_name_plural = "PerfTracker Projects"
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ProjectModel
+        fields = ('id', 'name')

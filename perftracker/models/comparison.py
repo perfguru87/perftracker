@@ -18,7 +18,7 @@ from rest_framework import serializers
 from perftracker.models.job import JobModel, JobSimpleSerializer
 from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
-from perftracker.models.project import ProjectModel
+from perftracker.models.project import ProjectModel, ProjectSerializer
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer
 from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 
@@ -176,6 +176,7 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
     tests_failed = serializers.SerializerMethodField()
     tests_errors = serializers.SerializerMethodField()
     tests_warnings = serializers.SerializerMethodField()
+    project = serializers.SerializerMethodField()
 
     def get_env_node(self, cmp):
         objs = []
@@ -221,6 +222,9 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
 
     def get_tests_warnings(self, cmp):
         return self._pt_get_jobs_sum(cmp, 'tests_warnings')
+
+    def get_project(self, cmp):
+        return ProjectSerializer(cmp.project).data
 
 
 class ComparisonSimpleSerializer(ComparisonBaseSerializer):
