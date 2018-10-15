@@ -9,6 +9,7 @@
     <tr>
       <th class='colExpander'></th>
       <th class='colID'>ID</th>
+      <th class='colProject'>Project</th>
       <th class='colTitle'>Title</th>
       <th class='colTag'>Tag</th>
       <th class='colJobs'>Jobs</th>
@@ -22,6 +23,7 @@
     <tr>
       <th class='colExpander'></th>
       <th class='colID'>ID</th>
+      <th class='colProject'>Project</th>
       <th class='colTitle'>Title</th>
       <th class='colTag'>Tag</th>
       <th class='colJobs'>Jobs</th>
@@ -46,7 +48,7 @@ $(document).ready(function() {
         "serverSide": true,
         "lengthMenu": [[50, 200, 1000, -1], [50, 200, 1000, "All"]],
         "ajax": "/api/v{{ api_ver }}/{{ project.id }}/regression/",
-        "order": [[ 2, "desc" ]],
+        "order": [[ 3, "desc" ]],
         "columns": [
             {
                 "className": 'pt_row_details_toggle',
@@ -55,6 +57,7 @@ $(document).ready(function() {
                 "defaultContent": "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>",
             },
             { "data": "id" },
+            { "data": "project" },
             { "data": "title" },
             { "data": "tag" },
             { "data": "jobs" },
@@ -65,9 +68,19 @@ $(document).ready(function() {
         ],
         "columnDefs": [
             {
+                "targets": "colProject",
+                "type": "string",
+                {% if project.id != 0 %}
+                    "visible": false,
+                {% endif %}
+                "render": function ( data, type, row ) {
+                    return data.name;
+                },
+            },
+            {
                 "targets": "colTitle",
                 "type": "string",
-                "orderData": [ 5, 1 ],
+                "orderData": [ 6, 1 ],
                 "render": function ( data, type, row ) {
                     return "<a href='/{{ project.id }}/regression/" + row.id + "'>" + data + "</a>";
                 },
