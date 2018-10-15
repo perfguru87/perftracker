@@ -38,11 +38,11 @@ class RegressionModel(models.Model):
     def save(self):
         super(RegressionModel, self).save()
 
-    def pt_get_all_jobs(self):
-        return JobModel.objects.filter(regression_original=self, deleted=False).order_by('end').all()
+    def pt_get_all_jobs(self, order='end'):
+        return JobModel.objects.filter(regression_original=self, deleted=False).order_by(order).all()
 
-    def pt_get_linked_jobs(self):
-        return JobModel.objects.filter(regression_linked=self, deleted=False).order_by('end').all()
+    def pt_get_linked_jobs(self, order='end'):
+        return JobModel.objects.filter(regression_linked=self, deleted=False).order_by(order).all()
 
     def pt_set_first_last_job(self):
         jobs = self.pt_get_linked_jobs()
@@ -98,7 +98,7 @@ class RegressionNestedSerializer(RegressionBaseSerializer):
     jobs_list = serializers.SerializerMethodField()
 
     def get_jobs_list(self, regression):
-        jobs = regression.pt_get_all_jobs()
+        jobs = regression.pt_get_all_jobs(order='-end')
         return JobSimpleSerializer(jobs, many=True).data
 
     class Meta:
