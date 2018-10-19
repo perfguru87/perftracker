@@ -220,10 +220,10 @@ div.pt_test_group_selector select {
 /* Charts */
 .pt_chart {
   width: 100%;
-  height: 300px;
+  height: 250px;
   text-align: center;
   color: #777;
-  line-height: 300px;
+  line-height: 250px;
   vertical-align: middle;
   border: 1px solid #ccc;
   background-color: #f8f8f8;
