@@ -10,27 +10,51 @@ class PTDurationField(serializers.DurationField):
     def to_representation(self, value):
         return int(round(value.total_seconds()))
 
+def pt_round_float(val):
+    abs_val = abs(float(val))
 
-def pt_float2human(value, MK=False):
-    if str(value) == "":
+    if abs_val > 100:
+        return int(round(val))
+    elif abs_val < 0.00000001:
         return 0
-    val = abs(float(value))
-    if MK and val > 100000000:
-        return str(int(round(value / 1000000))) + "M"
-    elif MK and val > 100000:
-        return str(int(round(value / 1000))) + "K"
-    elif val > 100:
-        return int(round(value))
-    elif val < 0.00000001:
+
+    thr = 100
+    prec = 0
+    while abs_val < thr:
+        prec += 1
+        thr /= 10.0
+    fmt = "%." + str(prec) + "f"
+    return float(fmt % (val))
+
+
+def pt_float2human(val, MK=False):
+    if str(val) == "":
         return 0
-    else:
-        thr = 100
-        prec = 0
-        while val < thr:
-            prec += 1
-            thr /= 10.0
-        fmt = "%." + str(prec) + "f"
-        return float(fmt % (val)) * (1 if value > 0 else -1)
+
+    print("MK", MK, val)
+    if not MK:
+        return pt_round_float(val)
+
+    abs_val = abs(float(val))
+    if abs_val < 1000:
+        return pt_round_float(val)
+
+    g = 1000000000.0
+    m = 1000000.0
+    k = 1000.0
+
+    suffix = ""
+    if abs_val >= g:
+        suffix = "G"
+        val /= g
+    elif abs_val >= m:
+        suffix = "M"
+        val /= m
+    elif abs_val >= k:
+        suffix = "K"
+        val /= k
+
+    return str(pt_round_float(val)) + suffix
 
 
 class PTRoundedFloatField(serializers.FloatField):
