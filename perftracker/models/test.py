@@ -33,7 +33,7 @@ class TestModel(models.Model):
     group       = models.CharField(max_length=TEST_GROUP_TAG_LENGTH, help_text="Test group tag")
     description = models.CharField(max_length=1024, help_text="Test description: disk sequential read test by 1M blocks")
 
-    scores      = models.CharField(max_length=1024, help_text="Raw test scores: [12.21, 14.23, 12.94]")
+    scores      = models.CharField(max_length=16384, help_text="Raw test scores: [12.21, 14.23, 12.94]")
     scores_rejected = models.IntegerField(default=0, help_text="Number of scores rejected")
 
     deviations  = models.CharField(max_length=1024, help_text="Test deviations: [0.02, 0.03, 0.01]")
