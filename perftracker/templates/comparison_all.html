@@ -13,7 +13,7 @@
       <th class='colProject'>Project</th>
       <th class='colEnv'>Env</th>
       <th class='colVersion'>Version</th>
-      <th class='colRunTitle'>Run title</th>
+      <th class='colTitle'>Comparison title</th>
       <th class='colJobs'>Jobs</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
@@ -29,7 +29,7 @@
       <th class='colProject'>Project</th>
       <th class='colEnv'>Env</th>
       <th class='colVersion'>Version</th>
-      <th class='colRunTitle'>Run title</th>
+      <th class='colTitle'>Comparison title</th>
       <th class='colJobs'>Jobs</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
@@ -80,6 +80,13 @@ $(document).ready(function() {
         ],
         "columnDefs": [
             {
+                "targets": "colID",
+                "type": "integer",
+                "render": function ( data, type, row ) {
+                    return "<a href='/{0}/comparison/{1}'>{2}</a>".ptFormat(row.project, row.id, data);
+                },
+            },
+            {
                 "targets": "colUpdated",
                 "type": "date",
                 "render": function ( data, type, row ) {
@@ -118,13 +125,12 @@ $(document).ready(function() {
                 "type": "string",
                 "orderData": [ 5, 1 ],
             },
-
             {
-                "targets": "colRunTitle",
+                "targets": "colTitle",
                 "type": "string",
                 "orderData": [ 6, 1 ],
                 "render": function ( data, type, row ) {
-                    return "<a href='/{0}/comparison/{1}'>{2}</a>".ptFormat(row.project, row.id, data);
+                    return data;
                 },
             },
             {
