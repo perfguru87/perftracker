@@ -14,7 +14,7 @@ Jobs list:
 + fix search
 + fix paging
 + job details: env info
-- job details: json download
++ job details: json download
 - job details: xls download
 + job details: job delete
 - job details: which comparisons refer to the job?
