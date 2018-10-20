@@ -68,6 +68,14 @@ $(document).ready(function() {
         ],
         "columnDefs": [
             {
+                "targets": "colID",
+                "type": "int",
+                "render": function ( data, type, row ) {
+                    return "<a href='/{{ project.id }}/regression/" + row.id + "'>" + data + "</a>";
+                },
+            },
+
+            {
                 "targets": "colProject",
                 "type": "string",
                 {% if project.id != 0 %}
@@ -82,7 +90,7 @@ $(document).ready(function() {
                 "type": "string",
                 "orderData": [ 6, 1 ],
                 "render": function ( data, type, row ) {
-                    return "<a href='/{{ project.id }}/regression/" + row.id + "'>" + data + "</a>";
+                    return data;
                 },
             },
             {
