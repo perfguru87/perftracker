@@ -266,7 +266,10 @@ function pt_draw_comparison_details(d, err_msg)
             hw += job.env_node[h].name;
         }
         s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, d.project, job.id, job.title);
-        s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
+        if (job.tests_completed == job.tests_total)
+            s += "<td>{0}</td><td>{1}</td><td>{2}</td>".ptFormat(job.duration, job.tests_completed, job.tests_errors);
+        else
+            s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
         s += "</tr>";
     }
     s += "</table></div>";
@@ -311,7 +314,10 @@ function pt_draw_regression_details(d, err_msg)
             hw += job.env_node[h].name;
         }
         s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, job.project.id, job.id, job.title);
-        s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
+        if (job.tests_completed == job.tests_total)
+            s += "<td>{0}</td><td>{1}</td><td>{2}</td>".ptFormat(job.duration, job.tests_completed, job.tests_errors);
+        else
+            s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
 
         var showEditIcon = job.is_linked
             ? `<td><a href="#" data-id={0} data-toggle="modal" class="pt-link-job-edit pt-link-job-edit--linked glyphicon glyphicon-check"></a></td>`.ptFormat(job.id)
