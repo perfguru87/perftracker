@@ -83,7 +83,7 @@ $(document).ready(function() {
                 "targets": "colID",
                 "type": "integer",
                 "render": function ( data, type, row ) {
-                    return "<a href='/{0}/comparison/{1}'>{2}</a>".ptFormat(row.project, row.id, data);
+                    return "<a href='/{0}/comparison/{1}'>{2}</a>".ptFormat(row.project.id, row.id, data);
                 },
             },
             {
