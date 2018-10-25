@@ -290,7 +290,9 @@ class PTComparisonServSideTestView:
                 if t[prev] is None or t[n] is None:
                     ret.append("- 0")
                     continue
-                if t[prev].avg_score < t[n].avg_score:
+                if not t[n].avg_score:
+                    d = 0
+                elif t[prev].avg_score < t[n].avg_score:
                     d = 100 * (t[n].avg_score / t[prev].avg_score - 1)
                 elif t[prev].avg_score > t[n].avg_score:
                     d = -100 * (t[prev].avg_score / t[n].avg_score - 1)
