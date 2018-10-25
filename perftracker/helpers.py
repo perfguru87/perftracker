@@ -31,7 +31,6 @@ def pt_float2human(val, MK=False):
     if str(val) == "":
         return 0
 
-    print("MK", MK, val)
     if not MK:
         return pt_round_float(val)
 
