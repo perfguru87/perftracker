@@ -1,0 +1,10 @@
+db.sqlite3
+perftracker.log
+
+*__pycache__/
+*.py[cod]
+*$py.class
+local_settings.py
+
+
+.idea/
