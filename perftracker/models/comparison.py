@@ -322,12 +322,12 @@ class PTComparisonServSideTestView:
 
 class PTComparisonServSideSeriesView:
     def __init__(self, sect, legend):
-        self.series = []
+        self.series = [0] * len(sect.jobs)
         self.sect = sect
         self.legend = legend
 
     def pt_add_test(self, job, job_n, test_obj):
-        self.series.append(pt_float2human(test_obj.avg_score))
+        self.series[job_n] = pt_float2human(test_obj.avg_score)
 
     @property
     def data(self):
@@ -465,6 +465,7 @@ class PTComparisonServSideView:
         for i, job in enumerate(self.job_objs):
             tests = TestModel.objects.filter(job=job).order_by('seq_num')
             for t in tests:
+                print(job, i, t, t.category)
                 self.pt_add_test(job, i, t)
 
         for g in self.groups.values():
