@@ -188,6 +188,8 @@ $(document).ready(function() {
         "className": "pt_lborder pt_right",
         "type": "float",
         "render": function ( data, type, row ) {
+          if (data == "-")
+             return data;
           return data + "%";
         }
       },
