@@ -465,7 +465,6 @@ class PTComparisonServSideView:
         for i, job in enumerate(self.job_objs):
             tests = TestModel.objects.filter(job=job).order_by('seq_num')
             for t in tests:
-                print(job, i, t, t.category)
                 self.pt_add_test(job, i, t)
 
         for g in self.groups.values():
