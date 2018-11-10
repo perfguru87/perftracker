@@ -322,12 +322,26 @@ class PTComparisonServSideTestView:
 
 class PTComparisonServSideSeriesView:
     def __init__(self, sect, legend):
-        self.series = [0] * len(sect.jobs)
         self.sect = sect
+        self.tests = []
         self.legend = legend
+        self._series = None
 
     def pt_add_test(self, job, job_n, test_obj):
-        self.series[job_n] = pt_float2human(test_obj.avg_score)
+        self.tests.append(test_obj)
+
+    @property
+    def series(self):
+        if self._series:
+            return self._series
+
+        self._series = [0] * len(self.sect.x_axis_categories)
+        for t in self.tests:
+            if t.category not in self.sect.test_cat_to_axis_cat_seqnum:
+                print("WARNING: test category '%s' is not found in %s" % (t.category, str(self.sect.test_cat_to_axis_cat_seqnum)))
+                continue
+            self._series[self.sect.test_cat_to_axis_cat_seqnum[t.category]] = pt_float2human(t.avg_score)
+        return self._series
 
     @property
     def data(self):
@@ -336,7 +350,7 @@ class PTComparisonServSideSeriesView:
 
         ret = []
         for n in range(0, len(self.series)):
-            ret.append([self.sect.categories[n], self.series[n]])
+            ret.append([self.sect.x_axis_categories[n], self.series[n]])
         return ret
 
 
@@ -350,7 +364,9 @@ class PTComparisonServSideSectView:
         self.chart_type = PTCmpChartType.NOCHART
         self.chart_trend_line = False
         self.table_type = PTCmpTableType.HIDE
-        self.categories = []
+        self.tests_categories = []
+        self.x_axis_categories = []
+        self.test_cat_to_axis_cat_seqnum = []
         self.x_axis_name = ''
         self.x_axis_type = 'category'
         self.x_axis_rotate = 0
@@ -366,7 +382,7 @@ class PTComparisonServSideSectView:
         key = "%s %s" % (test_obj.tag, test_obj.category)
         if key not in self.tests:
             self.tests[key] = PTComparisonServSideTestView(self.jobs)
-            self.categories.append(test_obj.category)
+            self.tests_categories.append(test_obj.category)
             self.y_axis_name = test_obj.metrics
         self.series[job_n].pt_add_test(job, job_n, test_obj)
         self.tests[key].pt_add_test(job, job_n, test_obj)
@@ -396,7 +412,7 @@ class PTComparisonServSideSectView:
             return
 
         int_ar = []
-        for c in self.categories:
+        for c in self.x_axis_categories:
             try:
                int_ar.append(float(c))
             except ValueError:
@@ -407,7 +423,7 @@ class PTComparisonServSideSectView:
         self.chart_type = PTCmpChartType.XYLINE
 
     def pt_init_chart_and_table(self):
-        self.x_axis_name, self.categories = pt_cut_common_sfx(self.categories)
+        self.x_axis_name, self.x_axis_categories, self.test_cat_to_axis_cat_seqnum = pt_cut_common_sfx(self.tests_categories)
 
         self._pt_init_chart_type()
 

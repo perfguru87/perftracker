@@ -91,7 +91,7 @@ def pt_is_valid_uuid(uuid_to_test, version=1):
     return str(uuid_obj) == uuid_to_test
 
 
-def pt_cut_common_sfx(lines, separators=None):
+def _pt_cut_common_sfx(lines, separators=None):
     if separators is None:
         separators = (' ', ';', '-', ',', '.')
     common_sfx = os.path.commonprefix([s[::-1] for s in lines])[::-1]
@@ -119,6 +119,14 @@ def pt_cut_common_sfx(lines, separators=None):
                 l = l[:-1]
         ret.append(l)
     return common_sfx, ret
+
+
+def pt_cut_common_sfx(lines, separators=None):
+    common_sfx, prefixes = _pt_cut_common_sfx(lines, separators)
+    line2seqnum = {}
+    for n in range(0, len(lines)):
+        line2seqnum[lines[n]] = n
+    return common_sfx, prefixes, line2seqnum
 
 
 class PTJson:
