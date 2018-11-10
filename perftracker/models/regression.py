@@ -18,7 +18,7 @@ from perftracker.models.job import JobModel, JobSimpleSerializer
 from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
 from perftracker.models.comparison import PTCmpChartType, PTCmpTableType
-from perftracker.helpers import pt_float2human, pt_cut_common_sfx
+from perftracker.helpers import pt_float2human
 
 
 class RegressionModel(models.Model):
