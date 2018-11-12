@@ -67,6 +67,7 @@ Comparison view:
 - charts: ability to change chart type in report and save
 - charts: add an option to see the table
 + charts: fix an issue on the chart when job A has test1 score and job B has only test2 score
+- charts: filter by test name
 
 Job Upload
 + json upload
