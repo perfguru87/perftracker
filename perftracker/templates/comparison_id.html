@@ -51,7 +51,8 @@ So we will use static HTML with couple tricks:
 {% endcomment %}
 
 {% for g_tag, g in cmp_view.groups.items %}
-  <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#{{ g_tag }}'>{{ g.group_obj.title }}</h3>
+  <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#data_{{ g.id }}'>{{ g.group_obj.title }}</h3>
+  <div class='collapse in' id='data_{{ g.id }}'>
   {% for s_tag, s in g.sections.items %}
     <h4>{{ s.title }}</h4>
 
@@ -89,6 +90,7 @@ So we will use static HTML with couple tricks:
     {% endif %}
 
   {% endfor %}
+  </div>
 {% endfor %}
 
 <script>
