@@ -60,6 +60,7 @@ Comparison view:
 + results details: description
 + results details: start, end, duration
 + results details: iterations data, min, max, avg
++ sections collapse
 - charts: autocolors
 - charts: find common prefix/suffix in y-asix values and set y-axis legend
 - charts: auto chart type 
