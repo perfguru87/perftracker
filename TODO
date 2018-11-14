@@ -40,6 +40,7 @@ Job view:
 + results table
 + test details
 - link jobs to real hosts
+- switch between table mode and charts mode
 
 Comparisons
 + table
