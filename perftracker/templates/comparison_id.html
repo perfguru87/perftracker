@@ -290,6 +290,7 @@ $(document).ready(function() {
                 {% if s.chart_type == PTCmpChartType.XYLINE %}
                   type: 'line',
                   smooth: true,
+                  smoothMonotone: 'none',
                 {% elif s.chart_type == PTCmpChartType.BAR %}
                   type: 'bar',
                 {% endif %}
@@ -302,6 +303,7 @@ $(document).ready(function() {
                 name: '{{ serie.legend|safe }} (trend)',
                 type: 'line',
                 smooth: true,
+                smoothMonotone: 'none',
                 showSymbol: false,
                 animation: false,
                 data: regr_{{ forloop.counter }}.points,
