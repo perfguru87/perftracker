@@ -82,9 +82,14 @@ def pt_dur2str(duration):
     return ret
 
 
-def pt_is_valid_uuid(uuid_to_test, version=1):
+def pt_is_valid_uuid(uuid_to_test):
     try:
-        uuid_obj = uuid.UUID(uuid_to_test, version=version)
+        uuid_to_test = uuid_to_test.lower()
+    except:
+        return False
+
+    try:
+        uuid_obj = uuid.UUID(uuid_to_test)
     except ValueError:
         return False
 
@@ -200,7 +205,8 @@ class PTJson:
 
     def get_uuid(self, key, defval=None, require=False):
         v = self._get_value(key, defval, require, str, 'uuid')
-
+        if v:
+            v = v.lower()
         if v and not pt_is_valid_uuid(v):
             self._raise("%s: '%s' key value '%s' is not a valid UUID1" % (self.obj_name, key, v))
         return v
