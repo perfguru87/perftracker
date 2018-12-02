@@ -130,7 +130,7 @@ function pt_test_details_draw(ar, err_msg)
     s += pt_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
     s += pt_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
     s += pt_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin), pt_date2str(d.end)); });
-    s += pt_test_details_draw_row('Duration', ar, function(d) { return "{0}".ptFormat(d.duration); });
+    s += pt_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
     s += pt_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
     s += "</tbody></table>";
     s += "</div>";
