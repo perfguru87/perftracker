@@ -147,7 +147,7 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
     if not uuid:
         return HttpResponse("job 'uuid' is no set", status=http.client.BAD_REQUEST)
     if not pt_is_valid_uuid(uuid):
-        return HttpResponse("job 'uuid' value '%s' is not valid, it must be version1 UUID" % uuid, status=http.client.BAD_REQUEST)
+        return HttpResponse("job 'uuid' value '%s' is not valid" % uuid, status=http.client.BAD_REQUEST)
 
     new = False
     try:
