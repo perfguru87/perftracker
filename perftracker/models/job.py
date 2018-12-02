@@ -2,6 +2,7 @@ import uuid
 import itertools
 import json
 import re
+import uuid
 
 from datetime import timedelta
 from datetime import datetime
@@ -62,7 +63,7 @@ class JobModel(models.Model):
         j = PTJson(json_data, obj_name="job json", exception_type=SuspiciousOperation)
 
         project_name = j.get_str('project_name', require=True)
-        self.uuid = j.get_uuid('uuid', require=True)
+        self.uuid = j.get_uuid('uuid', defval=uuid.uuid1())
 
         self.title = j.get_str('job_title')
         if not self.title:
@@ -91,7 +92,7 @@ class JobModel(models.Model):
 
         for t in tests_json:
             if 'uuid' not in t:
-                raise SuspiciousOperation("test doesn't have 'uuid' key: %s" % str(t))
+                t['uuid'] = uuid.uuid1()
             test = TestModel(job=self, uuid=t['uuid'])
             test.pt_update(self, t, validate_only=True)  # FIXME, double pt_update() call (here and below)
             test.pt_validate_uniqueness(key2test)
