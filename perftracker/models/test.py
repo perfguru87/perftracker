@@ -83,7 +83,11 @@ class TestModel(models.Model):
         self.cmdline = j.get_str('cmdline')
         self.description = j.get_str('description')
 
-        scores = j.get_list('scores', require=True)
+        score = j.get_float('score', defval=None)
+        if score is None:
+            scores = j.get_list('scores', require=True)
+        else:
+            scores = [score]
         deviations = j.get_list('deviations')
 
         self.scores = str(scores)
