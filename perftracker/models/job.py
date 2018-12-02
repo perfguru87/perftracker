@@ -79,25 +79,39 @@ class JobModel(models.Model):
         tests_json = j.get_list('tests')
 
         key2test = {}
-        uuid2test = {}
+        tests_to_delete = {}
+        tests_to_commit = {}
         test_seq_num = 0
 
         # process existing tests
         if self.id:
             for t in TestModel.objects.filter(job=self):
-                uuid2test[str(t.uuid)] = t
                 test_seq_num = max(t.seq_num, test_seq_num)
+                u = str(t.uuid)
                 if append:
                     t.pt_validate_uniqueness(key2test)
+                    tests_to_commit[u] = t
+                else:
+                    tests_to_delete[u] = t
 
         for t in tests_json:
             if not len(t.keys()):
                 continue
-            if 'uuid' not in t:
-                t['uuid'] = uuid.uuid1()
-            test = TestModel(job=self, uuid=t['uuid'])
-            test.pt_update(self, t, validate_only=True)  # FIXME, double pt_update() call (here and below)
-            test.pt_validate_uniqueness(key2test)
+            u = TestModel.pt_get_uuid(t)
+            if u in tests_to_delete:
+                tests_to_commit[u] = tests_to_delete[u]
+                del tests_to_delete[u]
+            else:
+                test_seq_num += 1
+                try:
+                    tests_to_commit[u] = TestModel.objects.get(uuid=u)
+                except TestModel.MultipleObjectsReturned:
+                    TestModel.objects.filter(uuid=self.uuid).delete()
+                    tests_to_commit[u] = TestModel(uuid=u, seq_num=test_seq_num)
+                except TestModel.DoesNotExist:
+                    tests_to_commit[u] = TestModel(uuid=u, seq_num=test_seq_num)
+            tests_to_commit[u].pt_update(t)
+            tests_to_commit[u].pt_validate_uniqueness(key2test)
 
         self.suite_name = j.get_str('suite_name')
         self.suite_ver  = j.get_str('suite_ver')
@@ -151,33 +165,10 @@ class JobModel(models.Model):
                 else:
                     raise SuspiciousOperation(str(serializer.errors) + ", original json: " + str(env_node_json))
 
-        for t in tests_json:
-            test_uuid = t['uuid']
+        for t in tests_to_commit.values():
+            t.job = self
+            t.pt_save()
 
-            if test_uuid not in uuid2test:
-                uuid2test[test_uuid] = TestModel(job=self, uuid=test_uuid)
-                test_seq_num += 1
-                uuid2test[test_uuid].seq_num = test_seq_num
-
-            test = uuid2test[test_uuid]
-
-            test.pt_update(self, t)
-
-            self.tests_total += 1
-            if test.pt_status_is_completed():
-                self.tests_completed += 1
-            if test.pt_status_is_failed():
-                self.tests_failed += 1
-            if test.errors:
-                self.tests_errors += 1
-            if test.warnings:
-                self.tests_warnings += 1
-            ret = uuid2test.pop(test_uuid, None)
-
-        if not append:
-            TestModel.pt_delete_tests(uuid2test.keys())
-
-        for t in uuid2test.values():
             self.tests_total += 1
             if t.pt_status_is_completed():
                 self.tests_completed += 1
@@ -187,6 +178,9 @@ class JobModel(models.Model):
                 self.tests_errors += 1
             if t.warnings:
                 self.tests_warnings += 1
+
+        if tests_to_delete:
+            TestModel.pt_delete_tests(tests_to_delete.keys())
 
         if regression_tag is not None:
             from perftracker.models.regression import RegressionModel

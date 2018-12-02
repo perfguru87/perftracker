@@ -146,6 +146,8 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
 
     if not uuid:
         return HttpResponse("job 'uuid' is no set", status=http.client.BAD_REQUEST)
+
+    uuid = uuid.lower()
     if not pt_is_valid_uuid(uuid):
         return HttpResponse("job 'uuid' value '%s' is not valid" % uuid, status=http.client.BAD_REQUEST)
 
@@ -800,6 +802,7 @@ def pt_artifact_meta_all_json(request, api_ver, project_id):
 def pt_artifact_meta_id_json(request, api_ver, project_id, uuid):
     project_id = int(project_id)
 
+    uuid = uuid.lower()
     if not pt_is_valid_uuid(uuid):
         return pt_rest_bad_req("Invalid artifact UUID %s" % uuid)
 
@@ -834,6 +837,10 @@ def pt_artifact_meta_id_json(request, api_ver, project_id, uuid):
 def pt_artifact_content_id(request, project_id, uuid):
     if not ArtifactMetaModel.pt_artifacts_enabled():
         return pt_rest_err(http.client.NOT_IMPLEMENTED, "Artifacts management is not configured, set the ARTIFACTS_STORAGE_DIR setting")
+
+    uuid = uuid.lower()
+    if not pt_is_valid_uuid(uuid):
+        return pt_rest_bad_req("Invalid artifact content UUID %s" % uuid)
 
     try:
         artifact = ArtifactMetaModel.objects.get(uuid=uuid)
