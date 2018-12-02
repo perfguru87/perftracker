@@ -91,6 +91,8 @@ class JobModel(models.Model):
                     t.pt_validate_uniqueness(key2test)
 
         for t in tests_json:
+            if not len(t.keys()):
+                continue
             if 'uuid' not in t:
                 t['uuid'] = uuid.uuid1()
             test = TestModel(job=self, uuid=t['uuid'])
