@@ -145,9 +145,9 @@ def _pt_upload_job_json(data, job_title=None, project_name=None):
     append = j.get('append', False)
 
     if not uuid:
-        raise SuspiciousOperation("job 'uuid' is no set")
+        return HttpResponse("job 'uuid' is no set", status=http.client.BAD_REQUEST)
     if not pt_is_valid_uuid(uuid):
-        raise SuspiciousOperation("job 'uuid' value '%s' is not valid, it must be version1 UUID" % uuid)
+        return HttpResponse("job 'uuid' value '%s' is not valid, it must be version1 UUID" % uuid, status=http.client.BAD_REQUEST)
 
     new = False
     try:
