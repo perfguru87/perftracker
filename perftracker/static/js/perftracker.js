@@ -44,6 +44,12 @@ function pt_env_node_draw(j, parent_id)
     else
         glyphicon = "glyphicon glyphicon-list-alt";
 
+    var cpu_info = "";
+
+    cpu_info += !isNaN(parseInt(j['cpus'])) ? "{0} CPUs".ptFormat(j['cpus']) : '';
+    cpu_info += j['cpus_topology'] ? " ({0})".ptFormat(j['cpus_topology']) : '';
+
+
     s += "<tr data-tt-id='{0}' {1}><td><span class='{2}'></span>{3}</td><td>{4}</td><td>{5}</td></tr>".ptFormat(
              this_id,
              parent_tag,
@@ -57,7 +63,7 @@ function pt_env_node_draw(j, parent_id)
                  j['hostname']
              ].filter(function (v) {return v;}).join(', '),
              [
-                 !isNaN(parseInt(j['cpus'])) ? "{0} CPUs".ptFormat(j['cpus']) : '',
+                 cpu_info,
                  !isNaN(parseInt(j['ram_mb'])) ? "{0} GB RAM".ptFormat((j['ram_mb'] / 1024.0).toFixed(1)) : '',
                  !isNaN(parseInt(j['disk_gb'])) ? "{0} GB Disk".ptFormat(j['disk_gb']) : '',
                  j['params']
