@@ -117,7 +117,12 @@ class TestModel(models.Model):
             self.warnings = len(j.get_list('warnings'))
 
         dur_sec = j.get_float('duration_sec', 0)
-        self.duration = timedelta(seconds=int(dur_sec)) if dur_sec else self.end - self.begin
+        if dur_sec:
+            self.duration = timedelta(seconds=int(dur_sec))
+        elif self.end and self.begin:
+            self.duration = self.end - self.begin
+        else:
+            self.duration = timedelta(seconds=0)
 
         self.job = job
         self.group = j.get_str('group')
