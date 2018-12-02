@@ -108,6 +108,7 @@ class EnvNodeModel(models.Model):
 
     params     = models.CharField(max_length=512, help_text="DMA disabled", null=True, blank=True)
     cpus       = models.IntegerField(help_text="32", null=True, blank=True)
+    cpus_topology = models.CharField(max_length=128, help_text="32 (2S x 8C x 2T)", null=True, blank=True)
     ram_mb     = models.IntegerField(help_text="131072", null=True, blank=True)
     disk_gb    = models.IntegerField(help_text="4096", null=True, blank=True)
 
@@ -187,8 +188,9 @@ class EnvNodeUploadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnvNodeModel
-        fields = ('name', 'uuid', 'version', 'node_type', 'ip', 'hostname', 'params', 'cpus',
-                  'ram_mb', 'disk_gb', 'links', 'parent', 'job', 'hw_chassis')
+        fields = ('name', 'uuid', 'version', 'node_type', 'ip', 'hostname', 'params',
+                  'cpus', 'cpus_topology', 'ram_mb', 'disk_gb',
+                  'links', 'parent', 'job', 'hw_chassis')
 
 
 class EnvNodeSimpleSerializer(serializers.ModelSerializer):
@@ -210,5 +212,6 @@ class EnvNodeNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnvNodeModel
-        fields = ('name', 'id', 'uuid', 'version', 'node_type', 'ip', 'hostname', 'params', 'cpus', 'ram_mb',
-                  'disk_gb', 'links', 'parent', 'job', 'hw_chassis', 'children')
+        fields = ('name', 'id', 'uuid', 'version', 'node_type', 'ip', 'hostname', 'params',
+                  'cpus', 'cpus_topology', 'ram_mb', 'disk_gb',
+                  'links', 'parent', 'job', 'hw_chassis', 'children')
