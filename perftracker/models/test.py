@@ -18,7 +18,7 @@ from rest_framework import serializers
 
 from perftracker.models.job import JobModel
 from perftracker.models.test_group import TestGroupModel, TEST_GROUP_TAG_LENGTH
-from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, PTJson
+from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, PTJson, pt_is_valid_uuid
 
 TEST_STATUSES = ['NOTTESTED', 'SKIPPED', 'INPROGRESS', 'SUCCESS', 'FAILED']
 
@@ -68,7 +68,16 @@ class TestModel(models.Model):
     min_plusmin = models.FloatField("Deviation in % of min score: 0.01", null=True)
     max_plusmin = models.FloatField("Deviation in % of max score: 0.03", null=True)
 
-    def pt_update(self, job, json_data, validate_only=False):
+    @staticmethod
+    def pt_get_uuid(json_data):
+        if 'uuid' in json_data:
+            u = json_data['uuid']
+            if not pt_is_valid_uuid(u):
+               raise ValidationError("Invalid test uuid: '%s'" % u)
+            return u.lower()
+        return uuid.uuid1()
+
+    def pt_update(self, json_data):
         j = PTJson(json_data, obj_name="test json", exception_type=SuspiciousOperation)
 
         if 'seq_num' in json_data:
@@ -124,7 +133,6 @@ class TestModel(models.Model):
         else:
             self.duration = timedelta(seconds=0)
 
-        self.job = job
         self.group = j.get_str('group')
         TestGroupModel.pt_get_by_tag(self.group)  # ensure appropriate TestGroupModel object exists
 
@@ -147,14 +155,17 @@ class TestModel(models.Model):
         if self.end and (self.end.tzinfo is None or self.end.tzinfo.utcoffset(self.end) is None):
             raise SuspiciousOperation("'end' datetime object must include timezone: %s" % str(self.end))
 
-        if not validate_only:
-            try:
-                obj = TestModel.objects.get(uuid=self.uuid)
-            except TestModel.DoesNotExist:
-                obj = None
+    def pt_save(self):
+        try:
+            obj = TestModel.objects.get(uuid=self.uuid)
+        except TestModel.MultipleObjectsReturned:
+            TestModel.objects.filter(uuid=self.uuid).delete()
+            obj = None
+        except TestModel.DoesNotExist:
+            obj = None
 
-            if obj is None or not self.pt_is_equal_to(obj):
-                self.save()
+        if obj is None or not self.pt_is_equal_to(obj):
+            self.save()
 
     def __str__(self):
         return self.tag
@@ -194,7 +205,6 @@ class TestModel(models.Model):
             key2test[key] = self
             return
 
-        print("key", key)
         test = key2test[key]
         if self.uuid == test.uuid:
             return
