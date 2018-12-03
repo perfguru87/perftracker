@@ -9,7 +9,7 @@ for your R&D performance continuous integration (CI):
 Use the [perftracker-client](https://github.com/perfguru87/perftracker-client) to upload your jobs
 
 ## Features
-Version 0.4.3 (current):
+Version 0.4.4 (current):
 - performance tests jobs uploader
 - jobs list view
 - job details view
