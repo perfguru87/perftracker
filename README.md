@@ -61,6 +61,7 @@ sudo yum -y install python36u-pip
 
 ```
 sudo yum -y install openssl-devel
+sudo yum -y install python36u-devel
 export PYCURL_SSL_LIBRARY=openssl
 export LDFLAGS=-L/usr/local/opt/openssl/lib;export CPPFLAGS=-I/usr/local/opt/openssl/include;
 sudo pip3.6 install pycurl
