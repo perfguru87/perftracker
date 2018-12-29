@@ -96,7 +96,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-EOF
+EOD
 ```
 
 NOTE: please refere to Django [documentation](https://docs.djangoproject.com/en/2.1/ref/databases/) to see which databases are supported. For example Django 2.1 supports PosgtreSQL-9.4 and higher so it will not work on default CentOS-7 which has PostgreSQL-9.2 out of the box
