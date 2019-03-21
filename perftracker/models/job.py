@@ -18,6 +18,7 @@ from perftracker.models.project import ProjectModel, ProjectSerializer
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
 from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
 from perftracker.helpers import PTDurationField, PTJson
+from django import forms
 
 
 class JobModel(models.Model):
@@ -273,3 +274,10 @@ class JobDetailedSerializer(serializers.ModelSerializer):
         model = JobModel
         depth = 1
         fields = [f.name for f in JobModel._meta.get_fields()] + ['tests']
+
+class EditJob(forms.ModelForm):
+    class Meta:
+        model = JobModel
+        fields = ('id', 'title', 'suite_name', 'suite_ver', 'end', 'duration', 'upload',
+                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
+                  'product_name', 'product_ver')

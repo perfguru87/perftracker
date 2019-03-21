@@ -61,6 +61,7 @@ sudo yum -y install python36u-pip
 
 ```
 sudo yum -y install openssl-devel
+sudo yum -y install python36u-devel
 export PYCURL_SSL_LIBRARY=openssl
 export LDFLAGS=-L/usr/local/opt/openssl/lib;export CPPFLAGS=-I/usr/local/opt/openssl/include;
 sudo pip3.6 install pycurl
@@ -95,7 +96,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-EOF
+EOD
 ```
 
 NOTE: please refere to Django [documentation](https://docs.djangoproject.com/en/2.1/ref/databases/) to see which databases are supported. For example Django 2.1 supports PosgtreSQL-9.4 and higher so it will not work on default CentOS-7 which has PostgreSQL-9.2 out of the box

@@ -67,6 +67,7 @@ urlpatterns = [
     path('test_endpoint/contact/', test_endpoint_view.pt_test_endpoint_contact, name='Contact'),
     path('test_endpoint/about/', test_endpoint_view.pt_test_endpoint_about, name='About'),
     path('test_endpoint/empty/', test_endpoint_view.pt_test_endpoint_empty, name='Empty'),
+    path('<int:project_id>/job/<int:job_id>/edit/', views.edit_job, name='Edit'),
 
     path('<int:project_id>/artifact_content/<uuid:uuid>', views.pt_artifact_content_id),
 

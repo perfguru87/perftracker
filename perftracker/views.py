@@ -20,6 +20,7 @@ from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.db.models import Q
 from django.db.models import Count
 from django.db.models.query import QuerySet
+from django.shortcuts import render, get_object_or_404, redirect
 
 from perftracker import __pt_version__
 from perftracker.models.project import ProjectModel
@@ -38,6 +39,8 @@ from perftracker.models.artifact import ArtifactMetaModel, ArtifactLinkModel, Ar
 from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
+
+from .models.job import EditJob
 
 API_VER = '1.0'
 
@@ -859,3 +862,17 @@ def pt_artifact_content_id(request, project_id, uuid):
         return Http404
 
     return artifact.pt_get_http_content()
+
+
+def edit_job(request, project_id, job_id):
+    job = get_object_or_404(JobModel, pk=job_id)
+    if request.method == "POST":
+        form = EditJob(request.POST, instance=job)
+        if form.is_valid():
+            job.save()
+            # [:-7] to remove '/id/edit'
+            url = str(request.get_full_path())[:-7]
+            return redirect(url, pk=job.pk)
+    else:
+        form = EditJob(instance=job)
+    return render(request, 'job_edit.html', {'form': form, 'obj': job})
