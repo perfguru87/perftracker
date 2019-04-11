@@ -62,14 +62,16 @@ class JobModel(models.Model):
 
         j = PTJson(json_data, obj_name="job json", exception_type=SuspiciousOperation)
 
-        project_name = j.get_str('project_name', require=True)
         self.uuid = j.get_uuid('uuid', defval=uuid.uuid1())
 
         self.title = j.get_str('job_title')
         if not self.title:
             self.title = j.get_str('title', require=True)
         self.cmdline = j.get_str('cmdline')
-        self.project = ProjectModel.pt_get_by_name(j.get_str('project_name'))
+
+        if j.get_bool('is_edited') != True:
+            project_name = j.get_str('project_name', require=True)
+            self.project = ProjectModel.pt_get_by_name(j.get_str('project_name'))
 
         append = False if self.deleted else j.get_bool('append')
 
@@ -132,6 +134,13 @@ class JobModel(models.Model):
         self.tests_errors = 0
         self.tests_warnings = 0
 
+        if j.get_bool('is_edited') == True:
+            self.tests_total = j.get_int('tests_total')
+            self.tests_completed = j.get_int('tests_completed')
+            self.tests_failed = j.get_int('tests_failed')
+            self.tests_errors = j.get_int('tests_error')
+            self.tests_warnings = j.get_int('tests_warnings')
+
         self.deleted = False
 
         if append:
@@ -146,6 +155,9 @@ class JobModel(models.Model):
             self.duration = end - begin
             self.begin = begin
             self.end = end
+
+        if j.get_bool('is_edited') == True:
+            self.duration = timedelta(int(j.get_str('duration')) / 86400)
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))
