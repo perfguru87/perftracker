@@ -333,15 +333,30 @@ def pt_job_id_json(request, api_ver, project_id, job_id):
 
         return HttpResponse("OK")
 
-    if request.method == 'GET' or request.method == 'DELETE':
+    elif request.method in ['PUT', 'GET', 'DELETE']:
         try:
             job = JobModel.objects.get(pk=job_id)
         except JobModel.DoesNotExist:
             return JsonResponse([], safe=False, status=http.client.NOT_FOUND)
 
-        if request.method == 'GET':
+        if request.method == 'PUT':
+            if request.content_type != "application/json":
+                return HttpResponseBadRequest("content_type must be 'application/json'")
+
+            body_unicode = request.body.decode('utf-8')
+            try:
+                body = json.loads(body_unicode)
+            except ValueError as ve:
+                return HttpResponseBadRequest("unable to parse JSON data. Error : {0}".format(ve))
+
+            job.pt_update(body)
+            messages.success(request, "job #%s was successfully edited" % str(job_id))
+            return HttpResponse("OK")
+
+        elif request.method == 'GET':
             return JsonResponse(JobNestedSerializer(job).data, safe=False)
-        else:
+
+        elif request.method == 'DELETE':
             job.deleted = True
             job.save()
             messages.success(request, "job #%s was deleted" % str(job_id))
