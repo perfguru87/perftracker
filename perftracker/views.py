@@ -468,8 +468,19 @@ def pt_comparison_all_json(request, api_ver, project_id):
 
     return ComparisonJson.as_view()(request)
 
-
+@csrf_exempt
 def pt_comparison_id_json(request, api_ver, project_id, cmp_id):
+    try:
+        comparison = ComparisonModel.objects.get(pk=cmp_id)
+    except ComparisonModel.DoesNotExist:
+        return JsonResponse([], safe=False, status=http.client.NOT_FOUND)
+
+    if request.method == 'DELETE':
+        comparison.deleted = True
+        comparison.save()
+        messages.success(request, "comparison #%s was deleted" % str(cmp_id))
+        return JsonResponse([], safe=False)
+
     try:
         return JsonResponse(ComparisonNestedSerializer(ComparisonModel.objects.get(pk=cmp_id)).data, safe=False)
     except ComparisonModel.DoesNotExist:
