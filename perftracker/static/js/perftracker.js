@@ -255,6 +255,7 @@ function pt_draw_comparison_details(d, err_msg)
 
     s += "<div class='pt_obj_management'>" +
          "<a href='/admin/perftracker/comparisonmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
+         "<a href='#' onclick=\"return pt_ajax_comparison_delete({0})\">Delete</a><span>|</span>".ptFormat(d.id) +
          "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
 
     s += "<div class='col-md-12'><h4>Jobs</h4>";
@@ -282,6 +283,27 @@ function pt_draw_comparison_details(d, err_msg)
     s += "</div></div>"; // row, slider
 
     return s;
+}
+
+function pt_ajax_comparison_delete(comparison_id)
+{
+    if (!confirm('Are you sure you want to delete comparison #' + comparison_id + '?'))
+        return false;
+
+    $.ajax({
+        url: '/api/v1.0/0/comparison/{0}'.ptFormat(comparison_id),
+        cache: true,
+        data: null,
+        type: 'DELETE',
+        timeout: 2000,
+        success: function(data, status) {
+            window.location.reload();
+        },
+        error: function(data, status, error) {
+            alert("can't delete comparison #" + comparison_id + ", " + error);
+        }
+    });
+    return false;
 }
 
 function pt_draw_regression_details(d, err_msg)
