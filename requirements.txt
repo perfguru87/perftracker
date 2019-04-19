@@ -8,7 +8,7 @@ python-dateutil
 djangorestframework
 django-bootstrap3
 django-group-by
-perftrackerlib>=0.0.36
+perftrackerlib>=0.0.40
 pillow
 psycopg2
 lorem
