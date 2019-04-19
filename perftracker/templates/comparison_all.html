@@ -3,7 +3,7 @@
 {% block title %}Comparisons{% endblock %}
 
 {% block content %}
-
+    
 <table id="comparisons" class="display dataTable" cellspacing="0" width="100%">
   <thead>
     <tr>
@@ -71,7 +71,7 @@ $(document).ready(function() {
             { "data": "tests_completed" },
             { "data": "tests_failed" },
             {
-                "className": 'pt_row_compare_toggle',
+                "className": 'pt_row_edit_toggle',
                 "orderable": false,
                 "data":      null,
                 "defaultContent": "<span class='glyphicon glyphicon-edit' aria-hidden='true'></span>",
@@ -208,9 +208,16 @@ $(document).ready(function() {
     });
 
     /*
-     * 3. Comparison options
+     * 3. Comparison editing
      */
-    $("#comparisons").on('click', 'td.pt_row_compare_toggle', function() { alert("Sorry, not implemented"); return false; });
+
+    $("#comparisons").on('click', 'td.pt_row_edit_toggle', function() {
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
+        var id = row.data().id;
+        window.location.replace("/{{ project.id }}/job/?edit={0}".ptFormat(id));
+        return false;
+    });
 
 });
 </script>
