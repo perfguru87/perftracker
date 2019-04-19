@@ -486,6 +486,47 @@ $(document).ready(function() {
         return false;
     });
 
+    /*
+     * 7. Editing comparison
+     */
+
+    if (window.location.search.indexOf('edit=') > -1)
+        pt_cmp_edit_cb();
+
+    function pt_cmp_edit_cb() {
+        var api_ver = '{{ api_ver }}';
+        var project_id = {{ project.id }};
+        var urlParams = new URLSearchParams(window.location.search);
+        var id = urlParams.get('edit');
+
+        var adjust_body_margin = function () {
+            $("body").css('margin-bottom', '{0}px'.ptFormat($(".pt_job_comparison_dialog").outerHeight() + 20));
+        }
+        $(".pt_job_comparison_dialog").slideToggle("slow", adjust_body_margin());
+
+        $.getJSON("/api/v{0}/{1}/comparison/{2}".ptFormat(api_ver, project_id, id), function (data) {
+            $('#pt_comparison_title').val(data.title);
+
+            $('#pt_btn_save').off('click').on('click', function () {
+                data.title = $('#pt_comparison_title').val();
+
+                $.ajax({
+                    url: '/api/v{0}/{1}/comparison/{2}'.ptFormat(api_ver, project_id, id),
+                    type: 'PUT',
+                    contentType: "application/json",
+                    data: JSON.stringify(data),
+                    success: function () {
+                        window.location.replace("/{0}/comparison/".ptFormat(project_id))
+                    },
+                    error: function (xhr) {
+                        alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                    }
+                });
+                return false;
+            });
+
+        });
+    }
 });
 </script>
 
