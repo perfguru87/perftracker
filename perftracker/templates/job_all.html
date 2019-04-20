@@ -100,7 +100,7 @@ $(function() {
           <ul id='pt_jobs_to_compare'>
           </ul>
           <div>
-            <button type="cancel" class="btn btn-default">Cancel</button>
+            <button type="cancel" class="btn btn-default" id='pt_btn_cancel'>Cancel</button>
             <button type="submit" class="btn btn-primary pt_right" id='pt_btn_save'>Save</button>
             <button type="submit" class="btn btn-default pt_right" id='pt_btn_preview'>Preview</button>
           </div>
@@ -118,7 +118,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_charts_type">
                 {% for value, text in cmp_form.charts_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="chart-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -137,7 +137,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_tables_type">
                 {% for value, text in cmp_form.tables_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="tables-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -156,7 +156,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_tests_type">
                 {% for value, text in cmp_form.tests_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="tests-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -175,7 +175,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_values_type">
                 {% for value, text in cmp_form.values_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="values-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -363,11 +363,15 @@ $(document).ready(function() {
      * 3. Add to comparison
      */
 
+    var cmp_edited = false;
     var jobs_in_comparison = {};
 
     $("#pt_jobs_to_compare" ).sortable();
 
     $('#jobs').on('click', 'td.pt_row_compare_toggle', function() {
+        if (cmp_edited == true) {
+            return false;
+        }
         var tr = $(this).closest('tr');
         var row = table.row( tr );
         var id = row.data().id;
@@ -490,14 +494,16 @@ $(document).ready(function() {
      * 7. Editing comparison
      */
 
-    if (window.location.search.indexOf('edit=') > -1)
-        pt_cmp_edit_cb();
+    if (window.location.search.indexOf('edit=') > -1) {
+        cmp_edited = true;
+        var urlParams = new URLSearchParams(window.location.search);
+        var cmp_id = urlParams.get('edit');
+        pt_cmp_edit_cb(cmp_id);
+    }
 
-    function pt_cmp_edit_cb() {
+    function pt_cmp_edit_cb(id) {
         var api_ver = '{{ api_ver }}';
         var project_id = {{ project.id }};
-        var urlParams = new URLSearchParams(window.location.search);
-        var id = urlParams.get('edit');
 
         var adjust_body_margin = function () {
             $("body").css('margin-bottom', '{0}px'.ptFormat($(".pt_job_comparison_dialog").outerHeight() + 20));
@@ -506,9 +512,30 @@ $(document).ready(function() {
 
         $.getJSON("/api/v{0}/{1}/comparison/{2}".ptFormat(api_ver, project_id, id), function (data) {
             $('#pt_comparison_title').val(data.title);
+            $('#pt_charts_type').text(document.getElementsByClassName("chart-type")[data.charts_type].text);
+            $('#pt_tables_type').text(document.getElementsByClassName("tables-type")[data.tables_type].text);
+            $('#pt_tests_type').text(document.getElementsByClassName("tests-type")[data.tests_type].text);
+            $('#pt_values_type').text(document.getElementsByClassName("values-type")[data.values_type].text);
+
+            $.each(data.jobs, function () {
+                jobs_in_comparison[this['id']] = this['title'];
+                $("#pt_jobs_to_compare").append(
+                    "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(this['id'], this['title']) +
+                    "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
+            });
 
             $('#pt_btn_save').off('click').on('click', function () {
                 data.title = $('#pt_comparison_title').val();
+                data.charts_type = $.trim($("#pt_charts_type").text());
+                data.tables_type = $.trim($("#pt_tables_type").text());
+                data.tests_type = $.trim($("#pt_tests_type").text());
+                data.values_type = $.trim($("#pt_values_type").text());
+
+                var elements = $('#pt_jobs_to_compare').find('input');
+                data.jobs = [];
+                for (var i = 0; i < elements.length; i++) {
+                    data.jobs.push(parseInt(elements[i].value));
+                }
 
                 $.ajax({
                     url: '/api/v{0}/{1}/comparison/{2}'.ptFormat(api_ver, project_id, id),
@@ -527,6 +554,24 @@ $(document).ready(function() {
 
         });
     }
+
+    $('.chart-type').click(function () {
+        $('#pt_charts_type').text($(this).text());
+    });
+    $('.tables-type').click(function () {
+        $('#pt_tables_type').text($(this).text());
+    });
+    $('.tests-type').click(function () {
+        $('#pt_tests_type').text($(this).text());
+    });
+    $('.values-type').click(function () {
+        $('#pt_values_type').text($(this).text());
+    });
+
+    $('#pt_btn_cancel').click(function () {
+        window.location.replace((cmp_edited == true) ? "/{{ project.id }}/comparison/" : "/{{ project.id }}/job/");
+        return false;
+    });
 });
 </script>
 

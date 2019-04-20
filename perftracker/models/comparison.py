@@ -121,9 +121,6 @@ class ComparisonModel(models.Model):
             raise SuspiciousOperation("Unknown type: %s, acceptable types are: %s" % (json_data[key], ",".join(type2id.keys())))
         return id
 
-    def pt_update_(self, json_data):
-        self.title = json_data['title']
-        self.save()
 
     def pt_update(self, json_data):
         self.title = json_data['title']
@@ -253,8 +250,9 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 
     class Meta:
         model = ComparisonModel
-        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
+        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated', 'tests_total', 'tests_completed',
+                  'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs', 'charts_type', 'tables_type',
+                  'tests_type', 'values_type')
 
 
 ######################################################################

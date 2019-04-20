@@ -512,8 +512,7 @@ def pt_comparison_id_json(request, api_ver, project_id, cmp_id):
             except SuspiciousOperation as e:
                 return HttpResponseBadRequest(e)
 
-            # TODO: call pt_update
-            comparison.pt_update_(body)
+            comparison.pt_update(body)
             messages.success(request, "comparison #%s was successfully edited" % str(cmp_id))
             return HttpResponse("OK")
 
