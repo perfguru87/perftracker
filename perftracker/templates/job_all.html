@@ -227,6 +227,9 @@ $(document).ready(function() {
                 "orderable": false,
                 "data":      null,
                 "defaultContent": "<span class='glyphicon glyphicon-plus' aria-hidden='true'></span>",
+                "render": function (row) {
+                    return "<span class='glyphicon glyphicon-plus' id='glyphicon-plus-{0} aria-hidden='true'></span>".ptFormat(row.id);
+                },
             },
             {
                 "className": 'pt_row_edit_toggle',
@@ -369,9 +372,6 @@ $(document).ready(function() {
     $("#pt_jobs_to_compare" ).sortable();
 
     $('#jobs').on('click', 'td.pt_row_compare_toggle', function() {
-        if (cmp_edited == true) {
-            return false;
-        }
         var tr = $(this).closest('tr');
         var row = table.row( tr );
         var id = row.data().id;
@@ -483,6 +483,9 @@ $(document).ready(function() {
      */
 
     $("#jobs").on('click', 'td.pt_row_edit_toggle', function() {
+        if (cmp_edited == true)
+            return false;
+
         var tr = $(this).closest('tr');
         var row = table.row( tr );
         var id = row.data().id;
@@ -523,9 +526,11 @@ $(document).ready(function() {
                     "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(this['id'], this['title']) +
                     "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
             });
+            
+            // TODO: change icon of chosen jobs
 
             $('#pt_btn_save').off('click').on('click', function () {
-                data.title = $('#pt_comparison_title').val();
+                data.title = $('#pt_comparison_title').val() || $("#pt_comparison_title").attr("placeholder");
                 data.charts_type = $.trim($("#pt_charts_type").text());
                 data.tables_type = $.trim($("#pt_tables_type").text());
                 data.tests_type = $.trim($("#pt_tests_type").text());
