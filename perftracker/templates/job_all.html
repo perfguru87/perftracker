@@ -227,8 +227,11 @@ $(document).ready(function() {
                 "orderable": false,
                 "data":      null,
                 "defaultContent": "<span class='glyphicon glyphicon-plus' aria-hidden='true'></span>",
-                "render": function (row) {
-                    return "<span class='glyphicon glyphicon-plus' id='glyphicon-plus-{0} aria-hidden='true'></span>".ptFormat(row.id);
+                "render": function (data) {
+                    if (data['id'] in jobs_in_comparison)
+                        return "<span class='glyphicon glyphicon-check' id='glyphicon-check-{0}' aria-hidden='true'></span>".ptFormat(data['id']);
+                    else
+                        return "<span class='glyphicon glyphicon-plus' id='glyphicon-plus-{0}' aria-hidden='true'></span>".ptFormat(data['id']);
                 },
             },
             {
@@ -318,6 +321,13 @@ $(document).ready(function() {
                 "visible": false,
             }
         ],
+        "initComplete": function () {
+            for (const [key, value] of Object.entries(jobs_in_comparison)) {
+                var elem = document.getElementById('glyphicon-check-{0}'.ptFormat(key));
+                var tr = $(elem).closest('tr');
+                tr.addClass('selected');
+            }
+        }
     });
 
     /*
@@ -499,8 +509,8 @@ $(document).ready(function() {
 
     if (window.location.search.indexOf('edit=') > -1) {
         cmp_edited = true;
-        var urlParams = new URLSearchParams(window.location.search);
-        var cmp_id = urlParams.get('edit');
+        var url_params = new URLSearchParams(window.location.search);
+        var cmp_id = url_params.get('edit');
         pt_cmp_edit_cb(cmp_id);
     }
 
@@ -526,8 +536,6 @@ $(document).ready(function() {
                     "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(this['id'], this['title']) +
                     "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
             });
-            
-            // TODO: change icon of chosen jobs
 
             $('#pt_btn_save').off('click').on('click', function () {
                 data.title = $('#pt_comparison_title').val() || $("#pt_comparison_title").attr("placeholder");
