@@ -121,7 +121,6 @@ class ComparisonModel(models.Model):
             raise SuspiciousOperation("Unknown type: %s, acceptable types are: %s" % (json_data[key], ",".join(type2id.keys())))
         return id
 
-
     def pt_update(self, json_data):
         self.title = json_data['title']
         self.charts_type = self._pt_get_type(CMP_CHARTS, json_data, 'charts_type')

@@ -376,7 +376,7 @@ $(document).ready(function() {
      * 3. Add to comparison
      */
 
-    var cmp_edited = false;
+    var cmp_edited_id = -1;
     var jobs_in_comparison = {};
 
     $("#pt_jobs_to_compare" ).sortable();
@@ -450,15 +450,10 @@ $(document).ready(function() {
         return false;
     });
 
-    $('#pt_btn_save').click(function (e) {
+    $('#pt_btn_save').on('click', function (e) {
 
-        var payload = {}
-
-        payload.title = $("#pt_comparison_title").val();
-        if (payload.title == "") {
-            payload.title = $("#pt_comparison_title").attr("placeholder");
-        }
-
+        var payload = {};
+        payload.title = $('#pt_comparison_title').val() || $("#pt_comparison_title").attr("placeholder");
         payload.charts_type = $.trim($("#pt_charts_type").text());
         payload.tables_type = $.trim($("#pt_tables_type").text());
         payload.tests_type = $.trim($("#pt_tests_type").text());
@@ -467,24 +462,40 @@ $(document).ready(function() {
 
         var elements = $('#pt_jobs_to_compare').find('input');
         for (var i = 0; i < elements.length; i++) {
-	        payload.jobs.push(parseInt(elements[i].value));
+            payload.jobs.push(parseInt(elements[i].value));
         }
 
-        $.ajax({
-            url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
-            type : "POST",
-            contentType: "application/json; charset=utf-8",
-            dataType : 'json',
-            data : JSON.stringify(payload),
-            success : function(result) {
-                window.location.replace("/{{ project.id }}/comparison/" + result.id)
-            },
-            error: function(xhr, resp, text) {
-                console.log("Form comparison sumbit failed", xhr, resp, text);
-                alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
-            }
-        })
+        if (cmp_edited_id > 0) {
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/{0}'.ptFormat(cmp_edited_id),
+                type: 'PUT',
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function () {
+                    window.location.replace("/{{ project.id }}/comparison/");
+                },
+                error: function (xhr) {
+                    alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                }
+            });
+        }
 
+        else if (cmp_edited_id == -1) {
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                data: JSON.stringify(payload),
+                success: function (result) {
+                    window.location.replace("/{{ project.id }}/comparison/" + result.id)
+                },
+                error: function (xhr, resp, text) {
+                    console.log("Form comparison sumbit failed", xhr, resp, text);
+                    alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
+                }
+            });
+        }
         return false;
     });
 
@@ -493,7 +504,7 @@ $(document).ready(function() {
      */
 
     $("#jobs").on('click', 'td.pt_row_edit_toggle', function() {
-        if (cmp_edited == true)
+        if (cmp_edited_id > 0)
             return false;
 
         var tr = $(this).closest('tr');
@@ -508,13 +519,12 @@ $(document).ready(function() {
      */
 
     if (window.location.search.indexOf('edit=') > -1) {
-        cmp_edited = true;
         var url_params = new URLSearchParams(window.location.search);
-        var cmp_id = url_params.get('edit');
-        pt_cmp_edit_cb(cmp_id);
+        cmp_edited_id = url_params.get('edit');
+        pt_cmp_edit_cb();
     }
 
-    function pt_cmp_edit_cb(id) {
+    function pt_cmp_edit_cb() {
         var api_ver = '{{ api_ver }}';
         var project_id = {{ project.id }};
 
@@ -524,7 +534,7 @@ $(document).ready(function() {
         $(".pt_job_comparison_dialog").slideToggle("slow", adjust_body_margin());
 
         $.ajax({
-            url: "/api/v{0}/{1}/comparison/{2}".ptFormat(api_ver, project_id, id),
+            url: "/api/v{0}/{1}/comparison/{2}".ptFormat(api_ver, project_id, cmp_edited_id),
             cache: true,
             data: null,
             type: 'GET',
@@ -542,36 +552,6 @@ $(document).ready(function() {
                     $("#pt_jobs_to_compare").append(
                         "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(this['id'], this['title']) +
                         "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
-                });
-
-
-                $('#pt_btn_save').off('click').on('click', function () {
-                    data = {};
-                    data.title = $('#pt_comparison_title').val() || $("#pt_comparison_title").attr("placeholder");
-                    data.charts_type = $.trim($("#pt_charts_type").text());
-                    data.tables_type = $.trim($("#pt_tables_type").text());
-                    data.tests_type = $.trim($("#pt_tests_type").text());
-                    data.values_type = $.trim($("#pt_values_type").text());
-
-                    var elements = $('#pt_jobs_to_compare').find('input');
-                    data.jobs = [];
-                    for (var i = 0; i < elements.length; i++) {
-                        data.jobs.push(parseInt(elements[i].value));
-                    }
-
-                    $.ajax({
-                        url: '/api/v{0}/{1}/comparison/{2}'.ptFormat(api_ver, project_id, id),
-                        type: 'PUT',
-                        contentType: "application/json",
-                        data: JSON.stringify(data),
-                        success: function () {
-                            window.location.replace("/{0}/comparison/".ptFormat(project_id))
-                        },
-                        error: function (xhr) {
-                            alert('Error: ' + xhr.status + ' ' + xhr.responseText);
-                        }
-                    });
-                    return false;
                 });
             },
             error: function (xhr) {
@@ -594,7 +574,7 @@ $(document).ready(function() {
     });
 
     $('#pt_btn_cancel').click(function () {
-        window.location.replace((cmp_edited == true) ? "/{{ project.id }}/comparison/" : "/{{ project.id }}/job/");
+        window.location.replace((cmp_edited_id > 0) ? "/{{ project.id }}/comparison/" : "/{{ project.id }}/job/");
         return false;
     });
 });
