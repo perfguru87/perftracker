@@ -27,7 +27,6 @@
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
       <th class='colCompare'></th>
-      <th class='colEdit'>Edit</th>
     </tr>
   </thead>
   <tfoot>
@@ -46,7 +45,6 @@
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
       <th class='colCompare'></th>
-      <th class='colEdit'>Edit</th>
     </tr>
   </tfoot>
 </table>
@@ -234,13 +232,6 @@ $(document).ready(function() {
                         return "<span class='glyphicon glyphicon-plus' id='glyphicon-plus-{0}' aria-hidden='true'></span>".ptFormat(data['id']);
                 },
             },
-            {
-                "className": 'pt_row_edit_toggle',
-                "orderable": false,
-                "data":      null,
-                "defaultContent": "<span class='glyphicon glyphicon-edit' aria-hidden='true'></span>",
-            },
-
         ],
         "columnDefs": [
             {
@@ -500,22 +491,7 @@ $(document).ready(function() {
     });
 
     /*
-     * 6. Editing job
-     */
-
-    $("#jobs").on('click', 'td.pt_row_edit_toggle', function() {
-        if (cmp_edited_id > 0)
-            return false;
-
-        var tr = $(this).closest('tr');
-        var row = table.row( tr );
-        var id = row.data().id;
-        pt_job_edit_cb(id);
-        return false;
-    });
-
-    /*
-     * 7. Editing comparison
+     * 6. Editing comparison
      */
 
     if (window.location.search.indexOf('edit=') > -1) {
