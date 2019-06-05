@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '!5)es5!)c48g^1z-d#f5s=^d^x&i0ec-ec*k4fa&8z!&ly5)pp'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -132,26 +132,38 @@ BOOTSTRAP3 = {
 LOGGING = {
     'disable_existing_loggers': False,
     'version': 1,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
+            'formatter': 'simple'
         },
         'logfile': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
+            'formatter': 'verbose',
             'filename': 'perftracker.log',
         }
     },
     'loggers': {
         '': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'handlers': ['logfile'],
             'propagate': False
         },
         'django.request': {
             'handlers': ['logfile'],
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropriate
             'propagate': False,
         },
         'django.db.backends': {
