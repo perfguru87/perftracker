@@ -64,12 +64,6 @@
                                   value=""></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label for="UUID">UUID</label>
-                        <input type="hidden" id="jobId">
-                        <input type="uuid" class="form-control" id="uuid" maxlength="128" placeholder="UUID" value="">
-                    </div>
-
                     <div class='pt_button_group'>
                         <button type="submit" id="saveButton" class="btn btn-primary pull-right float-right">Save
                         </button>
@@ -96,7 +90,6 @@
             $("#suiteVer").val(data.suite_ver);
             $("#duration").val(data.duration);
             $("#links").val(data.links);
-            $("#uuid").val(data.uuid);
 
             $('#saveButton').off('click');
             $('#saveButton').on('click', function () {
@@ -107,7 +100,6 @@
                 data.suite_ver = $("#suiteVer").val();
                 data.duration = $("#duration").val();
                 data.links = $("#links").val();
-                data.uuid = $("#uuid").val();
                 data.project_name = data.project.name;
 
                 if (isNaN(Number(data.duration))) {
