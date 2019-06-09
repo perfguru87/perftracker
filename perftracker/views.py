@@ -491,36 +491,36 @@ def pt_comparison_id_json(request, api_ver, project_id, cmp_id):
         except ComparisonModel.DoesNotExist:
             return JsonResponse([], safe=False, status=http.client.NOT_FOUND)
 
-        if request.method == 'DELETE':
-            comparison.deleted = True
-            comparison.save()
-            messages.success(request, "comparison #%s was deleted" % str(cmp_id))
+    if request.method == 'DELETE':
+        comparison.deleted = True
+        comparison.save()
+        messages.success(request, "comparison #%s was deleted" % str(cmp_id))
+        return JsonResponse([], safe=False)
+
+    elif request.method == 'PUT':
+        if request.content_type != "application/json":
+            return HttpResponseBadRequest("content_type must be 'application/json'")
+
+        body_unicode = request.body.decode('utf-8')
+        try:
+            body = json.loads(body_unicode)
+        except ValueError as ve:
+            return HttpResponseBadRequest("unable to parse JSON data. Error : {0}".format(ve))
+
+        try:
+            ComparisonModel.pt_validate_json(body)
+        except SuspiciousOperation as e:
+            return HttpResponseBadRequest(e)
+
+        comparison.pt_update(body)
+        messages.success(request, "comparison #%s was successfully edited" % str(cmp_id))
+        return HttpResponse("OK")
+
+    elif request.method == 'GET':
+        try:
+            return JsonResponse(ComparisonNestedSerializer(ComparisonModel.objects.get(pk=cmp_id)).data, safe=False)
+        except ComparisonModel.DoesNotExist:
             return JsonResponse([], safe=False)
-
-        elif request.method == 'PUT':
-            if request.content_type != "application/json":
-                return HttpResponseBadRequest("content_type must be 'application/json'")
-
-            body_unicode = request.body.decode('utf-8')
-            try:
-                body = json.loads(body_unicode)
-            except ValueError as ve:
-                return HttpResponseBadRequest("unable to parse JSON data. Error : {0}".format(ve))
-
-            try:
-                ComparisonModel.pt_validate_json(body)
-            except SuspiciousOperation as e:
-                return HttpResponseBadRequest(e)
-
-            comparison.pt_update(body)
-            messages.success(request, "comparison #%s was successfully edited" % str(cmp_id))
-            return HttpResponse("OK")
-
-        elif request.method == 'GET':
-            try:
-                return JsonResponse(ComparisonNestedSerializer(ComparisonModel.objects.get(pk=cmp_id)).data, safe=False)
-            except ComparisonModel.DoesNotExist:
-                return JsonResponse([], safe=False)
 
     return JsonResponse([], safe=False, status=http.client.NOT_IMPLEMENTED)
 
