@@ -140,7 +140,7 @@ function pt_draw_job_details(d, err_msg)
     s += "<div class='row'>";
 
     s += "<div class='pt_obj_management'>" +
-         "<a href='/admin/perftracker/jobmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
+         "<a href='#' onclick=\"return pt_job_edit_cb({0})\">Edit</a><span>|</span>".ptFormat(d.id) +
          "<a href='#' onclick=\"return pt_ajax_job_delete({0})\">Delete</a><span>|</span>".ptFormat(d.id) +
          "<a href='/0/job/{0}?as_json=1'>Download JSON</a><span>|</span>".ptFormat(d.id) +
          "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
@@ -254,7 +254,7 @@ function pt_draw_comparison_details(d, err_msg)
     s += "<div class='row'>";
 
     s += "<div class='pt_obj_management'>" +
-         "<a href='/admin/perftracker/comparisonmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
+         "<a onclick=\"window.location.replace('/{0}/job/?edit={1}');return false;\" >Edit</a><span>|</span>".ptFormat(d.project.id, d.id) +
          "<a href='#' onclick=\"return pt_ajax_comparison_delete({0})\">Delete</a><span>|</span>".ptFormat(d.id) +
          "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
 
