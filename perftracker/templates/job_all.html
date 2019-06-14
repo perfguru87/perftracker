@@ -8,6 +8,8 @@
   {% include '_hw_lock_timeline.html' %}
 {% endif %}
 
+{% include 'job_id_edit.html' %}
+
 <table id="jobs" class="display dataTable" cellspacing="0" width="100%">
   <thead>
     <tr>
@@ -96,7 +98,7 @@ $(function() {
           <ul id='pt_jobs_to_compare'>
           </ul>
           <div>
-            <button type="cancel" class="btn btn-default">Cancel</button>
+            <button type="cancel" class="btn btn-default" id='pt_btn_cancel'>Cancel</button>
             <button type="submit" class="btn btn-primary pt_right" id='pt_btn_save'>Save</button>
             <button type="submit" class="btn btn-default pt_right" id='pt_btn_preview'>Preview</button>
           </div>
@@ -114,7 +116,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_charts_type">
                 {% for value, text in cmp_form.charts_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="chart-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -133,7 +135,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_tables_type">
                 {% for value, text in cmp_form.tables_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="tables-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -152,7 +154,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_tests_type">
                 {% for value, text in cmp_form.tests_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="tests-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -171,7 +173,7 @@ $(function() {
               </button>
               <ul class="dropdown-menu" aria-labelledby="pt_values_type">
                 {% for value, text in cmp_form.values_type.field.choices %}
-                    <li><a href='#'>{{ text }}</a></li>
+                    <li><a href='#' class="values-type" >{{ text }}</a></li>
                     {% ifequal value 0 %}
                         <li role="separator" class="divider"></li>
                     {% endifequal %}
@@ -223,8 +225,13 @@ $(document).ready(function() {
                 "orderable": false,
                 "data":      null,
                 "defaultContent": "<span class='glyphicon glyphicon-plus' aria-hidden='true'></span>",
+                "render": function (data) {
+                    if (data['id'] in jobs_in_comparison)
+                        return "<span class='glyphicon glyphicon-check' id='glyphicon-check-{0}' aria-hidden='true'></span>".ptFormat(data['id']);
+                    else
+                        return "<span class='glyphicon glyphicon-plus' id='glyphicon-plus-{0}' aria-hidden='true'></span>".ptFormat(data['id']);
+                },
             },
-
         ],
         "columnDefs": [
             {
@@ -305,6 +312,13 @@ $(document).ready(function() {
                 "visible": false,
             }
         ],
+        "initComplete": function () {
+            for (const [key, value] of Object.entries(jobs_in_comparison)) {
+                var elem = document.getElementById('glyphicon-check-{0}'.ptFormat(key));
+                var tr = $(elem).closest('tr');
+                tr.addClass('selected');
+            }
+        }
     });
 
     /*
@@ -353,6 +367,7 @@ $(document).ready(function() {
      * 3. Add to comparison
      */
 
+    var cmp_edited_id = -1;
     var jobs_in_comparison = {};
 
     $("#pt_jobs_to_compare" ).sortable();
@@ -426,15 +441,10 @@ $(document).ready(function() {
         return false;
     });
 
-    $('#pt_btn_save').click(function (e) {
+    $('#pt_btn_save').on('click', function (e) {
 
-        var payload = {}
-
-        payload.title = $("#pt_comparison_title").val();
-        if (payload.title == "") {
-            payload.title = $("#pt_comparison_title").attr("placeholder");
-        }
-
+        var payload = {};
+        payload.title = $('#pt_comparison_title').val() || $("#pt_comparison_title").attr("placeholder");
         payload.charts_type = $.trim($("#pt_charts_type").text());
         payload.tables_type = $.trim($("#pt_tables_type").text());
         payload.tests_type = $.trim($("#pt_tests_type").text());
@@ -443,24 +453,104 @@ $(document).ready(function() {
 
         var elements = $('#pt_jobs_to_compare').find('input');
         for (var i = 0; i < elements.length; i++) {
-	        payload.jobs.push(parseInt(elements[i].value));
+            payload.jobs.push(parseInt(elements[i].value));
         }
 
-        $.ajax({
-            url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
-            type : "POST",
-            contentType: "application/json; charset=utf-8",
-            dataType : 'json',
-            data : JSON.stringify(payload),
-            success : function(result) {
-                window.location.replace("/{{ project.id }}/comparison/" + result.id)
-            },
-            error: function(xhr, resp, text) {
-                console.log("Form comparison sumbit failed", xhr, resp, text);
-                alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
-            }
-        })
+        if (cmp_edited_id > 0) {
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/{0}'.ptFormat(cmp_edited_id),
+                type: 'PUT',
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function () {
+                    window.location.replace("/{{ project.id }}/comparison/");
+                },
+                error: function (xhr) {
+                    alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                }
+            });
+        }
 
+        else if (cmp_edited_id == -1) {
+            $.ajax({
+                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                data: JSON.stringify(payload),
+                success: function (result) {
+                    window.location.replace("/{{ project.id }}/comparison/" + result.id)
+                },
+                error: function (xhr, resp, text) {
+                    console.log("Form comparison sumbit failed", xhr, resp, text);
+                    alert("Status: {0} ({1}), {2}".ptFormat(xhr.status, xhr.statusText, xhr.reponseText));
+                }
+            });
+        }
+        return false;
+    });
+
+    /*
+     * 6. Editing comparison
+     */
+
+    if (window.location.search.indexOf('edit=') > -1) {
+        var url_params = new URLSearchParams(window.location.search);
+        cmp_edited_id = url_params.get('edit');
+        pt_cmp_edit_cb();
+    }
+
+    function pt_cmp_edit_cb() {
+        var api_ver = '{{ api_ver }}';
+        var project_id = {{ project.id }};
+
+        var adjust_body_margin = function () {
+            $("body").css('margin-bottom', '{0}px'.ptFormat($(".pt_job_comparison_dialog").outerHeight() + 20));
+        }
+        $(".pt_job_comparison_dialog").slideToggle("slow", adjust_body_margin());
+
+        $.ajax({
+            url: "/api/v{0}/{1}/comparison/{2}".ptFormat(api_ver, project_id, cmp_edited_id),
+            cache: true,
+            data: null,
+            type: 'GET',
+            async: false,
+            timeout: 2000,
+            success: function (data) {
+                $('#pt_comparison_title').val(data.title);
+                $('#pt_charts_type').text(document.getElementsByClassName("chart-type")[data.charts_type].text);
+                $('#pt_tables_type').text(document.getElementsByClassName("tables-type")[data.tables_type].text);
+                $('#pt_tests_type').text(document.getElementsByClassName("tests-type")[data.tests_type].text);
+                $('#pt_values_type').text(document.getElementsByClassName("values-type")[data.values_type].text);
+
+                $.each(data.jobs, function () {
+                    jobs_in_comparison[this['id']] = this['title'];
+                    $("#pt_jobs_to_compare").append(
+                        "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(this['id'], this['title']) +
+                        "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
+                });
+            },
+            error: function (xhr) {
+                alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+            }
+        });
+    }
+
+    $('.chart-type').click(function () {
+        $('#pt_charts_type').text($(this).text());
+    });
+    $('.tables-type').click(function () {
+        $('#pt_tables_type').text($(this).text());
+    });
+    $('.tests-type').click(function () {
+        $('#pt_tests_type').text($(this).text());
+    });
+    $('.values-type').click(function () {
+        $('#pt_values_type').text($(this).text());
+    });
+
+    $('#pt_btn_cancel').click(function () {
+        window.location.replace((cmp_edited_id > 0) ? "/{{ project.id }}/comparison/" : "/{{ project.id }}/job/");
         return false;
     });
 });

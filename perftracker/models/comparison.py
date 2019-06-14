@@ -249,8 +249,9 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 
     class Meta:
         model = ComparisonModel
-        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
+        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated', 'tests_total', 'tests_completed',
+                  'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs', 'charts_type', 'tables_type',
+                  'tests_type', 'values_type')
 
 
 ######################################################################
