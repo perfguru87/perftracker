@@ -327,9 +327,12 @@ class PTComparisonServSideSeriesView:
         self.tests = []
         self.legend = legend
         self._series = None
+        self._errors = None
 
     def pt_add_test(self, job, job_n, test_obj):
         self.tests.append(test_obj)
+        if test_obj.status == 'FAILED' or test_obj.errors:
+            self.sect.has_failures = True
 
     @property
     def series(self):
@@ -337,21 +340,39 @@ class PTComparisonServSideSeriesView:
             return self._series
 
         self._series = [0] * len(self.sect.x_axis_categories)
+        self._errors = [0] * len(self.sect.x_axis_categories)
         for t in self.tests:
             if t.category not in self.sect.test_cat_to_axis_cat_seqnum:
                 print("WARNING: test category '%s' is not found in %s" % (t.category, str(self.sect.test_cat_to_axis_cat_seqnum)))
                 continue
-            self._series[self.sect.test_cat_to_axis_cat_seqnum[t.category]] = pt_float2human(t.avg_score)
+            i = self.sect.test_cat_to_axis_cat_seqnum[t.category]
+            self._series[i] = pt_float2human(t.avg_score)
+            self._errors[i] = t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
         return self._series
 
     @property
     def data(self):
-        if self.sect.chart_type == PTCmpChartType.BAR:
-            return self.series
-
         ret = []
-        for n in range(0, len(self.series)):
-            ret.append([self.sect.x_axis_categories[n], self.series[n]])
+        if self.sect.chart_type == PTCmpChartType.BAR:
+            for n in range(0, len(self.series)):
+                if self._errors[n]:
+                    pt = {"value": self.series[n],
+                          "label": {"show": 1, "formatter": "fail"},
+                          "errors": self._errors[n]}
+                    ret.append(pt)
+                else:
+                    ret.append(self.series[n])
+        else:
+            for n in range(0, len(self.series)):
+                if self._errors[n]:
+                    pt = { "value": [self.sect.x_axis_categories[n], self.series[n]],
+                           "symbol": "diamond",
+                           "symbolSize": 10,
+                           "itemStyle": {"color": '#000'},
+                           "errors": self._errors[n]}
+                    ret.append(pt)
+                else:
+                    ret.append([self.sect.x_axis_categories[n], self.series[n]])
         return ret
 
 
@@ -373,6 +394,7 @@ class PTComparisonServSideSectView:
         self.x_axis_rotate = 0
         self.y_axis_name = ''
         self.id = id
+        self.has_failures = False
 
         self.legends = [j.title for j in jobs]
         if len(set(self.legends)) != len(self.legends):
@@ -427,6 +449,9 @@ class PTComparisonServSideSectView:
         self.x_axis_name, self.x_axis_categories, self.test_cat_to_axis_cat_seqnum = pt_cut_common_sfx(self.tests_categories)
 
         self._pt_init_chart_type()
+
+        if self.chart_type == PTCmpChartType.XYLINE and self.has_failures:
+            self.legends += [{"name": "Failed test", "icon": "diamond"}]
 
         if len(self.tests_tags) == 1:
             if self.cmp_obj.tables_type == PTCmpTableType.AUTO:
