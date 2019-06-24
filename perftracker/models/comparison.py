@@ -350,8 +350,8 @@ class PTComparisonServSideSeriesView:
             maxi = max(maxi, i)
             self._series[i] = pt_float2human(t.avg_score)
             self._errors[i] = t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
-        self._series = self._series[:maxi]
-        self._errors = self._errors[:maxi]
+        self._series = self._series[:maxi + 1]
+        self._errors = self._errors[:maxi + 1]
         return self._series
 
     @property

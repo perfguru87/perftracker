@@ -444,7 +444,7 @@ def pt_comparison_all_json(request, api_ver, project_id):
             if column == 'tests_total':
                 return '{0} {1}'.format(row.tests_total, row.tests_completed)
             else:
-                return super(JobJson, self).render_column(row, column)
+                return super(ComparisonJson, self).render_column(row, column)
 
         def filter_queryset(self, qs):
             # use parameters passed in GET request to filter queryset
@@ -452,7 +452,7 @@ def pt_comparison_all_json(request, api_ver, project_id):
             # simple example:
             search = self.request.GET.get(u'search[value]', None)
             if search:
-                qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
+                qs = qs.filter(Q(title__icontains=search))
 
             if int(project_id) != 0:
                 qs = qs.filter(Q(project_id=project_id))
