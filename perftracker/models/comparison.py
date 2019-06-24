@@ -341,13 +341,17 @@ class PTComparisonServSideSeriesView:
 
         self._series = [0] * len(self.sect.x_axis_categories)
         self._errors = [0] * len(self.sect.x_axis_categories)
+        maxi = 0
         for t in self.tests:
             if t.category not in self.sect.test_cat_to_axis_cat_seqnum:
                 print("WARNING: test category '%s' is not found in %s" % (t.category, str(self.sect.test_cat_to_axis_cat_seqnum)))
                 continue
             i = self.sect.test_cat_to_axis_cat_seqnum[t.category]
+            maxi = max(maxi, i)
             self._series[i] = pt_float2human(t.avg_score)
             self._errors[i] = t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
+        self._series = self._series[:maxi]
+        self._errors = self._errors[:maxi]
         return self._series
 
     @property
