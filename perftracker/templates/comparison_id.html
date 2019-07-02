@@ -154,6 +154,7 @@ function pt_tests_repopulate(table, group_id)
 
 $(document).ready(function() {
   var id = {{ obj.id }};
+  None = undefined;
 
 {% for job in jobs %}
   pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
@@ -161,12 +162,12 @@ $(document).ready(function() {
 
 {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
 {% if s.chart_type != PTCmpChartType.NOCHART %}
-  pt_configure_chart('chart_{{ g.id }}_{{ s.id }}', {{ s.chart_type }}, {% if s.has_failures %}true{% else %}false{% endif %},
+  pt_configure_chart_async('chart_{{ g.id }}_{{ s.id }}', {{ s.chart_type }}, {% if s.has_failures %}true{% else %}false{% endif %},
      {{ s.x_axis_categories|safe }}, '{{ s.x_axis_name }}', '{{ s.x_axis_type }}', {{ s.x_axis_rotate }}, '{{ s.y_axis_name }}', [
 {% for serie in s.series %}      { name: '{{ serie.legend|safe }}', data: {{ serie.data|safe }}{% if s.chart_trend_line %}, trend: true{% endif %}},
 {% endfor %}     ]);
 {% endif %}{% if s.table_type == PTCmpTableType.SHOW %}
-  pt_configure_table('#tests_{{ g.id }}_{{ s.id }}', {% if s.pageable %}1{% else %}0{% endif %}, [
+  pt_configure_table_async('#tests_{{ g.id }}_{{ s.id }}', {% if s.pageable %}1{% else %}0{% endif %}, [
 {% for t_tag, t in s.tests.items %}      {{ t.table_data|safe }},
 {% endfor %}    ]);
 {% endif %}
