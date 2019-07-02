@@ -612,6 +612,13 @@ function pt_configure_chart(element, chart_type, has_failures, x_categories, x_n
     chart.setOption(option);
 }
 
+function pt_configure_chart_async(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series) {
+    var fn = function() {
+        pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series);
+    }
+    setTimeout(fn, 0)
+}
+
 var tableConfig = {
     lengthMenu: [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]],
 
@@ -731,4 +738,11 @@ function pt_configure_table(element, pageable, data) {
             });
         }
     });
+}
+
+function pt_configure_table_async(element, pageable, data) {
+    var fn = function() {
+        pt_configure_table(element, pageable, data);
+    }
+    setTimeout(fn, 0)
 }
