@@ -55,7 +55,7 @@ So we will use static HTML with couple tricks:
   <div class='collapse in' id='data_{{ g.id }}'>
   {% for s_tag, s in g.sections.items %}
     <h4>{{ s.title }}</h4>
-
+    {% spaceless %}
     {% if s.chart_type != PTCmpChartType.NOCHART %}
       <div class='container collapse in pt_div_cmp'>
         <div id="chart_{{ g.id }}_{{ s.id }}" class='pt_chart'>Loading chart...</div>
@@ -88,7 +88,7 @@ So we will use static HTML with couple tricks:
         </table>
       </div>
     {% endif %}
-
+    {% endspaceless %}
   {% endfor %}
   </div>
 {% endfor %}
@@ -153,262 +153,24 @@ function pt_tests_repopulate(table, group_id)
 }
 
 $(document).ready(function() {
-    var None = undefined;
-    var id = {{ obj.id }};
+  var id = {{ obj.id }};
 
-    {% for job in jobs %}
-        pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
-    {% endfor %}
+{% for job in jobs %}
+  pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
+{% endfor %}
 
-    var lengthMenu = [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]];
-
-    var columnDefs = [
-      {
-        "targets": "colExpander",
-        "type": "string",
-        "orderable": false,
-        "className": 'pt_row_details_toggle',
-        "render": function ( data, type, row ) {
-          return "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
-        }
-      },
-      {
-        "targets": [ "colId", "colCategory"],
-        "type": "string",
-        "visible": false,
-      },
-      {
-        "targets": "colTag",
-        "type": "string",
-        "className": 'pt_left',
-      },
-      {
-        "targets": "colScore",
-        "type": "string",
-        "className": 'pt_lborder',
-      },
-      {
-        "targets": "colDeviation",
-        "className": "pt_lborder pt_right",
-        "type": "float",
-        "render": function ( data, type, row ) {
-          if (data == "-")
-             return data;
-          return data + "%";
-        }
-      },
-      {
-        "targets": "colDiff",
-        "width": "45px",
-        "type": "string",
-        "className": 'pt_diff_equal pt_right',
-        "createdCell": function (td, cellData, rowData, rowIndex, colIndex) {
-          var data = rowData[colIndex];
-          var ar = data.split(" ");
-          var diff = "";
-          if (ar[1] == '1') {
-            $(td).attr('class', 'pt_diff_better pt_right');
-          } else if (ar[1] == '-1') {
-            $(td).attr('class', 'pt_diff_worse pt_right');
-          }
-          diff = ar[0];
-          if (ar[0] > 0) {
-            diff = "+" + diff;
-          }
-          if (diff != "-") {
-            diff += "%";
-          }
-          $(td).html(diff);
-        },
-      },
-    ];
-
-    {% for g_tag, g in cmp_view.groups.items %}
-      {% for s_tag, s in g.sections.items %}
-        {% if s.chart_type != PTCmpChartType.NOCHART %}
-
-          {% for serie in s.series %}
-            var data_{{ forloop.counter }} = {{ serie.data|safe }};
-
-            {% if s.chart_trend_line %}
-              var regr_{{ forloop.counter }} = ecStat.regression('polynomial', data_{{ forloop.counter }}, 3);
-              regr_{{ forloop.counter }}.points.sort(function(a, b) {
-                return a[0] - b[0];
-              });
-
-            {% endif %}
-          {% endfor %}
-
-          var chart = echarts.init(document.getElementById('chart_{{ g.id }}_{{ s.id }}'));
-
-          var option = {
-            title: {
-            },
-            tooltip: {
-                transitionDuration: 0,
-                formatter: function(params) {
-                    var s = params.seriesName + "<br>";
-                {% if s.chart_type == PTCmpChartType.XYLINE %}
-                    if (params.data.errors)
-                        s += params.data.value[0] + " : " + params.data.value[1] + "<br>"
-                             + params.data.errors + " iteration(s) failed";
-                    else
-                        s += params.data[0] + " : " + params.data[1];
-                {% else %}
-                    if (params.data.errors)
-                        s += params.data.value + "<br>" + params.data.errors + " iteration(s) failed";
-                    else
-                        s += params.data;
-                {% endif %}
-                    return s;
-                }
-            },
-            legend: {
-                data: {{ s.legends|safe }},
-                type: 'scroll',
-                orient: 'vertical',
-                right: 10,
-                top: 50,
-                width: 180,
-                align: 'left',
-            },
-            xAxis: {
-                data: {{ s.x_axis_categories|safe }},
-                name: '{{ s.x_axis_name }}',
-                type: '{{ s.x_axis_type }}',
-                nameLocation: 'center',
-                axisLabel: { rotate: {{ s.x_axis_rotate }} },
-                nameGap: 30,
-            },
-            yAxis: {
-                name: '{{ s.y_axis_name }}'
-            },
-            grid: {
-                top: 50,
-                right: 200,
-                left: 50,
-            },
-            toolbox: {
-                show: true,
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    dataView: {readOnly: false},
-                    magicType: {type: ['line', 'bar']},
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            series: [
-            {% for serie in s.series %}
-              {
-                name: '{{ serie.legend|safe }}',
-                {% if s.chart_type == PTCmpChartType.XYLINE %}
-                  type: 'line',
-                  smooth: true,
-                  smoothMonotone: 'none',
-                {% elif s.chart_type == PTCmpChartType.BAR %}
-                  type: 'bar',
-                {% endif %}
-                barGap: '0.1',
-                animation: false,
-                data: data_{{ forloop.counter }},
-              },
-              {% if s.chart_trend_line %}
-              {
-                name: '{{ serie.legend|safe }} (trend)',
-                type: 'line',
-                smooth: true,
-                smoothMonotone: 'none',
-                showSymbol: false,
-                animation: false,
-                data: regr_{{ forloop.counter }}.points,
-                lineStyle: {
-                  normal: {
-                    color: 'gray',
-                    width: 1,
-                    type: 'dashed'
-                  }
-                },
-              },
-              {% endif %}
-            {% endfor %}
-            {% if s.chart_type == PTCmpChartType.XYLINE %}
-               {name: 'Failed test', type: 'line', itemStyle: { color: '#000'}},
-            {% endif %}
-            ]
-          };
-          chart.setOption(option);
-          {% if s.chart_type == PTCmpChartType.XYLINE %}
-          {% elif s.chart_type == PTCmpChartType.XYLINE_WITH_TREND %}
-          {% elif s.chart_type == PTCmpChartType.BAR %}
-          {% elif s.chart_type == PTCmpChartType.BAR_WITH_TREND %}
-          {% endif %}
-        {% endif %}
-        {% if s.table_type == PTCmpTableType.SHOW %}
-          var data = [
-          {% for t_tag, t in s.tests.items %}
-            {{ t.table_data|safe }},
-          {% endfor %}
-          ];
-
-          var table_{{ g.id }}_{{ s.id }} = $('#tests_{{ g.id }}_{{ s.id }}').DataTable({
-/*          "processing": true, */
-/*          "serverSide": true, */
-            "lengthMenu": lengthMenu,
-            {% if not s.pageable %}
-              "bLengthChange" : false,
-              "bInfo":false,
-              "bPaginate": false,
-            {% endif %}
-            "bFilter": false,
-            "data": data,
-            "order": [[ 2, "asc" ]],
-            "columnDefs": columnDefs,
-          });
-
-          // Add event listener for opening and closing details
-          $('#tests_{{ g.id }}_{{ s.id }}').on('click', 'td.pt_row_details_toggle', function () {
-            // FIXME, merge with jobs.html
-            var tr = $(this).closest('tr');
-            var row = table_{{ g.id }}_{{ s.id }}.row( tr );
-            var id = row.data()[1]; // FIXME: colId index
-
-            if ( row.child.isShown() ) {
-              // This row is already open - close it
-              $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
-              $('#test_details_slider_{0}'.ptFormat(id), row.child()).slideUp(function() {
-                row.child.hide()
-                tr.removeClass('shown');
-              });
-            }
-            else {
-              $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
-              $.ajax({
-                url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/0/test/{0}'.ptFormat(id),
-                cache: true,
-                data: null,
-                type: 'GET',
-                timeout: 2000,
-                success: function(data, status) {
-                  row.child(pt_test_details_draw(data, null)).show();
-                  tr.next('tr').children().toggleClass('pt_row_details');
-                  tr.addClass('shown');
-                  tr.next('tr').children().find('.pt_slider').slideDown();
-                },
-                error: function(data, status, error) {
-                  row.child(pt_test_details_draw(row.data(), error)).show();
-                  tr.next('tr').children().toggleClass('pt_row_details');
-                  tr.addClass('shown');
-                  tr.next('tr').children().find('.pt_slider').slideDown();
-                }
-              });
-            }
-          });
-        {% endif %}
-      {% endfor %}
-    {% endfor %}
+{% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
+{% if s.chart_type != PTCmpChartType.NOCHART %}
+  pt_configure_chart('chart_{{ g.id }}_{{ s.id }}', {{ s.chart_type }}, {% if s.has_failures %}true{% else %}false{% endif %},
+     {{ s.x_axis_categories|safe }}, '{{ s.x_axis_name }}', '{{ s.x_axis_type }}', {{ s.x_axis_rotate }}, '{{ s.y_axis_name }}', [
+{% for serie in s.series %}      { name: '{{ serie.legend|safe }}', data: {{ serie.data|safe }}{% if s.chart_trend_line %}, trend: true{% endif %}},
+{% endfor %}     ]);
+{% endif %}{% if s.table_type == PTCmpTableType.SHOW %}
+  pt_configure_table('#tests_{{ g.id }}_{{ s.id }}', {% if s.pageable %}1{% else %}0{% endif %}, [
+{% for t_tag, t in s.tests.items %}      {{ t.table_data|safe }},
+{% endfor %}    ]);
+{% endif %}
+{% endfor %} {% endfor %}
 });
 </script>
 

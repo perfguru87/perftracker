@@ -494,3 +494,241 @@ $(document).ready(function() {
         }
     });
 });
+
+function pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series) {
+    chart = echarts.init(document.getElementById(element));
+    if (chart_type != 2 && chart_type != 4) {
+        throw "Unsupported chart type " + chart_type;
+    }
+    var is_xy = (chart_type == 2);
+    var legends = [];
+    var option = {
+        title: { },
+        tooltip: {
+            transitionDuration: 0,
+            formatter: function(params) {
+                var s = params.seriesName + "<br>";
+                if (is_xy) {
+                    if (params.data.errors)
+                        s += params.data.value[0] + " : " + params.data.value[1] + "<br>"
+                            + params.data.errors + " iteration(s) failed";
+                    else
+                        s += params.data[0] + " : " + params.data[1];
+                } else {
+                    if (params.data.errors)
+                        s += params.data.value + "<br>" + params.data.errors + " iteration(s) failed";
+                    else
+                        s += params.data;
+                }
+                return s;
+            }
+        },
+        legend: {
+            data: legends,
+            type: 'scroll',
+            orient: 'vertical',
+            right: 10,
+            top: 50,
+            width: 180,
+            align: 'left'
+        },
+        xAxis: {
+            data: x_categories,
+            name: x_name,
+            type: x_type,
+            nameLocation: 'center',
+            axisLabel: { rotate: x_rotate },
+            nameGap: 30
+        },
+        yAxis: {
+            name: y_name
+        },
+        grid: {
+            top: 50,
+            right: 200,
+            left: 50
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        series: []
+    };
+
+    for (var i = 0; i < series.length; i++) {
+        var s = series[i];
+        var so = {
+            name: s.name,
+            data: s.data,
+            animation: false
+        };
+        Object.assign(so, is_xy ? {
+                type: 'line',
+                smooth: true,
+                smoothMonotone: 'none'
+            } :
+            {
+                type: 'bar',
+                barGap: '0.1'
+            }
+        );
+        legends.push(so.name);
+        option.series.push(so);
+
+        if (s.trend) {
+            var regr = ecStat.regression('polynomial', s.data, 3);
+            regr.points.sort(function(a, b) { return a[0] - b[0]; });
+            var trend = Object.assign({}, so, {
+                    name: s.name + " (trend)",
+                    data: regr.points,
+                    showSymbol: false,
+                    lineStyle: {
+                        normal: {
+                            color: 'gray',
+                            width: 1,
+                            type: 'dashed'
+                        }
+                    }
+                });
+            legends.push(trend.name);
+            option.series.push(trend);
+        }
+    }
+    if (has_failures)
+        legends.push({"name": "Failed test", "icon": "diamond"});
+
+    option.series.push(
+        {name: 'Failed test', type: 'line', itemStyle: { color: '#000'}}
+    );
+    // console.log(JSON.stringify(option));
+    chart.setOption(option);
+}
+
+var tableConfig = {
+    lengthMenu: [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]],
+
+    columnDefs: [
+        {
+            "targets": "colExpander",
+            "type": "string",
+            "orderable": false,
+            "className": 'pt_row_details_toggle',
+            "render": function (data, type, row) {
+                return "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+            }
+        },
+        {
+            "targets": ["colId", "colCategory"],
+            "type": "string",
+            "visible": false,
+        },
+        {
+            "targets": "colTag",
+            "type": "string",
+            "className": 'pt_left',
+        },
+        {
+            "targets": "colScore",
+            "type": "string",
+            "className": 'pt_lborder',
+        },
+        {
+            "targets": "colDeviation",
+            "className": "pt_lborder pt_right",
+            "type": "float",
+            "render": function (data, type, row) {
+                if (data === "-")
+                    return data;
+                return data + "%";
+            }
+        },
+        {
+            "targets": "colDiff",
+            "width": "45px",
+            "type": "string",
+            "className": 'pt_diff_equal pt_right',
+            "createdCell": function (td, cellData, rowData, rowIndex, colIndex) {
+                var data = rowData[colIndex];
+                var ar = data.split(" ");
+                var diff = "";
+                if (ar[1] === '1') {
+                    $(td).attr('class', 'pt_diff_better pt_right');
+                } else if (ar[1] === '-1') {
+                    $(td).attr('class', 'pt_diff_worse pt_right');
+                }
+                diff = ar[0];
+                if (ar[0] > 0) {
+                    diff = "+" + diff;
+                }
+                if (diff !== "-") {
+                    diff += "%";
+                }
+                $(td).html(diff);
+            },
+        },
+    ]
+};
+
+function pt_configure_table(element, pageable, data) {
+    var tableOpts = {
+        "lengthMenu": tableConfig.lengthMenu,
+        "bFilter": false,
+        "data": data,
+        "order": [[ 2, "asc" ]],
+        "columnDefs": tableConfig.columnDefs
+    };
+
+    if (!pageable){
+        tableOpts["bLengthChange"] = false;
+        tableOpts["bInfo"] = false;
+        tableOpts["bPaginate"] = false;
+    }
+    var table = $(element).DataTable(tableOpts);
+
+    // Add event listener for opening and closing details
+    $(element).on('click', 'td.pt_row_details_toggle', function () {
+        // FIXME, merge with jobs.html
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+        var id = row.data()[1]; // FIXME: colId index
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>";
+            $('#test_details_slider_{0}'.ptFormat(id), row.child()).slideUp(function() {
+                row.child.hide();
+                tr.removeClass('shown');
+            });
+        }
+        else {
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
+            $.ajax({
+                url: '/api/v1.0/13/comparison/476/group/0/test/{0}'.ptFormat(id),
+                cache: true,
+                data: null,
+                type: 'GET',
+                timeout: 2000,
+                success: function(data, status) {
+                    row.child(pt_test_details_draw(data, null)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    tr.next('tr').children().find('.pt_slider').slideDown();
+                },
+                error: function(data, status, error) {
+                    row.child(pt_test_details_draw(row.data(), error)).show();
+                    tr.next('tr').children().toggleClass('pt_row_details');
+                    tr.addClass('shown');
+                    tr.next('tr').children().find('.pt_slider').slideDown();
+                }
+            });
+        }
+    });
+}
