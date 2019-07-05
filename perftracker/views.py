@@ -887,7 +887,7 @@ def pt_artifact_content_id(request, project_id, uuid):
     if not ArtifactMetaModel.pt_artifacts_enabled():
         return pt_rest_err(http.client.NOT_IMPLEMENTED, "Artifacts management is not configured, set the ARTIFACTS_STORAGE_DIR setting")
 
-    uuid = uuid.lower()
+    uuid = str(uuid).lower()
     if not pt_is_valid_uuid(uuid):
         return pt_rest_bad_req("Invalid artifact content UUID %s" % uuid)
 
