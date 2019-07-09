@@ -53,6 +53,17 @@ MIDDLEWARE = [
     'request_logging.middleware.LoggingMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "django_auth_ldap.backend.LDAPBackend",
+]
+
+AUTH_LDAP_USER_ATTR_MAP = {
+    "first_name": "givenName",
+    "last_name": "sn",
+    "email": "mail",
+}
+
 ROOT_URLCONF = 'perftracker_django.urls'
 
 TEMPLATES = [
@@ -170,6 +181,10 @@ LOGGING = {
             'level': 'DEBUG',
             'handlers': ['logfile'],
             'propagate': False,
+        },
+        'django_auth_ldap': {
+            'level': 'DEBUG',
+            'handlers': ['logfile'],
         },
     },
 }

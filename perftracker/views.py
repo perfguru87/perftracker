@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.serializers import serialize
 from django.core.exceptions import SuspiciousOperation, ObjectDoesNotExist, ValidationError
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from django.db.models import Q
 from django.db.models import Count
@@ -39,6 +40,9 @@ from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUpload
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
 
+import logging
+logger = logging.getLogger(__name__)
+
 API_VER = '1.0'
 
 
@@ -53,6 +57,37 @@ def pt_redirect(request):
     if redirect:
         return HttpResponseRedirect(redirect)
     return HttpResponse()
+
+
+@csrf_exempt
+def pt_auth(request, api_ver, project_id):
+    if request.method == 'GET':
+        data = {"is_authenticated": request.user.is_authenticated,
+                "username": str(request.user)}
+        return JsonResponse(data, safe=False)
+
+    elif request.method == 'POST':
+        if request.user.is_authenticated:
+            logout(request)
+
+        else:
+            try:
+                data = json.loads(request.body.decode("utf-8"))
+            except json.JSONDecodeError:
+                return HttpResponseBadRequest("Wrong json")
+
+            user = authenticate(request, username=data['email'], password=data['password'])
+            if user is not None:
+                login(request, user)
+            else:
+                logger.info("Authentication failed")
+
+        data = {"is_authenticated": request.user.is_authenticated,
+                "username": str(request.user)}
+        return JsonResponse(data, safe=False)
+
+    return JsonResponse([], safe=False, status=http.client.NOT_IMPLEMENTED)
+
 
 # HTML views ###
 
@@ -747,6 +782,9 @@ def pt_hwfarm_node_id_json(request, api_ver, project_id, hw_id):
 def pt_hwfarm_node_lock_all_json(request, api_ver, project_id):
 
     if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return HttpResponse()
+
         body_unicode = request.body.decode('utf-8')
         try:
             body = json.loads(body_unicode)
@@ -761,6 +799,7 @@ def pt_hwfarm_node_lock_all_json(request, api_ver, project_id):
             return HttpResponseBadRequest(e)
 
         obj.pt_update(body)
+        logger.info(str(request.user) + " has set a lock " + str(obj.id))
         return HttpResponse("OK")
 
     if request.method == 'GET':
@@ -794,11 +833,16 @@ def pt_hwfarm_node_lock_id_json(request, api_ver, project_id, id):
         return HttpResponseNotFound()
 
     if request.method == 'DELETE':
-        # FIXME. Check owner
+        if not request.user.is_authenticated:
+            return HttpResponse()
+
         obj.pt_unlock()
+        logger.info(str(request.user) + " has deleted a lock " + str(id))
         return HttpResponse("OK")
 
     if request.method == 'PUT':
+        if not request.user.is_authenticated:
+            return HttpResponse()
 
         if request.content_type != "application/json":
             return HttpResponseBadRequest("content_type must be 'application/json'")
@@ -815,6 +859,7 @@ def pt_hwfarm_node_lock_id_json(request, api_ver, project_id, id):
             return HttpResponseBadRequest(e)
 
         obj.pt_update(body)
+        logger.info(str(request.user) + " has updated a lock " + str(id))
         return HttpResponse("OK")
 
     try:
