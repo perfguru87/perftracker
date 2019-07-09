@@ -112,6 +112,22 @@ python3.6 ./manage.py migrate
 python3.6 ./manage.py createsuperuser
 ```
 
+### Authenticate via Active Directory
+In order to use AD `settings_local.py` should contain the following:
+```python3.7
+import ldap
+from django_auth_ldap.config import LDAPSearch
+
+AUTH_LDAP_SERVER_URI = "ldap://ldap.example.com"
+AUTH_LDAP_BIND_DN = "username"
+AUTH_LDAP_BIND_PASSWORD = "password"
+AUTH_LDAP_USER_SEARCH = LDAPSearch(
+                        "ou=users,dc=example,dc=com",
+                        ldap.SCOPE_SUBTREE,
+                        "(uid=%(user)s)")
+```
+For more information please refer to [documentation](https://django-auth-ldap.readthedocs.io/en/latest/authentication.html).
+
 ## Running the server
 
 ```
