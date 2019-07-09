@@ -326,7 +326,7 @@ class PTComparisonServSideSeriesView:
         self.sect = sect
         self.tests = []
         self.legend = legend
-        self._series = None
+        self._scores = None
         self._errors = None
 
     def pt_add_test(self, job, job_n, test_obj):
@@ -334,12 +334,11 @@ class PTComparisonServSideSeriesView:
         if test_obj.status == 'FAILED' or test_obj.errors:
             self.sect.has_failures = True
 
-    @property
-    def series(self):
-        if self._series:
-            return self._series
+    def _init_scores(self):
+        if self._scores:
+            return
 
-        self._series = [None] * len(self.sect.x_axis_categories)
+        self._scores = [None] * len(self.sect.x_axis_categories)
         self._errors = [None] * len(self.sect.x_axis_categories)
         maxi = 0
         for t in self.tests:
@@ -348,35 +347,35 @@ class PTComparisonServSideSeriesView:
                 continue
             i = self.sect.test_cat_to_axis_cat_seqnum[t.category]
             maxi = max(maxi, i)
-            self._series[i] = pt_float2human(t.avg_score)
+            self._scores[i] = pt_float2human(t.avg_score)
             self._errors[i] = t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
-        self._series = self._series[:maxi + 1]
+        self._scores = self._scores[:maxi + 1]
         self._errors = self._errors[:maxi + 1]
-        return self._series
 
     @property
     def data(self):
+        self._init_scores()
         ret = []
         if self.sect.chart_type == PTCmpChartType.BAR:
-            for n in range(0, len(self.series)):
+            for n in range(0, len(self._scores)):
                 if self._errors[n]:
-                    pt = {"value": self.series[n],
+                    pt = {"value": self._scores[n],
                           "label": {"show": 1, "formatter": "fail"},
                           "errors": self._errors[n]}
                     ret.append(pt)
                 else:
-                    ret.append(self.series[n])
+                    ret.append(self._scores[n])
         else:
-            for n in range(0, len(self.series)):
+            for n in range(0, len(self._scores)):
                 if self._errors[n]:
-                    pt = { "value": [self.sect.x_axis_categories[n], self.series[n]],
+                    pt = { "value": [self.sect.x_axis_categories[n], self._scores[n]],
                            "symbol": "diamond",
                            "symbolSize": 10,
                            "itemStyle": {"color": '#000'},
                            "errors": self._errors[n]}
                     ret.append(pt)
                 else:
-                    ret.append([self.sect.x_axis_categories[n], self.series[n]])
+                    ret.append([self.sect.x_axis_categories[n], self._scores[n]])
         return ret
 
 
@@ -470,12 +469,11 @@ class PTComparisonServSideSectView:
 
 
 class PTComparisonServSideGroupView:
-    def __init__(self, id, cmp_obj, jobs, test_obj):
+    def __init__(self, id, cmp_obj, jobs, group):
         self.cmp_obj = cmp_obj
         self.jobs = jobs
-        self.group_obj = TestGroupModel.pt_get_by_tag(test_obj.group)
+        self.group_obj = TestGroupModel.pt_get_by_tag(group)
         self.sections = OrderedDict()
-        self.test_results = [[]] * len(jobs)
         self.id = id
 
     def pt_add_test(self, job, job_n, test_obj):
@@ -483,7 +481,6 @@ class PTComparisonServSideGroupView:
         if key not in self.sections:
             self.sections[key] = PTComparisonServSideSectView(len(self.sections), self.cmp_obj, self.jobs, key)
         self.sections[key].pt_add_test(job, job_n, test_obj)
-        self.test_results[job_n].append(test_obj.avg_score)
 
     def pt_init_chart_and_table(self):
         for s in self.sections.values():
@@ -504,7 +501,7 @@ class PTComparisonServSideView:
 
     def pt_add_test(self, job, job_n, test_obj):
         if test_obj.group not in self.groups:
-            self.groups[test_obj.group] = PTComparisonServSideGroupView(len(self.groups), self.cmp_obj, self.job_objs, test_obj)
+            self.groups[test_obj.group] = PTComparisonServSideGroupView(len(self.groups), self.cmp_obj, self.job_objs, test_obj.group)
         self.groups[test_obj.group].pt_add_test(job, job_n, test_obj)
 
     def init(self):
