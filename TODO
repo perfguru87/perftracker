@@ -4,7 +4,7 @@ View:
 
 Authentication:
 + login form
-- sign in
++ sign in
 
 Authorization:
 - hidden screens for non-authorized users
@@ -45,9 +45,9 @@ Job view:
 Comparisons
 + table
 + comparison details
-- comparison edit dialog
++ comparison edit dialog
 + comparison auto title generator
-- delete comparison
++ delete comparison
 + comparison items ordering
 
 Comparison view:
