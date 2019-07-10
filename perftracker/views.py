@@ -60,30 +60,37 @@ def pt_redirect(request):
 
 
 @csrf_exempt
-def pt_auth(request, api_ver, project_id):
+def pt_auth(request, api_ver):
     if request.method == 'GET':
         data = {"is_authenticated": request.user.is_authenticated,
                 "username": str(request.user)}
         return JsonResponse(data, safe=False)
 
     elif request.method == 'POST':
-        if request.user.is_authenticated:
-            logout(request)
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest("Wrong json")
 
-        else:
-            try:
-                data = json.loads(request.body.decode("utf-8"))
-            except json.JSONDecodeError:
-                return HttpResponseBadRequest("Wrong json")
+        user_is_authenticated = False
+        authentication_failed = False
 
-            user = authenticate(request, username=data['email'], password=data['password'])
+        if data['action'] == 'login':
+            user = authenticate(request,
+                                username=data['email'],
+                                password=data['password'])
             if user is not None:
                 login(request, user)
+                user_is_authenticated = True
             else:
-                logger.info("Authentication failed")
+                authentication_failed = True
 
-        data = {"is_authenticated": request.user.is_authenticated,
-                "username": str(request.user)}
+        elif data['action'] == 'logout':
+            logout(request)
+
+        data = {"is_authenticated": user_is_authenticated,
+                "username": str(request.user),
+                "authentication_failed": authentication_failed}
         return JsonResponse(data, safe=False)
 
     return JsonResponse([], safe=False, status=http.client.NOT_IMPLEMENTED)
