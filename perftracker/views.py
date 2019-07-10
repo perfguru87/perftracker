@@ -73,7 +73,6 @@ def pt_auth(request, api_ver):
             return HttpResponseBadRequest("Wrong json")
 
         user_is_authenticated = False
-        authentication_failed = False
 
         if data['action'] == 'login':
             user = authenticate(request,
@@ -83,17 +82,16 @@ def pt_auth(request, api_ver):
                 login(request, user)
                 user_is_authenticated = True
             else:
-                authentication_failed = True
+                return HttpResponse('Authentication failed', status=401)
 
         elif data['action'] == 'logout':
             logout(request)
 
         data = {"is_authenticated": user_is_authenticated,
-                "username": str(request.user),
-                "authentication_failed": authentication_failed}
+                "username": str(request.user)}
         return JsonResponse(data, safe=False)
 
-    return JsonResponse([], safe=False, status=http.client.NOT_IMPLEMENTED)
+    return HttpResponse('Not implemented', status=501)
 
 
 # HTML views ###
@@ -790,7 +788,7 @@ def pt_hwfarm_node_lock_all_json(request, api_ver, project_id):
 
     if request.method == 'POST':
         if not request.user.is_authenticated:
-            return HttpResponse()
+            return HttpResponse(status=401)
 
         body_unicode = request.body.decode('utf-8')
         try:
@@ -841,7 +839,7 @@ def pt_hwfarm_node_lock_id_json(request, api_ver, project_id, id):
 
     if request.method == 'DELETE':
         if not request.user.is_authenticated:
-            return HttpResponse()
+            return HttpResponse(status=401)
 
         obj.pt_unlock()
         logger.info(str(request.user) + " has deleted a lock " + str(id))
@@ -849,7 +847,7 @@ def pt_hwfarm_node_lock_id_json(request, api_ver, project_id, id):
 
     if request.method == 'PUT':
         if not request.user.is_authenticated:
-            return HttpResponse()
+            return HttpResponse(status=401)
 
         if request.content_type != "application/json":
             return HttpResponseBadRequest("content_type must be 'application/json'")

@@ -746,3 +746,58 @@ function pt_configure_table_async(element, pageable, data) {
     }
     setTimeout(fn, 0)
 }
+
+/*
+ * Authentication stuff
+ */
+
+function initialize_nav_bar(api_ver) {
+    $.ajax({
+        url: '/api/v{0}/auth'.ptFormat(api_ver),
+        data: null,
+        type: 'GET',
+        timeout: 2000,
+        success: function (auth_response) {
+            update_nav_bar(auth_response);
+        },
+        error: function (xhr) {
+            alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+        }
+    });
+}
+
+function pt_login(api_ver) {
+    var data = {
+        email: $("#exampleInputEmail1").val(),
+        password: $("#exampleInputPassword1").val(),
+        action: 'login'
+    };
+    pt_auth_request(api_ver, data)
+}
+
+function pt_logout(api_ver) {
+    var data = { action: 'logout' };
+    pt_auth_request(api_ver, data)
+}
+
+function pt_auth_request(api_ver, data) {
+    $.ajax({
+        url: '/api/v{0}/auth'.ptFormat(api_ver),
+        type: 'POST',
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: function (auth_response) {
+            update_nav_bar(auth_response);
+        },
+        error: function (xhr) {
+            console.log('Error: ' + xhr.status + ' ' + xhr.responseText);
+        }
+    });
+}
+
+function update_nav_bar(auth_response) {
+    document.getElementById("pt_username").style.display = auth_response.is_authenticated ? "list-item" : "none";
+    document.getElementById("pt_btn_sign_in").style.display = auth_response.is_authenticated ? "none" : "list-item";
+    document.getElementById("pt_btn_sign_out").style.display = auth_response.is_authenticated ? "list-item" : "none";
+    $('#username').text(auth_response.username);
+}

@@ -50,8 +50,8 @@
         </ul>
 
         <ul class="nav navbar-nav navbar-right" id="navbar_right">
-          <li class="dropdown" id="username">
-            <a href="#" id="username_link_text">username</a>
+          <li class="dropdown" style="display:none;" id="pt_username">
+            <a href="#" id="username">username</a>
           </li>
 
           <li class="dropdown active" id="projects_btn">
@@ -69,7 +69,7 @@
           </li>
 
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" id="sign_in_btn">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display:none;" id="pt_btn_sign_in">
               <i class="glyphicon glyphicon-user"></i> Sign In
             </a>
             <div class="dropdown-menu form-login stop-propagation" role="menu">
@@ -85,12 +85,12 @@
                 </label>
                 <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password" />
               </div>
-              <button type="submit" class="btn btn-success btn-block" id='pt_btn_login' onclick="pt_login();"><i class="glyphicon glyphicon-ok"></i> Submit</button>
+              <button type="submit" class="btn btn-success btn-block" id='pt_btn_sign_in_submit'><i class="glyphicon glyphicon-ok"></i> Submit</button>
             </div>
           </li>
 
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" onclick="pt_logout();" id="sign_out_btn">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display:none;" id="pt_btn_sign_out">
               <i class="glyphicon glyphicon-user"></i> Sign Out
             </a>
           </li>
@@ -101,75 +101,19 @@
   </nav>
 
   <script>
-  var api_ver = '{{ api_ver }}';
-  initialize_nav_bar();
+  $(document).ready(function() {
 
-  $.ajax({
-      url: '/api/v{0}/auth'.ptFormat(api_ver),
-      data: null,
-      type: 'GET',
-      timeout: 2000,
-      success: function (auth_response) {
-          update_nav_bar(auth_response);
-      },
-      error: function (data, status, error) {
-          alert('Error: ' + xhr.status + ' ' + xhr.responseText);
-      }
+      var api_ver = '{{ api_ver }}';
+
+      $('#pt_btn_sign_in_submit').click(function () {
+          pt_login(api_ver);
+      });
+      $('#pt_btn_sign_out').click(function () {
+          pt_logout(api_ver);
+      });
+
+      initialize_nav_bar(api_ver);
   });
-
-  function pt_login() {
-      var data = {};
-      data.email = $("#exampleInputEmail1").val();
-      data.password = $("#exampleInputPassword1").val();
-      data['action'] = 'login';
-
-      $.ajax({
-          url: '/api/v{0}/auth'.ptFormat(api_ver),
-          type: 'POST',
-          contentType: "application/json",
-          data: JSON.stringify(data),
-          success: function (auth_response) {
-              update_nav_bar(auth_response);
-              if (auth_response.authentication_failed) {
-                  alert("Authentication failed.");
-              }
-          },
-          error: function (xhr) {
-              alert('Error: ' + xhr.status + ' ' + xhr.responseText);
-          }
-      });
-  }
-
-  function pt_logout() {
-      var data = {};
-      data['action'] = 'logout';
-
-      $.ajax({
-          url: '/api/v{0}/auth'.ptFormat(api_ver),
-          type: 'POST',
-          contentType: "application/json",
-          data: JSON.stringify(data),
-          success: function (auth_response) {
-              update_nav_bar(auth_response);
-          },
-          error: function (xhr) {
-              alert('Error: ' + xhr.status + ' ' + xhr.responseText);
-          }
-      });
-  }
-
-  function initialize_nav_bar() {
-      document.getElementById("username").style.display = "none";
-      document.getElementById("sign_in_btn").style.display = "none";
-      document.getElementById("sign_out_btn").style.display = "none";
-  }
-
-  function update_nav_bar(auth_response) {
-      document.getElementById("username").style.display = auth_response.is_authenticated ? "list-item" : "none";
-      document.getElementById("sign_in_btn").style.display = auth_response.is_authenticated ? "none" : "list-item";
-      document.getElementById("sign_out_btn").style.display = auth_response.is_authenticated ? "list-item" : "none";
-      $('#username_link_text').text(auth_response.username);
-  }
   </script>
 
   <div class="container">
