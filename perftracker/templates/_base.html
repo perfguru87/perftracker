@@ -49,8 +49,12 @@
           {% endfor %}
         </ul>
 
-        <ul class="nav navbar-nav navbar-right">
-          <li class="dropdown active">
+        <ul class="nav navbar-nav navbar-right" id="navbar_right">
+          <li class="dropdown" style="display:none;" id="pt_username">
+            <a href="#" id="username">username</a>
+          </li>
+
+          <li class="dropdown active" id="projects_btn">
             {% if projects|length > 1 %}
               <a href="#" class="dropdown-toggle active" data-toggle="dropdown" role="button" aria-haspopup="true"
                           aria-expanded="false">{{ project.name }} <span class="caret"></span></a>
@@ -65,7 +69,7 @@
           </li>
 
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display:none;" id="pt_btn_sign_in">
               <i class="glyphicon glyphicon-user"></i> Sign In
             </a>
             <div class="dropdown-menu form-login stop-propagation" role="menu">
@@ -81,13 +85,36 @@
                 </label>
                 <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password" />
               </div>
-              <button type="submit" class="btn btn-success btn-block" id='pt_btn_login'><i class="glyphicon glyphicon-ok"></i> Submit</button>
+              <button type="submit" class="btn btn-success btn-block" id='pt_btn_sign_in_submit'><i class="glyphicon glyphicon-ok"></i> Submit</button>
             </div>
           </li>
+
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display:none;" id="pt_btn_sign_out">
+              <i class="glyphicon glyphicon-user"></i> Sign Out
+            </a>
+          </li>
+
         </ul>
       </div><!-- /.navbar-header -->
     </div><!-- /.container-fluid -->
   </nav>
+
+  <script>
+  $(document).ready(function() {
+
+      var api_ver = '{{ api_ver }}';
+
+      $('#pt_btn_sign_in_submit').click(function () {
+          pt_login(api_ver);
+      });
+      $('#pt_btn_sign_out').click(function () {
+          pt_logout(api_ver);
+      });
+
+      initialize_nav_bar(api_ver);
+  });
+  </script>
 
   <div class="container">
     <h1>{% block title %}(no title){% endblock %}</h1>
