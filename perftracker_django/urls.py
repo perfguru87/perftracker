@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico'), name='favicon'),
 
+    url(r'^api/v(?P<api_ver>\d+.\d+)/auth$', views.pt_auth),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/project/$', views.pt_project_json),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/home/$', views.pt_home_json),
     url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/regression/(?P<regression_id>\d+)$', views.pt_regression_id_json),
