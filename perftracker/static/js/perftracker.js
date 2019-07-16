@@ -272,7 +272,7 @@ function pt_draw_comparison_details(d, err_msg)
                 hw += ', ';
             hw += job.env_node[h].name;
         }
-        s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, d.project, job.id, job.title);
+        s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, d.project.id, job.id, job.title);
         if (job.tests_completed == job.tests_total)
             s += "<td>{0}</td><td>{1}</td><td>{2}</td>".ptFormat(job.duration, job.tests_completed, job.tests_errors);
         else
