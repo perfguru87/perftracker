@@ -761,7 +761,7 @@ function initialize_nav_bar(api_ver) {
             update_nav_bar(auth_response);
         },
         error: function (xhr) {
-            alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+            console.log('Initializing navbar error: ' + xhr.status + ' ' + xhr.responseText);
         }
     });
 }
@@ -790,7 +790,7 @@ function pt_auth_request(api_ver, data) {
             update_nav_bar(auth_response);
         },
         error: function (xhr) {
-            console.log('Error: ' + xhr.status + ' ' + xhr.responseText);
+            console.log('Authentication error: ' + xhr.status + ' ' + xhr.responseText);
         }
     });
 }
