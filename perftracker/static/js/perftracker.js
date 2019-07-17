@@ -684,7 +684,7 @@ var tableConfig = {
     ]
 };
 
-function pt_configure_table(element, pageable, data) {
+function pt_configure_table(element, pageable, testlink, data) {
     var tableOpts = {
         "lengthMenu": tableConfig.lengthMenu,
         "bFilter": false,
@@ -718,7 +718,7 @@ function pt_configure_table(element, pageable, data) {
         else {
             $(this)[0].innerHTML = "<span class='glyphicon glyphicon-triangle-bottom' aria-hidden='true'></span>";
             $.ajax({
-                url: '/api/v1.0/13/comparison/476/group/0/test/{0}'.ptFormat(id),
+                url: testlink + id,
                 cache: true,
                 data: null,
                 type: 'GET',
@@ -740,9 +740,9 @@ function pt_configure_table(element, pageable, data) {
     });
 }
 
-function pt_configure_table_async(element, pageable, data) {
+function pt_configure_table_async(element, pageable, testlink, data) {
     var fn = function() {
-        pt_configure_table(element, pageable, data);
+        pt_configure_table(element, pageable, testlink, data);
     }
     setTimeout(fn, 0)
 }

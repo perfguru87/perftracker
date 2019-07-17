@@ -162,7 +162,7 @@ $(document).ready(function() {
 {% for job in jobs %}
   pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
 {% endfor %}
-
+  var testlink = "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/0/test/";
 {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
 {% if s.chart_type != PTCmpChartType.NOCHART %}
   pt_configure_chart_async('chart_{{ g.id }}_{{ s.id }}', {{ s.chart_type }}, {% if s.has_failures %}true{% else %}false{% endif %},
@@ -170,7 +170,7 @@ $(document).ready(function() {
 {% for serie in s.series %}      { name: '{{ serie.legend|safe }}', data: {{ serie.data|safe }}{% if s.chart_trend_line %}, trend: true{% endif %}},
 {% endfor %}     ]);
 {% endif %}{% if s.table_type == PTCmpTableType.SHOW %}
-  pt_configure_table_async('#tests_{{ g.id }}_{{ s.id }}', {% if s.pageable %}1{% else %}0{% endif %}, [
+  pt_configure_table_async('#tests_{{ g.id }}_{{ s.id }}', {% if s.pageable %}1{% else %}0{% endif %}, testlink, [
 {% for t_tag, t in s.tests.items %}      {{ t.table_data|safe }},
 {% endfor %}    ]);
 {% endif %}
