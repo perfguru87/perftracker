@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import datetime
 import json
 import http.client
+import base64
 
 from django.views.generic.base import TemplateView
 from django.template import RequestContext
@@ -76,8 +77,8 @@ def pt_auth(request, api_ver):
 
         if data['action'] == 'login':
             user = authenticate(request,
-                                username=data['email'],
-                                password=data['password'])
+                                username=base64.b64decode(data['encoded_email']).decode("utf-8"),
+                                password=base64.b64decode(data['encoded_password']).decode("utf-8"))
             if user is not None:
                 login(request, user)
                 user_is_authenticated = True
