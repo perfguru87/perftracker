@@ -768,8 +768,8 @@ function initialize_nav_bar(api_ver) {
 
 function pt_login(api_ver) {
     var data = {
-        email: $("#exampleInputEmail1").val(),
-        password: $("#exampleInputPassword1").val(),
+        encoded_email: window.btoa($("#exampleInputEmail1").val()),
+        encoded_password: window.btoa($("#exampleInputPassword1").val()),
         action: 'login'
     };
     pt_auth_request(api_ver, data)
