@@ -134,7 +134,7 @@ class JobModel(models.Model):
 
         self.deleted = False
 
-        if append:
+        if append and j.get_bool('is_edited') == False:
             if self.duration:
                 self.duration += end - begin
             else:
@@ -147,13 +147,6 @@ class JobModel(models.Model):
             self.begin = begin
             self.end = end
 
-        if j.get_bool('is_edited') == True:
-            self.tests_total = j.get_int('tests_total')
-            self.tests_completed = j.get_int('tests_completed')
-            self.tests_failed = j.get_int('tests_failed')
-            self.tests_errors = j.get_int('tests_error')
-            self.tests_warnings = j.get_int('tests_warnings')
-            self.duration = timedelta(int(j.get_str('duration')) / 86400)
 
         if self.begin and (self.begin.tzinfo is None or self.begin.tzinfo.utcoffset(self.begin) is None):
             raise SuspiciousOperation("'begin' datetime object must include timezone: %s" % str(self.begin))

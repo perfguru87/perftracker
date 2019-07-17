@@ -51,13 +51,6 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="Duration">Duration</label>
-                        <input type="hidden" id="jobId">
-                        <input type="duration" class="form-control" id="duration" maxlength="128" placeholder="Duration"
-                               value="">
-                    </div>
-
-                    <div class="form-group">
                         <label for="Links">Links</label>
                         <input type="hidden" id="jobId">
                         <textarea type="links" class="form-control" id="links" maxlength="1024" placeholder="Links"
@@ -88,24 +81,18 @@
             $("#productVer").val(data.product_ver);
             $("#jobTitle").val(data.title);
             $("#suiteVer").val(data.suite_ver);
-            $("#duration").val(data.duration);
             $("#links").val(data.links);
 
             $('#saveButton').off('click');
             $('#saveButton').on('click', function () {
                 data.is_edited = true;
+                data.append = true;
                 data.product_name = $("#productName").val();
                 data.product_ver = $("#productVer").val();
                 data.title = $("#jobTitle").val();
                 data.suite_ver = $("#suiteVer").val();
-                data.duration = $("#duration").val();
                 data.links = $("#links").val();
                 data.project_name = data.project.name;
-
-                if (isNaN(Number(data.duration))) {
-                    alert("Field 'Duration' can only contain numeric values!");
-                    return false;
-                }
 
                 $.ajax({
                     url: '/api/v{0}/{1}/job/{2}'.ptFormat(api_ver, project_id, job_id),
