@@ -146,7 +146,7 @@ class ComparisonModel(models.Model):
         self.save()
 
     def pt_get_jobs(self):
-        # the method is required to order the jobs according to the order specified by user
+        # the method is required to order the jobs according to the order specified by  user
         if not self._job_ids:
             return self._jobs.all()
 
