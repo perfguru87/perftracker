@@ -1,23 +1,72 @@
-import uuid
-import itertools
 import json
 import re
 import uuid
 
-from datetime import timedelta
-from datetime import datetime
-
-from django.db import models
-from django.utils.dateparse import parse_datetime
-from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
-
+from django.db import models, transaction, connection
+from django.utils import timezone
+from django.conf import settings
 from rest_framework import serializers
 
-from perftracker.models.project import ProjectModel, ProjectSerializer
-from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
-from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
 from perftracker.helpers import PTDurationField, PTJson
+from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
+from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, \
+    EnvNodeNestedSerializer
+from perftracker.models.project import ProjectModel, ProjectSerializer
+
+from collections import defaultdict
+from django.apps import apps
+
+
+class BulkCreateManager(object):
+    """
+    This helper class keeps track of ORM objects to be created for multiple
+    model classes, and automatically creates those objects with `bulk_create`
+    when the number of objects accumulated for a given model class exceeds
+    `chunk_size`.
+    Upon completion of the loop that's `add()`ing objects, the developer must
+    call `done()` to ensure the final set of objects is created for all models.
+    """
+
+    def _update_nextvals(self):
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT nextval('perftracker_testmodel_id_seq') from generate_series(1,{})".format(self.chunk_size))
+
+        self.nextvals = iter([val[0] for val in cursor.fetchall()])
+
+    def __init__(self, chunk_size=100):
+        self._create_queues = defaultdict(list)
+        self.chunk_size = chunk_size
+        self._update_nextvals()
+
+    def _commit(self, model_class):
+        model_key = model_class._meta.label
+
+        model_class.objects.bulk_create(self._create_queues[model_key])
+        self._create_queues[model_key] = []
+        self._update_nextvals()
+
+    def add(self, obj):
+        """
+        Add an object to the queue to be created, and call bulk_create if we
+        have enough objs.
+        """
+        model_class = type(obj)
+        model_key = model_class._meta.label
+        obj.id = next(self.nextvals)
+        self._create_queues[model_key].append(obj)
+        if len(self._create_queues[model_key]) >= self.chunk_size:
+            self._commit(model_class)
+
+    def done(self):
+        """
+        Always call this upon completion to make sure the final partial chunk
+        is saved.
+        """
+        for model_name, objs in self._create_queues.items():
+            if len(objs) > 0:
+                self._commit(apps.get_model(model_name))
 
 
 class JobModel(models.Model):
@@ -57,8 +106,15 @@ class JobModel(models.Model):
     def __str__(self):
         return "#%d, %s" % (self.id, self.title)
 
+    @staticmethod
+    def _pt_db_get(query, value_to_key='uuid'):
+        result_list = list(query)
+        result_dict = {str(res.__getattribute__(value_to_key)): res for res in result_list}
+        return result_dict, result_list
+
     def pt_update(self, json_data):
         from perftracker.models.test import TestModel
+        from perftracker.models.test_group import TestGroupModel
 
         j = PTJson(json_data, obj_name="job json", exception_type=SuspiciousOperation)
 
@@ -82,10 +138,14 @@ class JobModel(models.Model):
         tests_to_delete = {}
         tests_to_commit = {}
         test_seq_num = 0
+        # triggering populating queryset cache
+        tests_from_db_by_uuid, tests_list_from_db = self._pt_db_get(TestModel.objects.filter(job=self))
+        # preload test groups
+        tests_groups_by_tag, tests_groups = self._pt_db_get(TestGroupModel.objects.all(), value_to_key='tag')
 
         # process existing tests
         if self.id:
-            for t in TestModel.objects.filter(job=self):
+            for t in tests_list_from_db:
                 test_seq_num = max(t.seq_num, test_seq_num)
                 u = str(t.uuid)
                 if append:
@@ -103,14 +163,10 @@ class JobModel(models.Model):
                 del tests_to_delete[u]
             else:
                 test_seq_num += 1
-                try:
-                    tests_to_commit[u] = TestModel.objects.get(uuid=u)
-                except TestModel.MultipleObjectsReturned:
-                    TestModel.objects.filter(uuid=self.uuid).delete()
+                if not tests_to_commit.get(u):
                     tests_to_commit[u] = TestModel(uuid=u, seq_num=test_seq_num)
-                except TestModel.DoesNotExist:
-                    tests_to_commit[u] = TestModel(uuid=u, seq_num=test_seq_num)
-            tests_to_commit[u].pt_update(t)
+
+            tests_to_commit[u].pt_update(t, tests_groups_by_tag)
             tests_to_commit[u].pt_validate_uniqueness(key2test)
 
         self.suite_name = j.get_str('suite_name')
@@ -166,21 +222,40 @@ class JobModel(models.Model):
                 else:
                     raise SuspiciousOperation(str(serializer.errors) + ", original json: " + str(env_node_json))
 
-        for t in tests_to_commit.values():
-            t.job = self
-            t.pt_save()
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+            bulk_mgr = BulkCreateManager(chunk_size=5000)
+            for t in tests_to_commit.values():
+                t.job = self
+                self.tests_total += 1
+                if t.pt_status_is_completed():
+                    self.tests_completed += 1
+                if t.pt_status_is_failed():
+                    self.tests_failed += 1
+                if t.errors:
+                    self.tests_errors += 1
+                if t.warnings:
+                    self.tests_warnings += 1
+                db_test = tests_from_db_by_uuid.get(str(t.uuid))
+                if not db_test:
+                    bulk_mgr.add(t)
+                elif t.pt_is_equal_to(db_test):
+                    continue
+            bulk_mgr.done()
+        else:
+            for t in tests_to_commit.values():
+                t.job = self
+                t.pt_save()
+                self.tests_total += 1
+                if t.pt_status_is_completed():
+                    self.tests_completed += 1
+                if t.pt_status_is_failed():
+                    self.tests_failed += 1
+                if t.errors:
+                    self.tests_errors += 1
+                if t.warnings:
+                    self.tests_warnings += 1
 
-            self.tests_total += 1
-            if t.pt_status_is_completed():
-                self.tests_completed += 1
-            if t.pt_status_is_failed():
-                self.tests_failed += 1
-            if t.errors:
-                self.tests_errors += 1
-            if t.warnings:
-                self.tests_warnings += 1
-
-        if tests_to_delete:
+        if not append and tests_to_delete:
             TestModel.pt_delete_tests(tests_to_delete.keys())
 
         if regression_tag is not None:

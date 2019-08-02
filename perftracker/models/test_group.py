@@ -29,13 +29,16 @@ class TestGroupModel(models.Model):
     icon        = models.URLField(max_length=256, help_text="URL of the icon to be used")
 
     @staticmethod
-    def pt_get_by_tag(tag):
-        try:
-            return TestGroupModel.objects.get(tag=tag)
-        except TestGroupModel.DoesNotExist:
-            g = TestGroupModel(title=tag, tag=tag)
-            g.save()
-            return g
+    def pt_get_by_tag(tag, test_groups=None):
+        if not test_groups:
+            try:
+                return TestGroupModel.objects.get(tag=tag)
+            except TestGroupModel.DoesNotExist:
+                g = TestGroupModel(title=tag, tag=tag)
+                g.save()
+                return g
+        else:
+            return test_groups.get(tag)
 
     def __str__(self):
         return self.tag

@@ -8,7 +8,7 @@ from functools import reduce
 from datetime import timedelta
 from datetime import datetime
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.dateparse import parse_datetime
 from django.apps import apps
 from django.db.models import Q
@@ -77,7 +77,7 @@ class TestModel(models.Model):
             return u.lower()
         return uuid.uuid1()
 
-    def pt_update(self, json_data):
+    def pt_update(self, json_data, test_groups=None):
         j = PTJson(json_data, obj_name="test json", exception_type=SuspiciousOperation)
 
         if 'seq_num' in json_data:
@@ -134,7 +134,11 @@ class TestModel(models.Model):
             self.duration = timedelta(seconds=0)
 
         self.group = j.get_str('group')
-        TestGroupModel.pt_get_by_tag(self.group)  # ensure appropriate TestGroupModel object exists
+        if not test_groups:
+            TestGroupModel.pt_get_by_tag(self.group, test_groups=test_groups)  # ensure appropriate TestGroupModel object exists
+        if not test_groups.get(self.group):
+            g = TestGroupModel(title=self.group, tag=self.group)
+            g.save()
 
         self.samples = j.get_int('samples', len(scores))
 
@@ -155,17 +159,23 @@ class TestModel(models.Model):
         if self.end and (self.end.tzinfo is None or self.end.tzinfo.utcoffset(self.end) is None):
             raise SuspiciousOperation("'end' datetime object must include timezone: %s" % str(self.end))
 
-    def pt_save(self):
-        try:
-            obj = TestModel.objects.get(uuid=self.uuid)
-        except TestModel.MultipleObjectsReturned:
-            TestModel.objects.filter(uuid=self.uuid).delete()
-            obj = None
-        except TestModel.DoesNotExist:
-            obj = None
+    @transaction.atomic
+    def pt_save(self, tests=None):
+        if tests is None:
+            try:
+                obj = TestModel.objects.get(uuid=self.uuid)
+            except TestModel.MultipleObjectsReturned:
+                TestModel.objects.filter(uuid=self.uuid).delete()
+                obj = None
+            except TestModel.DoesNotExist:
+                obj = None
 
-        if obj is None or not self.pt_is_equal_to(obj):
-            self.save()
+            if obj is None or not self.pt_is_equal_to(obj):
+                self.save()
+        else:
+            obj = tests.get(self.uuid)
+            if obj is None or not self.pt_is_equal_to(obj):
+                    self.save()
 
     def __str__(self):
         return self.tag
@@ -191,7 +201,7 @@ class TestModel(models.Model):
 
     def pt_is_equal_to(self, test):
         # FIXME, XXX - not sure this is right way to manage the problem of data object update in the database
-        for f in self._meta.get_fields():
+        for f in self._meta.get_fields()[1:]: # exclude id from comparison
             if getattr(test, f.name) != getattr(self, f.name):
                 return False
         return True
