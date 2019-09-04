@@ -130,6 +130,29 @@ def pt_comparison_all_html(request, project_id):
     return pt_base_html(request, project_id, 'comparison_all.html')
 
 
+def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_id=None, section_id=None):
+    try:
+        obj = ComparisonModel.objects.get(pk=cmp_id)
+    except ComparisonModel.DoesNotExist:
+        raise Http404
+
+    ret = {}
+    cmp_view = PTComparisonServSideView(obj)
+
+    requested_tables = [] if group_id is None and section_id is None else [(int(group_id), int(section_id))]
+
+    for group in cmp_view.groups.values():
+        for section in group.sections.values():
+            if not requested_tables or (group.id, section.id) in requested_tables:
+                ret[f'{group.id}_{section.id}'] = {
+                    'table_data': [t.table_data for t in section.tests.values()],
+                    'table_type': section.table_type,
+                    'pageable': int(section.pageable),
+                }
+
+    return JsonResponse(json.dumps(ret), safe=False)
+
+
 def pt_comparison_id_html(request, project_id, cmp_id):
     try:
         obj = ComparisonModel.objects.get(pk=cmp_id)
