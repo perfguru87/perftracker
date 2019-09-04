@@ -801,3 +801,62 @@ function update_nav_bar(auth_response) {
     document.getElementById("pt_btn_sign_out").style.display = auth_response.is_authenticated ? "list-item" : "none";
     $('#username').text(auth_response.username);
 }
+
+function pt_test_details_draw_row(title, ar, func) {
+    var s = '<tr><td>' + title + '</td>';
+    for (n = 0; n < ar.length; n++)
+        s += '<td>' + func(ar[n]) + '</td>';
+    return s + '</tr>';
+}
+
+function pt_test_details_draw(ar, err_msg) {
+    var s = '';
+    var d = ar[0];
+    var env_node = d.env_node;
+    var vms = d.vms;
+    var clients = d.clients;
+
+    s += "<div class='pt_slider' id='test_details_slider_{0}'>".ptFormat(d.id);
+
+    s += "<div class='row'>";
+
+    s += "<div class='col-md-12'>";
+    s += "<h4>Test details</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th colspan='" + ar.length + "'>Values</th></thead></tbody>";
+    s += pt_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
+    s += "<tr><td>Metrics</td><td colspan='" + ar.length + "'>" + "{0} ({1})".ptFormat(
+           d.metrics, d.less_better ? 'smaller is better' : 'bigger is better') + "</td></tr>";
+    s += "<tr><td>Group</td><td colspan='" + ar.length + "'>" + "{0}</td></tr>".ptFormat(d.group);
+    s += "<tr><td>Category</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.category);
+    s += pt_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
+    s += pt_test_details_draw_row('Descriptions', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description);});
+    s += pt_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
+    s += pt_test_details_draw_row('Errors', ar, function(d) { return "{0}".ptFormat(d.errors); });
+    s += pt_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
+    s += pt_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
+    s += pt_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin), pt_date2str(d.end)); });
+    s += pt_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
+    s += pt_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
+    s += "</tbody></table>";
+    s += "</div>";
+
+    s += "</div>"; /* row */
+
+    s += "</div>"; /* pt_slider */
+
+    return s;
+}
+
+function pt_table_loading_error_handler(test_case_id, error) {
+    if ($("#table_{0}_loading_error".ptFormat(test_case_id)).length) {
+        return;
+    }
+
+    var s = "";
+    s += "<div id=error_{0} class='alert alert-danger alert-dismissable'>".ptFormat(test_case_id);
+    s += "<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&#215;</button>";
+    s += "Table data loading error: " + error;
+    s += "</div>";
+    $('#results_{0}'.ptFormat(test_case_id)).append(s);
+}
