@@ -4,10 +4,10 @@
 
 /* Grids */
 tr.odd td.pt_job_test_errors {
-  background-color: #F5B7B1;
+  background-color: #F5B7B1 !important;
 }
 tr.even td.pt_job_test_errors {
-  background-color: #FADBD8;
+  background-color: #FADBD8 !important;
 }
 td.pt_row_details_toggle {
   cursor: pointer;
@@ -112,6 +112,9 @@ table.pt_obj_details tr:nth-child(even) td {
 table.pt_obj_details tr:nth-child(odd) td {
   background-color: #f4f4f4;
 }
+table.pt_obj_details tr.redClass td {
+  color: red;
+}
 table.pt_obj_details thead tr th {
   border-right: 1px solid #ddd;
 }
@@ -139,11 +142,11 @@ span.pt_ajax_error {
 }
 
 /* Test groups selector */
-div.pt_test_group_selector {
+div.pt_tests_group_selector {
   float: right;
   padding-right: 20px;
 }
-div.pt_test_group_selector select {
+div.pt_tests_group_selector select {
   width: 150px;
 }
 

@@ -24,6 +24,8 @@
         <th class='colDuration'>Duration (sec)</th>
         <th class='colScore'>Score</th>
         <th class='colPlusmin'>&plusmn; %</th>
+        <th class='colErrors'>Errors</th>
+        <th class='colStatus'>Errors</th>
       </tr>
     </thead>
     <tfoot>
@@ -37,12 +39,27 @@
         <th class='colDuration'>Duration (sec)</th>
         <th class='colScore'>Score</th>
         <th class='colPlusmin'>&plusmn; %</th>
+        <th class='colErrors'>Errors</th>
+        <th class='colStatus'>Errors</th>
       </tr>
     </tfoot>
   </table>
 </div>
 
 <script>
+
+function errors2str(data) {
+    var rv = "";
+    if (data.errors) {
+        rv = String(data.errors);
+    }
+    if (data.status === "FAILED") {
+        rv += rv ? ", ": "";
+        rv += data.status;
+    }
+    return rv;
+}
+
 function pt_test_details_draw(d, err_msg)
 {
     var s = '';
@@ -62,10 +79,12 @@ function pt_test_details_draw(d, err_msg)
     s += "<thead><th>Parameter</th><th>Value</th></thead></tbody>";
     s += "<tr><td>Raw scores</td><td>{0} {1}</td></tr>".ptFormat(d.scores, d.metrics);
     s += "<tr><td>&plusmn; %</td><td>{0}</td></tr>".ptFormat(d.avg_plusmin);
-    s += "<tr><td>Errors</td><td>{0}</td></tr>".ptFormat(d.errors);
+    var errors = errors2str(d);
+    var estyle = errors ? " class='redClass'" : "";
+    s += "<tr{0}><td>Errors</td><td>{1}</td></tr>".ptFormat(estyle, errors);
     s += "<tr><td>Raw deviations</td><td>{0}</td></tr>".ptFormat(d.deviations);
     s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : '');
-    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin), pt_date2str(d.end));
+    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true));
     s += "<tr><td>Duration (s)</td><td>{0}</td></tr>".ptFormat(d.duration);
     s += "</tbody></table>";
     s += "</div>";
@@ -130,6 +149,8 @@ $(document).ready(function() {
             { "data": "duration" },
             { "data": "avg_score" },
             { "data": "avg_plusmin" },
+            { "data": "errors" },
+            { "data": "status" }
         ],
         "columnDefs": [
             {
@@ -158,11 +179,21 @@ $(document).ready(function() {
                 }
             },
             {
-                "targets": [ "colId", "colCategory" ],
+                "targets": [ "colId", "colCategory", "colStatus" ],
                 "type": "string",
-                "visible": false,
+                "visible": false
+            },
+            {
+                "targets": "colErrors",
+                "type": "string",
+                "createdCell": function( td, cellData, rowData, row, col) {
+                    var ctl = $(td).text(errors2str(rowData));
+                    if (rowData.errors || rowData.status === 'FAILED') {
+                        ctl.addClass('pt_job_test_errors')
+                    }
+                }
             }
-        ],
+        ]
     });
 
     // Add event listener for opening and closing details
@@ -205,6 +236,7 @@ $(document).ready(function() {
     });
 
     /* Test group switch handler */
+    $('#tests_filter').after("<div id='tests_group_selector' class='pt_tests_group_selector'>Group filter: <select></select></div>");
     $.ajax({
         url: '/api/v{{ api_ver }}/{{ project.id }}/job/{0}/group/'.ptFormat({{ obj.id }}),
         cache: true,
@@ -212,8 +244,7 @@ $(document).ready(function() {
         type: 'GET',
         timeout: 2000,
         success: function(data, status) {
-            $('#tests_filter').after("<div id='test_group_selector' class='pt_test_group_selector'>Group filter: <select></select></div>");
-            var selector = $('#test_group_selector').children('select');
+            var selector = $('#tests_group_selector').children('select');
             selector.append($('<option>', {value: 0, text: ''}));
             $.each(data, function(i, item) {
                 selector.append($('<option>', {value: item.id, text: item.title}));
@@ -223,7 +254,7 @@ $(document).ready(function() {
             });
         },
         error: function(data, status, error) {
-            $('#test_group_selector').html(pt_draw_ajax_error(error));
+            $('#tests_group_selector').html(pt_draw_ajax_error(error));
         }
     });
 });
