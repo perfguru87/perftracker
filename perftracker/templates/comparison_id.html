@@ -27,6 +27,10 @@
     </div>
   </div>
 </div>
+<span style="float: right">
+  <a onclick="show_all_tables(true)">Show tables</a>
+  <a onclick="hide_all_tables()">Hide tables</a>
+</span>
 
 {% comment %}
 
@@ -57,6 +61,7 @@ So we will use static HTML with couple tricks:
     <span><h4 style="display: inline">{{ s.title }}</h4>
     <span style="float: right"><a href='#g_{{ g.id }}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
     <a href='#s_{{ g.id }}_{{ s.id }}' id='s_{{ g.id }}_{{ s.id }}' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
+    <a onclick="toggle_table({{ g.id }}, {{ s.id }})" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
     </span></span>
     {% spaceless %}
     {% if s.chart_type != PTCmpChartType.NOCHART %}
@@ -64,9 +69,103 @@ So we will use static HTML with couple tricks:
         <div id="chart_{{ g.id }}_{{ s.id }}" class='pt_chart'>Loading chart...</div>
       </div>
     {% endif %}
-    {% if s.table_type == PTCmpTableType.SHOW %}
-      <div class='container collapse in pt_div_cmp' id='results_{{ g.id }}_{{ s.id }}'>
-        <table id="tests_{{ g.id }}_{{ s.id }}" class="display dataTable" cellspacing="0" width="100%">
+    <div class='container collapse in pt_div_cmp' id='results_{{ g.id }}_{{ s.id }}'></div>
+    {% endspaceless %}
+  {% endfor %}
+  </div>
+{% endfor %}
+
+<script>
+function hide_all_tables() {
+    Object.keys(view_data).map(test_case_id => hide_table(test_case_id));
+}
+
+function show_all_tables(show_big_tables=false) {
+    var tables_are_rendered = true;
+    Object.values(view_data).map(test_case_data => {
+        if (test_case_data.rendered == false) {
+            tables_are_rendered = false;
+        }
+    });
+
+    var request_failed = false;
+
+    if (!tables_are_rendered) {
+        $.ajax({
+            url: "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/tables",
+            data: null,
+            type: 'GET',
+            async: false,
+            timeout: 10000,
+            success: function (response) {
+                response = $.parseJSON(response);
+                Object.keys(response).map(test_case_id => {
+                    view_data[test_case_id] = Object.assign({}, view_data[test_case_id], response[test_case_id]);
+                });
+            },
+            error: function (data, status, error) {
+                Object.keys(data).map(test_case_id => {
+                    pt_table_loading_error_handler(test_case_id, error);
+                });
+                request_failed = true;
+            }
+        });
+    }
+
+    if (request_failed) {
+        return;
+    }
+
+    Object.keys(view_data).map(test_case_id => {
+        if (view_data[test_case_id].table_type === {{ PTCmpTableType.SHOW }} || show_big_tables) {
+            show_table(test_case_id, view_data[test_case_id]);
+        }
+    });
+}
+
+function toggle_table(group_id, section_id) {
+    const test_case_id = '{0}_{1}'.ptFormat(group_id, section_id);
+
+    if (!$("#{0}".ptFormat(test_case_id)).length) {
+        $.ajax({
+            url: "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/{0}/section/{1}".ptFormat(group_id, section_id),
+            data: null,
+            type: 'GET',
+            timeout: 10000,
+            success: function (response) {
+                response = $.parseJSON(response);
+                view_data[test_case_id] = Object.assign({}, view_data[test_case_id], response[test_case_id]);
+                show_table(test_case_id, view_data[test_case_id]);
+            },
+            error: function (data, status, error) {
+                pt_table_loading_error_handler(test_case_id, error);
+            }
+        });
+    } else {
+        $("#{0}".ptFormat(test_case_id)).is(":visible") ? hide_table(test_case_id) : show_table(test_case_id, None);
+    }
+}
+
+function hide_table(test_case_id) {
+    if ($("#{0}".ptFormat(test_case_id)).is(":visible")) {
+        $('#results_{0}'.ptFormat(test_case_id)).children().hide();
+    }
+}
+
+function show_table(test_case_id, test_case_data) {
+    if ($("#table_{0}_loading_error".ptFormat(test_case_id)).length) {
+        $("#table_{0}_loading_error".ptFormat(test_case_id)).remove();
+    }
+
+    if ($("#{0}".ptFormat(test_case_id)).length) {
+        if ($("#{0}".ptFormat(test_case_id)).is(":hidden")) {
+            $('#results_{0}'.ptFormat(test_case_id)).children().show();
+        }
+        return;
+    }
+
+    $('#results_{0}'.ptFormat(test_case_id)).append(`
+        <table id={0} class="display dataTable" cellspacing="0" width="100%">
           <thead>
             <tr>
             <th colspan='4'></th>
@@ -89,60 +188,17 @@ So we will use static HTML with couple tricks:
             </tr>
           </thead>
         </table>
-      </div>
-    {% endif %}
-    {% endspaceless %}
-  {% endfor %}
-  </div>
-{% endfor %}
+        <br><br><br><br>
+    `.ptFormat(test_case_id));
 
-<script>
-function pt_test_details_draw_row(title, ar, func)
-{
-    var s = '<tr><td>' + title + '</td>';
-    for (n = 0; n < ar.length; n++)
-        s += '<td>' + func(ar[n]) + '</td>';
-    return s + '</tr>';
-}
+    pt_configure_table_async(
+        '#{0}'.ptFormat(test_case_id),
+        test_case_data.pageable,
+        "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/0/test/",
+        test_case_data.table_data,
+    );
 
-function pt_test_details_draw(ar, err_msg)
-{
-    var s = '';
-    var d = ar[0];
-    var env_node = d.env_node;
-    var vms = d.vms;
-    var clients = d.clients;
-
-    s += "<div class='pt_slider' id='test_details_slider_{0}'>".ptFormat(d.id);
-
-    s += "<div class='row'>";
-
-    s += "<div class='col-md-12'>";
-    s += "<h4>Test details</h4>";
-    s += "<table class='pt_obj_details'>";
-    s += "<thead><th>Parameter</th><th colspan='" + ar.length + "'>Values</th></thead></tbody>";
-    s += pt_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
-    s += "<tr><td>Metrics</td><td colspan='" + ar.length + "'>" + "{0} ({1})".ptFormat(
-           d.metrics, d.less_better ? 'smaller is better' : 'bigger is better') + "</td></tr>";
-    s += "<tr><td>Group</td><td colspan='" + ar.length + "'>" + "{0}</td></tr>".ptFormat(d.group);
-    s += "<tr><td>Category</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.category);
-    s += pt_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
-    s += pt_test_details_draw_row('Descriptions', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description);});
-    s += pt_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
-    s += pt_test_details_draw_row('Errors', ar, function(d) { return "{0}".ptFormat(d.errors); });
-    s += pt_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
-    s += pt_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
-    s += pt_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin), pt_date2str(d.end)); });
-    s += pt_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
-    s += pt_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
-    s += "</tbody></table>";
-    s += "</div>";
-
-    s += "</div>"; /* row */
-
-    s += "</div>"; /* pt_slider */
-
-    return s;
+    test_case_data.rendered = true;
 }
 
 function pt_tests_repopulate(table, group_id)
@@ -155,26 +211,49 @@ function pt_tests_repopulate(table, group_id)
     table.ajax.url(link).load(null, true);
 }
 
+function show_all_charts() {
+    Object.keys(view_data).map(test_case_id => {
+        var test_case_data = view_data[test_case_id];
+        if (test_case_data.has_chart) {
+            pt_configure_chart_async(
+                'chart_' + test_case_id,
+                test_case_data.chart_type,
+                test_case_data.has_failures,
+                test_case_data.x_categories,
+                test_case_data.x_name,
+                test_case_data.x_type,
+                test_case_data.x_rotate,
+                test_case_data.y_name,
+                test_case_data.series,
+            )
+        }
+    });
+}
+
+var view_data = {
+    {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
+        '{{ g.id }}_{{ s.id }}': { rendered: false,
+            has_chart: {% if s.chart_type != PTCmpChartType.NOCHART %}true{% else %}false{% endif %},
+        {% if s.chart_type != PTCmpChartType.NOCHART %}
+            has_failures: {% if s.has_failures %}true{% else %}false{% endif %},
+            chart_type: {{ s.chart_type }}, x_categories: {{ s.x_axis_categories|safe }},
+            x_name: '{{ s.x_axis_name }}', x_type: '{{ s.x_axis_type }}',
+            x_rotate: {{ s.x_axis_rotate }}, y_name: '{{ s.y_axis_name }}',
+            series: [{% for serie in s.series %}{name: '{{ serie.legend|safe }}',
+                    data: {{ serie.data|safe }}{% if s.chart_trend_line %},trend: true{% endif %}},{% endfor %}],
+        {% endif %}},{% endfor %} {% endfor %}
+};
+
 $(document).ready(function() {
-  var id = {{ obj.id }};
   None = undefined;
 
 {% for job in jobs %}
   pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
 {% endfor %}
-  var testlink = "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/0/test/";
-{% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
-{% if s.chart_type != PTCmpChartType.NOCHART %}
-  pt_configure_chart_async('chart_{{ g.id }}_{{ s.id }}', {{ s.chart_type }}, {% if s.has_failures %}true{% else %}false{% endif %},
-     {{ s.x_axis_categories|safe }}, '{{ s.x_axis_name }}', '{{ s.x_axis_type }}', {{ s.x_axis_rotate }}, '{{ s.y_axis_name }}', [
-{% for serie in s.series %}      { name: '{{ serie.legend|safe }}', data: {{ serie.data|safe }}{% if s.chart_trend_line %}, trend: true{% endif %}},
-{% endfor %}     ]);
-{% endif %}{% if s.table_type == PTCmpTableType.SHOW %}
-  pt_configure_table_async('#tests_{{ g.id }}_{{ s.id }}', {% if s.pageable %}1{% else %}0{% endif %}, testlink, [
-{% for t_tag, t in s.tests.items %}      {{ t.table_data|safe }},
-{% endfor %}    ]);
-{% endif %}
-{% endfor %} {% endfor %}
+
+{% if obj.charts_type != PTCmpChartType.NOCHART %} show_all_charts(); {% endif %}
+{% if obj.tables_type == PTCmpTableType.SHOW %} show_all_tables(true); {% endif %}
+{% if obj.tables_type == PTCmpTableType.AUTO %} show_all_tables(); {% endif %}
 });
 </script>
 
