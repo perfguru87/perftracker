@@ -229,6 +229,7 @@ function show_all_charts() {
         }
     });
 }
+None = undefined;
 
 var view_data = {
     {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
@@ -245,7 +246,6 @@ var view_data = {
 };
 
 $(document).ready(function() {
-  None = undefined;
 
 {% for job in jobs %}
   pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
