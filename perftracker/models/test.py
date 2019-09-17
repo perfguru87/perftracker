@@ -225,7 +225,7 @@ class TestSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TestModel
-        fields = ('id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin')
+        fields = ('id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin', 'errors', 'status')
 
 
 class TestDetailedSerializer(TestSimpleSerializer):

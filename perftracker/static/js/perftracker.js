@@ -14,7 +14,7 @@ if (!String.prototype.ptFormat) {
   };
 }
 
-function pt_date2str(date_str) {
+function pt_date2str(date_str, seconds = false) {
     if (typeof date_str == 'undefined')
         return '';
 
@@ -26,7 +26,13 @@ function pt_date2str(date_str) {
     if (date.getFullYear() != now.getFullYear())
         return date.toISOString().substring(0, 10);
 
-    return date.getDate() + ' ' + date.ptGetShortMonth() + ', ' + (hrs < 10 ? '0' + hrs : hrs) + ":" + (mins < 10 ? '0' + mins: mins);
+    var rv = date.getDate() + ' ' + date.ptGetShortMonth() + ', '
+            + (hrs < 10 ? '0' + hrs : hrs) + ":" + (mins < 10 ? '0' + mins: mins);
+    if (seconds) {
+        var secs = date.getSeconds();
+        rv += ":" + (secs < 10 ? '0' + secs: secs)
+    }
+    return rv;
 }
 
 function pt_env_node_draw(j, parent_id)

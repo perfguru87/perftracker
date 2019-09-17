@@ -432,8 +432,8 @@ def pt_job_id_json(request, api_ver, project_id, job_id):
 def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):
     class TestView(BaseDatatableView):
         model = TestModel
-        columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin']
-        order_columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin']
+        columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin', 'errors', 'status']
+        order_columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin', 'errors', 'status']
         max_display_length = 5000
 
         def filter_queryset(self, qs):
@@ -445,7 +445,7 @@ def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):
             if gid:
                 try:
                     group = TestGroupModel.objects.get(pk=gid)
-                    qs = qs.filter(job=job_id).filter(group=group.tag)
+                    qs = qs.filter(group=group.tag)
                 except TestGroupModel.DoesNotExist:
                     qs = TestModel.objects.none()
 
@@ -453,6 +453,17 @@ def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):
             if search:
                 qs = qs.filter(Q(tag__icontains=search) | Q(category__icontains=search))
             return qs
+
+        def ordering(self, qs):
+            # we need this trick to implement composite ordering by both errors and status == FAILED
+            # todo: currently it works only if tests status is either SUCCESS or FAILED
+            sort_by = self.request.GET.get(u'order[0][column]', None)
+            sort_dir = self.request.GET.get(u'order[0][dir]', None)
+            if sort_by == str(self.columns.index('errors')):
+                dir = "-" if sort_dir == "desc" else ""
+                sdir = "" if sort_dir == "desc" else "-"
+                return qs.order_by(dir + 'errors', sdir + "status")
+            return BaseDatatableView.ordering(self, qs)
 
         def prepare_results(self, qs):
             return TestSimpleSerializer(qs, many=True).data
