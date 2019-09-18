@@ -514,26 +514,16 @@ def pt_comparison_all_json(request, api_ver, project_id):
         # and make it return huge amount of data
         max_display_length = 5000
 
-        def render_column(self, row, column):
-            # We want to render user as a custom column
-            if column == 'tests_total':
-                return '{0} {1}'.format(row.tests_total, row.tests_completed)
-            else:
-                return super(ComparisonJson, self).render_column(row, column)
-
         def filter_queryset(self, qs):
-            # use parameters passed in GET request to filter queryset
-
-            # simple example:
-            search = self.request.GET.get(u'search[value]', None)
-            if search:
-                qs = qs.filter(Q(title__icontains=search))
-
+            # filter by project & deleted only, search filtering is performed in-mem in prepare_results
             if int(project_id) != 0:
                 qs = qs.filter(Q(project_id=project_id))
 
-            qs = qs.filter(Q(deleted=False))
+            qs = qs.filter(Q(deleted=False)).prefetch_related("_jobs", "project")
+            return qs
 
+        def paging(self, qs):
+            # disable default paging, it has stupid default=10. For client-side DataTables we need to return all
             return qs
 
         def prepare_results(self, qs):
