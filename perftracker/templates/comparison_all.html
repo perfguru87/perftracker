@@ -44,10 +44,14 @@ $(document).ready(function() {
     /*
      * 1. Comparisons list table
      */
+    var project_visible = true;
+    {% if project.id != 0 %}
+    project_visible = false;
+    {% endif %}
 
     var table = $('#comparisons').DataTable( {
         "processing": true,
-        "serverSide": true,
+        "serverSide": false,
         "lengthMenu": [[50, 200, 1000, -1], [50, 200, 1000, "All"]],
         "ajax": "/api/v{{ api_ver }}/{{ project.id }}/comparison/",
         "order": [[ 2, "desc" ]],
@@ -80,6 +84,7 @@ $(document).ready(function() {
             {
                 "targets": "colUpdated",
                 "type": "date",
+                "orderData": [ 3, 1 ],
                 "render": function ( data, type, row ) {
                     return pt_date2str(data);
                 },
@@ -87,9 +92,8 @@ $(document).ready(function() {
             {
                 "targets": "colProject",
                 "type": "string",
-                {% if project.id != 0 %}
-                    "visible": false,
-                {% endif %}
+                "orderData": [ 3, 1 ],
+                "visible": project_visible,
                 "render": function ( data, type, row ) {
                     return data.name;
                 },
@@ -97,12 +101,13 @@ $(document).ready(function() {
             {
                 "targets": "colEnv",
                 "type": "string",
+                "orderData": [ 4, 1 ],
                 "render": function ( data, type, row ) {
                     var str = '';
                     if (!data)
                         return '';
                     for (var i = 0; i < data.length; i++) {
-                        if (typeof data[i].name == 'undefined')
+                        if (typeof data[i].name === 'undefined')
                             continue;
                         if (str)
                             str += ", ";
@@ -126,7 +131,8 @@ $(document).ready(function() {
             },
             {
                 "targets": "colJobs",
-                "type": "string",
+                "type": "integer",
+                "orderData": [ 7, 1 ],
                 "render": function ( data, type, row ) {
                     if (!data)
                         return '';
@@ -135,14 +141,13 @@ $(document).ready(function() {
             },
             {
                 "targets": "colTests",
-                "type": "string",
-                "render": function ( data, type, row ) {
-                    return data;
-                },
+                "type": "integer",
+                "orderData": [ 9, 1 ],
             },
             {
                 "targets": "colErrors",
-                "type": "string",
+                "type": "integer",
+                "orderData": [ 10, 1 ],
                 "createdCell": function (td, cellData, rowData, row, col) {
                     if ( cellData > 0 ) {
                         $(td).addClass('pt_job_test_errors');

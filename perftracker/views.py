@@ -130,6 +130,29 @@ def pt_comparison_all_html(request, project_id):
     return pt_base_html(request, project_id, 'comparison_all.html')
 
 
+def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_id=None, section_id=None):
+    try:
+        obj = ComparisonModel.objects.get(pk=cmp_id)
+    except ComparisonModel.DoesNotExist:
+        raise Http404
+
+    ret = {}
+    cmp_view = PTComparisonServSideView(obj)
+
+    requested_tables = [] if group_id is None and section_id is None else [(int(group_id), int(section_id))]
+
+    for group in cmp_view.groups.values():
+        for section in group.sections.values():
+            if not requested_tables or (group.id, section.id) in requested_tables:
+                ret[f'{group.id}_{section.id}'] = {
+                    'table_data': [t.table_data for t in section.tests.values()],
+                    'table_type': section.table_type,
+                    'pageable': int(section.pageable),
+                }
+
+    return JsonResponse(json.dumps(ret), safe=False)
+
+
 def pt_comparison_id_html(request, project_id, cmp_id):
     try:
         obj = ComparisonModel.objects.get(pk=cmp_id)
@@ -409,8 +432,8 @@ def pt_job_id_json(request, api_ver, project_id, job_id):
 def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):
     class TestView(BaseDatatableView):
         model = TestModel
-        columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin']
-        order_columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin']
+        columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin', 'errors', 'status']
+        order_columns = ['', 'id', 'seq_num', 'group', 'tag', 'category', 'duration', 'avg_score', 'avg_plusmin', 'errors', 'status']
         max_display_length = 5000
 
         def filter_queryset(self, qs):
@@ -422,7 +445,7 @@ def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):
             if gid:
                 try:
                     group = TestGroupModel.objects.get(pk=gid)
-                    qs = qs.filter(job=job_id).filter(group=group.tag)
+                    qs = qs.filter(group=group.tag)
                 except TestGroupModel.DoesNotExist:
                     qs = TestModel.objects.none()
 
@@ -430,6 +453,17 @@ def pt_job_test_all_json(request, api_ver, project_id, job_id, group_id):
             if search:
                 qs = qs.filter(Q(tag__icontains=search) | Q(category__icontains=search))
             return qs
+
+        def ordering(self, qs):
+            # we need this trick to implement composite ordering by both errors and status == FAILED
+            # todo: currently it works only if tests status is either SUCCESS or FAILED
+            sort_by = self.request.GET.get(u'order[0][column]', None)
+            sort_dir = self.request.GET.get(u'order[0][dir]', None)
+            if sort_by == str(self.columns.index('errors')):
+                dir = "-" if sort_dir == "desc" else ""
+                sdir = "" if sort_dir == "desc" else "-"
+                return qs.order_by(dir + 'errors', sdir + "status")
+            return BaseDatatableView.ordering(self, qs)
 
         def prepare_results(self, qs):
             return TestSimpleSerializer(qs, many=True).data
@@ -480,26 +514,16 @@ def pt_comparison_all_json(request, api_ver, project_id):
         # and make it return huge amount of data
         max_display_length = 5000
 
-        def render_column(self, row, column):
-            # We want to render user as a custom column
-            if column == 'tests_total':
-                return '{0} {1}'.format(row.tests_total, row.tests_completed)
-            else:
-                return super(ComparisonJson, self).render_column(row, column)
-
         def filter_queryset(self, qs):
-            # use parameters passed in GET request to filter queryset
-
-            # simple example:
-            search = self.request.GET.get(u'search[value]', None)
-            if search:
-                qs = qs.filter(Q(title__icontains=search))
-
+            # filter by project & deleted only, search filtering is performed in-mem in prepare_results
             if int(project_id) != 0:
                 qs = qs.filter(Q(project_id=project_id))
 
-            qs = qs.filter(Q(deleted=False))
+            qs = qs.filter(Q(deleted=False)).prefetch_related("_jobs", "project")
+            return qs
 
+        def paging(self, qs):
+            # disable default paging, it has stupid default=10. For client-side DataTables we need to return all
             return qs
 
         def prepare_results(self, qs):

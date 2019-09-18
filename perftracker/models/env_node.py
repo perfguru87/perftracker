@@ -116,7 +116,7 @@ class EnvNodeModel(models.Model):
 
     parent     = models.ForeignKey('self', blank=True, null=True, on_delete=models.CASCADE, related_name='children')
     hw_chassis = models.ForeignKey(HwChassisModel, blank=True, null=True, on_delete=models.CASCADE, default=None)
-    job        = models.ForeignKey('perftracker.JobModel', help_text="Job", on_delete=models.CASCADE, related_name='env_node')
+    job        = models.ForeignKey('perftracker.JobModel', help_text="Job", on_delete=models.CASCADE, related_name='env_nodes')
 
     def __str__(self):
         ret = "%s %s %s" % (self.node_type, self.name, self.version)
@@ -129,7 +129,7 @@ class EnvNodeModel(models.Model):
         # performance optimization to avoid full nodes rewrite on each job results upload
         try:
             db_uuid2node = set([n.uuid for n in EnvNodeModel.objects.filter(job=job)])
-        except TestResultModel.DoesNotExist:
+        except EnvNodeModel.DoesNotExist:
             db_uuid2node = set()
 
         nodes_from_json = []
