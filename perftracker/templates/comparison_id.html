@@ -32,6 +32,8 @@
   <a onclick="hide_all_tables()">Hide tables</a>
 </span>
 
+<div id="main_content_container"></div>
+
 {% comment %}
 
 Principal decision is not to use REST api to render comparisons, because:
@@ -54,26 +56,6 @@ So we will use static HTML with couple tricks:
 
 {% endcomment %}
 
-{% for g_tag, g in cmp_view.groups.items %}
-  <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#data_{{ g.id }}'><a id='g_{{ g.id }}'>{{ g.group_obj.title }}</a></h3>
-  <div class='collapse in' id='data_{{ g.id }}'>
-  {% for s_tag, s in g.sections.items %}
-    <span><h4 style="display: inline">{{ s.title }}</h4>
-    <span style="float: right"><a href='#g_{{ g.id }}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
-    <a href='#s_{{ g.id }}_{{ s.id }}' id='s_{{ g.id }}_{{ s.id }}' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
-    <a onclick="toggle_table({{ g.id }}, {{ s.id }})" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
-    </span></span>
-    {% spaceless %}
-    {% if s.chart_type != PTCmpChartType.NOCHART %}
-      <div class='container collapse in pt_div_cmp'>
-        <div id="chart_{{ g.id }}_{{ s.id }}" class='pt_chart'>Loading chart...</div>
-      </div>
-    {% endif %}
-    <div class='container collapse in pt_div_cmp' id='results_{{ g.id }}_{{ s.id }}'></div>
-    {% endspaceless %}
-  {% endfor %}
-  </div>
-{% endfor %}
 
 <script>
 function hide_all_tables() {
@@ -104,9 +86,7 @@ function show_all_tables(show_big_tables=false) {
                 });
             },
             error: function (data, status, error) {
-                Object.keys(data).map(test_case_id => {
-                    pt_table_loading_error_handler(test_case_id, error);
-                });
+                Object.keys(data).map(test_case_id => pt_table_loading_error_handler(test_case_id, error));
                 request_failed = true;
             }
         });
@@ -164,8 +144,8 @@ function show_table(test_case_id, test_case_data) {
         return;
     }
 
-    $('#results_{0}'.ptFormat(test_case_id)).append(`
-        <table id={0} class="display dataTable" cellspacing="0" width="100%">
+    $('#results_' + test_case_id).append(`
+        <table id=${test_case_id} class="display dataTable" cellspacing="0" width="100%">
           <thead>
             <tr>
             <th colspan='4'></th>
@@ -189,7 +169,7 @@ function show_table(test_case_id, test_case_data) {
           </thead>
         </table>
         <br><br><br><br>
-    `.ptFormat(test_case_id));
+    `);
 
     pt_configure_table_async(
         '#{0}'.ptFormat(test_case_id),
@@ -229,11 +209,13 @@ function show_all_charts() {
         }
     });
 }
+
 None = undefined;
 
 var view_data = {
     {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
-        '{{ g.id }}_{{ s.id }}': { rendered: false,
+        '{{ g.id }}_{{ s.id }}': { rendered: false, s_tag: '{{ s_tag }}', g_tag: '{{ g_tag }}', s_id: '{{ s.id }}',
+            g_id: '{{ g.id }}', s_title: '{{ s.title }}', g_group_obj_title: '{{ g.group_obj.title }}',
             has_chart: {% if s.chart_type != PTCmpChartType.NOCHART %}true{% else %}false{% endif %},
         {% if s.chart_type != PTCmpChartType.NOCHART %}
             has_failures: {% if s.has_failures %}true{% else %}false{% endif %},
@@ -246,6 +228,30 @@ var view_data = {
 };
 
 $(document).ready(function() {
+
+    Object.keys(view_data).map(test_case_id => {
+        var test_case_data = view_data[test_case_id];
+        [g_id, s_id] = [test_case_data.g_id, test_case_data.s_id];
+
+        var chart_div = (test_case_data.has_chart) ?
+            `<div id="chart_${g_id}_${s_id}" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>` :
+            ``;
+
+        $('#main_content_container').append(`
+          <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#data_${g_id}'><a id='g_${g_id}'>${test_case_data.g_group_obj_title}</a></h3>
+          <div class='collapse in' id='data_${g_id}'>
+
+            <span><h4 style="display: inline">${test_case_data.s_title}</h4>
+            <span style="float: right"><a href='#g_${g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
+            <a href='#s_${g_id}_${s_id}' id='s_${g_id}_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
+            <a onclick="toggle_table(${g_id}, ${s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
+            </span></span>
+            {% spaceless %}` + chart_div + `
+            <div id='results_${g_id}_${s_id}' class='container collapse in pt_div_cmp' ></div>
+            {% endspaceless %}
+          </div>
+        `);
+    });
 
 {% for job in jobs %}
   pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
