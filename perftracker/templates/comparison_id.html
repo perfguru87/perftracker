@@ -233,17 +233,17 @@ $(document).ready(function() {
         var test_case_data = view_data[test_case_id];
         [g_id, s_id] = [test_case_data.g_id, test_case_data.s_id];
         $('#main_content_container').append(`
-          <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#data_` + g_id + `'><a id='g_` + g_id + `'>` + test_case_data.g_group_obj_title + `</a></h3>
-          <div class='collapse in' id='data_` + g_id + `'>
+          <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#data_${g_id}'><a id='g_${g_id}'>${test_case_data.g_group_obj_title}</a></h3>
+          <div class='collapse in' id='data_${g_id}'>
 
-            <span><h4 style="display: inline">` + test_case_data.s_title + `</h4>
-            <span style="float: right"><a href='#g_` + g_id + `' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
-            <a href='#s_` + g_id + `_` + s_id + `' id='s_` + g_id + `_` + s_id + `' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
-            <a onclick="toggle_table(` + g_id + `, ` + s_id + `)" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
+            <span><h4 style="display: inline">${test_case_data.s_title}</h4>
+            <span style="float: right"><a href='#g_${g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
+            <a href='#s_${g_id}_${s_id}' id='s_${g_id}_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
+            <a onclick="toggle_table(${g_id}, ${s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
             </span></span>
             {% spaceless %}
-            <div id="chart_` + g_id + `_` + s_id + `" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>
-            <div id='results_` + g_id + `_` + s_id + `' class='container collapse in pt_div_cmp' ></div>
+            <div id="chart_${g_id}_${s_id}" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>
+            <div id='results_${g_id}_${s_id}' class='container collapse in pt_div_cmp' ></div>
             {% endspaceless %}
           </div>
         `);
