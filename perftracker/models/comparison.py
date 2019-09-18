@@ -146,18 +146,16 @@ class ComparisonModel(models.Model):
         self.save()
 
     def pt_get_jobs(self):
-        # the method is required to order the jobs according to the order specified by  user
+        # the method is required to order the jobs according to the order specified by user
+        _jobs = self._jobs.all()
         if not self._job_ids:
-            return self._jobs.all()
+            return _jobs
 
-        jobs = []
-        for jid in self._job_ids.split(","):
-            try:
-                id = int(jid)
-            except ValueError:
-                return self._jobs.all()
-            jobs.append(JobModel.objects.get(id=id))
-        return jobs
+        try:
+            jids = list(map(int, self._job_ids.split(",")))
+            return sorted(_jobs, key=lambda job: jids.index(job.id))
+        except ValueError:
+            return _jobs
 
     def __str__(self):
         return "#%d, %s" % (self.id, self.title)
@@ -182,8 +180,9 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
         objs = []
         visited = set()
         for job in cmp.pt_get_jobs():
-            for obj in EnvNodeModel.objects.filter(job=job.id, parent=None).all():
-                if obj.name in visited:
+            #for obj in EnvNodeModel.objects.filter(job=job.id, parent=None).all():
+            for obj in job.env_nodes.all().only("job_id", "parent", "name"):
+                if obj.parent is not None or obj.name in visited:
                     continue
                 visited.add(obj.name)
                 objs.append(obj)
