@@ -232,6 +232,11 @@ $(document).ready(function() {
     Object.keys(view_data).map(test_case_id => {
         var test_case_data = view_data[test_case_id];
         [g_id, s_id] = [test_case_data.g_id, test_case_data.s_id];
+
+        var chart_div = (test_case_data.has_chart) ?
+            `<div id="chart_${g_id}_${s_id}" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>` :
+            ``;
+
         $('#main_content_container').append(`
           <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#data_${g_id}'><a id='g_${g_id}'>${test_case_data.g_group_obj_title}</a></h3>
           <div class='collapse in' id='data_${g_id}'>
@@ -241,8 +246,7 @@ $(document).ready(function() {
             <a href='#s_${g_id}_${s_id}' id='s_${g_id}_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
             <a onclick="toggle_table(${g_id}, ${s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
             </span></span>
-            {% spaceless %}
-            <div id="chart_${g_id}_${s_id}" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>
+            {% spaceless %}` + chart_div + `
             <div id='results_${g_id}_${s_id}' class='container collapse in pt_div_cmp' ></div>
             {% endspaceless %}
           </div>
