@@ -144,8 +144,8 @@ function show_table(test_case_id, test_case_data) {
         return;
     }
 
-    $('#results_{0}'.ptFormat(test_case_id)).append(`
-        <table id={0} class="display dataTable" cellspacing="0" width="100%">
+    $('#results_' + test_case_id).append(`
+        <table id=${test_case_id} class="display dataTable" cellspacing="0" width="100%">
           <thead>
             <tr>
             <th colspan='4'></th>
@@ -169,7 +169,7 @@ function show_table(test_case_id, test_case_data) {
           </thead>
         </table>
         <br><br><br><br>
-    `.ptFormat(test_case_id));
+    `);
 
     pt_configure_table_async(
         '#{0}'.ptFormat(test_case_id),
