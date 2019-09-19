@@ -80,7 +80,6 @@ function show_all_tables(show_big_tables=false) {
             async: false,
             timeout: 10000,
             success: function (response) {
-                response = $.parseJSON(response);
                 Object.keys(response).map(test_case_id => {
                     view_data[test_case_id] = Object.assign({}, view_data[test_case_id], response[test_case_id]);
                 });
@@ -113,7 +112,6 @@ function toggle_table(group_id, section_id) {
             type: 'GET',
             timeout: 10000,
             success: function (response) {
-                response = $.parseJSON(response);
                 view_data[test_case_id] = Object.assign({}, view_data[test_case_id], response[test_case_id]);
                 show_table(test_case_id, view_data[test_case_id]);
             },
@@ -150,7 +148,7 @@ function show_table(test_case_id, test_case_data) {
             <tr>
             <th colspan='4'></th>
             {% for job in jobs %}
-              <th class='pt_job' colspan='{{ forloop.counter0|add:"2" }}'>#{{ forloop.counter }} - {{ job.title }}</th>
+              <th class='pt_job' colspan='{{ forloop.counter0|add:"2" }}'>{{ job.calculated_legend|default:job.title }}</th>
             {% endfor %}
             </tr>
             <tr>

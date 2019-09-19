@@ -150,7 +150,7 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
                     'pageable': int(section.pageable),
                 }
 
-    return JsonResponse(json.dumps(ret), safe=False)
+    return JsonResponse(ret, safe=False)
 
 
 def pt_comparison_id_html(request, project_id, cmp_id):
@@ -160,10 +160,10 @@ def pt_comparison_id_html(request, project_id, cmp_id):
         raise Http404
 
     # register 'range' template tag
-
+    cmp_view = PTComparisonServSideView(obj)
     return pt_base_html(request, project_id, 'comparison_id.html',
-                      params={'jobs': obj.pt_get_jobs(),
-                              'cmp_view': PTComparisonServSideView(obj),
+                      params={'jobs': cmp_view.job_objs,
+                              'cmp_view': cmp_view,
                               'PTCmpChartType': PTCmpChartType,
                               'PTCmpTableType': PTCmpTableType
                               },
