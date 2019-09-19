@@ -398,9 +398,25 @@ class PTComparisonServSideSectView:
         self.id = id
         self.has_failures = False
 
-        self.legends = [j.title for j in jobs]
-        if len(set(self.legends)) != len(self.legends):
-            self.legends = ["%d - %s" % (j.id, j.title) for j in jobs]
+        titles = set(j.title for j in jobs)
+        titles_vers = set(",".join((j.title, j.product_name, j.product_ver)) for j in jobs)
+        add_title = len(titles) > 1
+        add_ver = not add_title and len(titles_vers) != 1
+
+        def job_legend(job):
+            if len(jobs) == 1:
+                s = job.title  # nothing to compare with, so no need for uniqueness
+            else:
+                s = "#%s: " % (jobs.index(job) + 1)
+                if add_title or (not add_title and not add_ver):
+                    s += job.title
+                if add_ver and (job.product_name or job.product_ver):
+                    tmpl = " [%s %s]" if add_title else " %s %s"
+                    s += tmpl % (job.product_name, job.product_ver)
+            job.calculated_legend = s  # requested from template
+            return s
+
+        self.legends = [job_legend(j) for j in jobs]
         self.series = [PTComparisonServSideSeriesView(self, l) for l in self.legends]
 
     def pt_add_test(self, job, job_n, test_obj):
