@@ -622,7 +622,7 @@ function pt_configure_chart_async(element, chart_type, has_failures, x_categorie
     var fn = function() {
         pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series);
     }
-    setTimeout(fn, 0)
+    setTimeout(fn, 10)
 }
 
 var tableConfig = {
@@ -730,13 +730,13 @@ function pt_configure_table(element, pageable, testlink, data) {
                 type: 'GET',
                 timeout: 2000,
                 success: function(data, status) {
-                    row.child(pt_test_details_draw(data, null)).show();
+                    row.child(pt_cmp_test_details_draw(data, null)).show();
                     tr.next('tr').children().toggleClass('pt_row_details');
                     tr.addClass('shown');
                     tr.next('tr').children().find('.pt_slider').slideDown();
                 },
                 error: function(data, status, error) {
-                    row.child(pt_test_details_draw(row.data(), error)).show();
+                    row.child(pt_cmp_test_details_draw(row.data(), error)).show();
                     tr.next('tr').children().toggleClass('pt_row_details');
                     tr.addClass('shown');
                     tr.next('tr').children().find('.pt_slider').slideDown();
@@ -750,7 +750,7 @@ function pt_configure_table_async(element, pageable, testlink, data) {
     var fn = function() {
         pt_configure_table(element, pageable, testlink, data);
     }
-    setTimeout(fn, 0)
+    setTimeout(fn, 10)
 }
 
 /*
@@ -808,14 +808,83 @@ function update_nav_bar(auth_response) {
     $('#username').text(auth_response.username);
 }
 
-function pt_test_details_draw_row(title, ar, func) {
+function test_errors2str(data) {
+    var rv = "";
+    if (data.errors) {
+        rv = String(data.errors);
+    }
+    if (data.status === "FAILED") {
+        rv += rv ? ", ": "";
+        rv += data.status;
+    }
+    return rv;
+}
+
+function pt_job_test_details_draw(d, err_msg)
+{
+    var s = '';
+    var env_node = d.env_node;
+    var vms = d.vms;
+    var clients = d.clients;
+
+    console.log(d);
+
+    s += "<div class='pt_slider' id='test_details_slider_{0}'>".ptFormat(d.id);
+
+    s += "<div class='row'>";
+
+    s += "<div class='col-md-4'>";
+    s += "<h4>Test details</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th>Value</th></thead></tbody>";
+    s += "<tr><td>Raw scores</td><td>{0} {1}</td></tr>".ptFormat(d.scores, d.metrics);
+    s += "<tr><td>&plusmn; %</td><td>{0}</td></tr>".ptFormat(d.avg_plusmin);
+    var errors = test_errors2str(d);
+    var estyle = errors ? " class='pt_test_errors'" : "";
+    s += "<tr><td>Errors</td><td{0}>{1}</td></tr>".ptFormat(estyle, errors);
+    s += "<tr><td>Raw deviations</td><td>{0}</td></tr>".ptFormat(d.deviations);
+    s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : '');
+    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true));
+    s += "<tr><td>Duration (s)</td><td>{0}</td></tr>".ptFormat(d.duration);
+    s += "</tbody></table>";
+    s += "</div>";
+
+    s += "<div class='col-md-8'>";
+    s += "<h4>Test info</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th>Value</th></thead><tbody>";
+    s += "<tr><td>Score</td><td>{0} {1} ({2})</td></tr>".ptFormat(d.avg_score, d.metrics, d.less_better ? 'smaller is better' : 'bigger is better');
+    s += "<tr><td>Cmdline</td><td><span class='pt_ellipsis'>{0}</td></tr>".ptFormat(d.cmdline);
+    s += "<tr><td>Description</td><td>{0}</td></tr>".ptFormat(d.description);
+
+    s += "<tr><td>Group</td><td>{0}</td></tr>".ptFormat(d.group);
+    s += "<tr><td>Category</td><td>{0}</td></tr>".ptFormat(d.category);
+
+    s += "<tr><td>Attributes</td><td>{0}</td></tr>".ptFormat(d.attribs ? pt_draw_attribs(d.attribs) : "");
+    s += "<tr><td>Links</td><td>{0}</td></tr>".ptFormat(d.links ? pt_draw_links(d.links) : "");
+    s += "</tbody></table>";
+    s += "</div>";
+
+
+    s += "</div>"; /* row */
+
+    s += "</div>"; /* pt_slider */
+
+    return s;
+}
+
+function pt_cmp_test_details_draw_row(title, ar, func) {
     var s = '<tr><td>' + title + '</td>';
-    for (n = 0; n < ar.length; n++)
-        s += '<td>' + func(ar[n]) + '</td>';
+    for (n = 0; n < ar.length; n++) {
+        var c = func(ar[n]);
+        if (!c.startsWith("<td"))
+            c = '<td>' + c + '</td>';
+        s += c;
+    }
     return s + '</tr>';
 }
 
-function pt_test_details_draw(ar, err_msg) {
+function pt_cmp_test_details_draw(ar, err_msg) {
     var s = '';
     var d = ar[0];
     var env_node = d.env_node;
@@ -830,20 +899,24 @@ function pt_test_details_draw(ar, err_msg) {
     s += "<h4>Test details</h4>";
     s += "<table class='pt_obj_details'>";
     s += "<thead><th>Parameter</th><th colspan='" + ar.length + "'>Values</th></thead></tbody>";
-    s += pt_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
+    s += pt_cmp_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
     s += "<tr><td>Metrics</td><td colspan='" + ar.length + "'>" + "{0} ({1})".ptFormat(
            d.metrics, d.less_better ? 'smaller is better' : 'bigger is better') + "</td></tr>";
     s += "<tr><td>Group</td><td colspan='" + ar.length + "'>" + "{0}</td></tr>".ptFormat(d.group);
     s += "<tr><td>Category</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.category);
-    s += pt_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
-    s += pt_test_details_draw_row('Descriptions', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description);});
-    s += pt_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
-    s += pt_test_details_draw_row('Errors', ar, function(d) { return "{0}".ptFormat(d.errors); });
-    s += pt_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
-    s += pt_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
-    s += pt_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin), pt_date2str(d.end)); });
-    s += pt_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
-    s += pt_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
+    s += pt_cmp_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
+    s += pt_cmp_test_details_draw_row('Descriptions', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description);});
+    s += pt_cmp_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
+    s += pt_cmp_test_details_draw_row('Errors', ar, function(d) {
+        var errors = test_errors2str(d);
+        var inner = errors ? "<td class='pt_test_errors'>{0}</td>" : "{0}";
+        return inner.ptFormat(d.errors);
+    });
+    s += pt_cmp_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
+    s += pt_cmp_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
+    s += pt_cmp_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true)); });
+    s += pt_cmp_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
+    s += pt_cmp_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
     s += "</tbody></table>";
     s += "</div>";
 
