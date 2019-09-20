@@ -488,10 +488,8 @@ function pt_gen_comparison_title(job_ids, job_titles)
     return title;
 }
 
-$(document).ready(function() {
-    $('.pt_collapse.expanded').append('<span class="glyphicon glyphicon-triangle-bottom"></span>');
-    $('.pt_collapse.collapsed').append('<span class="glyphicon glyphicon-triangle-right"></span>');
-    $('.pt_collapse').on('click', function() {
+function pt_handle_collapsing(selector) {
+    $(selector).on('click', function() {
         var x = $(this).hasClass('collapsed');
         if (x) {
             $(this).find(".glyphicon-triangle-right").removeClass("glyphicon-triangle-right").addClass("glyphicon-triangle-bottom");
@@ -499,6 +497,12 @@ $(document).ready(function() {
             $(this).find(".glyphicon-triangle-bottom").removeClass("glyphicon-triangle-bottom").addClass("glyphicon-triangle-right");
         }
     });
+}
+
+$(document).ready(function() {
+    $('.pt_collapse.expanded').append('<span class="glyphicon glyphicon-triangle-bottom"></span>');
+    $('.pt_collapse.collapsed').append('<span class="glyphicon glyphicon-triangle-right"></span>');
+    pt_handle_collapsing('.pt_collapse');
 });
 
 function pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series) {
@@ -625,7 +629,40 @@ function pt_configure_chart_async(element, chart_type, has_failures, x_categorie
     setTimeout(fn, 10)
 }
 
-var tableConfig = {
+function pt_cmp_table_html(element, titles) {
+    var s =
+"<table id='" + element + "' class='display dataTable' cellspacing='0' width='100%'>\
+   <thead>\
+     <tr>\
+       <th colspan='4'></th>";
+       titles.forEach(function(title, index) {
+           s += "<th class='pt_job' colspan='{0}'>{1}</th>".ptFormat(index + 2, title);
+       });
+
+       s +=
+    "</tr>\
+     <tr>\
+       <th class='colExpander'></th>\
+       <th class='colId'></th>\
+       <th class='colSeqNum'>#</th>\
+       <th class='colTag pt_left'>Tag</th>";
+       titles.forEach(function(title, index) {
+           s +=
+              "<th class='colScore pt_lborder'>Score</th>" +
+              "<th class='colDeviation pt_right'>&plusmn;%</th>";
+           for(var i = 1; i < index; i++) {
+               s += "<th class='colDiff pt_lborder pt_right'>% vs #{0}</th>".ptFormat(i);
+           }
+       });
+       s +=
+     "</tr>\
+   </thead>\
+</table><br><br>";
+
+    return s;
+}
+
+var pt_cmp_table_config = {
     lengthMenu: [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]],
 
     columnDefs: [
@@ -692,11 +729,11 @@ var tableConfig = {
 
 function pt_configure_table(element, pageable, testlink, data) {
     var tableOpts = {
-        "lengthMenu": tableConfig.lengthMenu,
+        "lengthMenu": pt_cmp_table_config.lengthMenu,
         "bFilter": false,
         "data": data,
         "order": [[ 2, "asc" ]],
-        "columnDefs": tableConfig.columnDefs
+        "columnDefs": pt_cmp_table_config.columnDefs
     };
 
     if (!pageable){
