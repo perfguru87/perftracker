@@ -58,6 +58,9 @@ So we will use static HTML with couple tricks:
 
 
 <script>
+
+var api_root = "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}";
+
 function hide_all_tables() {
     Object.keys(view_data).map(test_case_id => hide_table(test_case_id));
 }
@@ -65,7 +68,7 @@ function hide_all_tables() {
 function show_all_tables(show_big_tables=false) {
     var tables_are_rendered = true;
     Object.values(view_data).map(test_case_data => {
-        if (test_case_data.rendered == false) {
+        if (!test_case_data.rendered) {
             tables_are_rendered = false;
         }
     });
@@ -74,7 +77,7 @@ function show_all_tables(show_big_tables=false) {
 
     if (!tables_are_rendered) {
         $.ajax({
-            url: "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/tables",
+            url: api_root + "/tables",
             data: null,
             type: 'GET',
             async: false,
@@ -105,9 +108,10 @@ function show_all_tables(show_big_tables=false) {
 function toggle_table(group_id, section_id) {
     const test_case_id = '{0}_{1}'.ptFormat(group_id, section_id);
 
-    if (!$("#{0}".ptFormat(test_case_id)).length) {
+    var tab = $("#table_" + test_case_id);
+    if (!tab.length) {
         $.ajax({
-            url: "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/{0}/section/{1}".ptFormat(group_id, section_id),
+            url: api_root + "/group/{0}/section/{1}".ptFormat(group_id, section_id),
             data: null,
             type: 'GET',
             timeout: 10000,
@@ -120,13 +124,14 @@ function toggle_table(group_id, section_id) {
             }
         });
     } else {
-        $("#{0}".ptFormat(test_case_id)).is(":visible") ? hide_table(test_case_id) : show_table(test_case_id, None);
+        tab.is(":visible") ? hide_table(test_case_id) : show_table(test_case_id, None);
     }
 }
 
 function hide_table(test_case_id) {
-    if ($("#{0}".ptFormat(test_case_id)).is(":visible")) {
-        $('#results_{0}'.ptFormat(test_case_id)).children().hide();
+    var tab = $("#table_" + test_case_id);
+    if (tab.is(":visible")) {
+        $("#results_" + test_case_id).children().hide();
     }
 }
 
@@ -135,74 +140,39 @@ function show_table(test_case_id, test_case_data) {
         $("#table_{0}_loading_error".ptFormat(test_case_id)).remove();
     }
 
-    if ($("#{0}".ptFormat(test_case_id)).length) {
-        if ($("#{0}".ptFormat(test_case_id)).is(":hidden")) {
-            $('#results_{0}'.ptFormat(test_case_id)).children().show();
+    var tab_el = "#table_" + test_case_id;
+    var tab = $(tab_el);
+    if (tab.length) {
+        if (tab.is(":hidden")) {
+            $("#results_" + test_case_id).children().show();
         }
         return;
     }
 
-    $('#results_' + test_case_id).append(`
-        <table id=${test_case_id} class="display dataTable" cellspacing="0" width="100%">
-          <thead>
-            <tr>
-            <th colspan='4'></th>
-            {% for job in jobs %}
-              <th class='pt_job' colspan='{{ forloop.counter0|add:"2" }}'>{{ job.calculated_legend|default:job.title }}</th>
-            {% endfor %}
-            </tr>
-            <tr>
-            <th class='colExpander'></th>
-            <th class='colId'></th>
-            <th class='colSeqNum'>#</th>
-            <th class='colTag pt_left'>Tag</th>
-            {% for job in jobs %}
-              <th class='colScore pt_lborder'>Score</th>
-              <th class='colDeviation pt_right'>&plusmn;%</th>
-              {% range 1:forloop.counter as i %}
-                <th class='colDiff pt_lborder pt_right'>% vs #{{ i }}</th>
-              {% endrange %}
-            {% endfor %}
-            </tr>
-          </thead>
-        </table>
-        <br><br><br><br>
-    `);
-
-    pt_configure_table_async(
-        '#{0}'.ptFormat(test_case_id),
-        test_case_data.pageable,
-        "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/0/test/",
-        test_case_data.table_data,
+    $("#results_" + test_case_id).append(
+        pt_cmp_table_html(tab_el.substr(1), [{% for job in jobs %}"{{ job.calculated_legend|default:job.title }}", {% endfor %}])
     );
+
+    pt_configure_table_async(tab_el,
+        test_case_data.pageable, api_root + "/group/0/test/", test_case_data.table_data);
 
     test_case_data.rendered = true;
 }
 
-function pt_tests_repopulate(table, group_id)
-{
-    if (typeof group_id == 'undefined')
-        return;
-
-    var link = "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}/group/{0}/test/".ptFormat(group_id);
-
-    table.ajax.url(link).load(null, true);
-}
-
 function show_all_charts() {
     Object.keys(view_data).map(test_case_id => {
-        var test_case_data = view_data[test_case_id];
-        if (test_case_data.has_chart) {
+        var d = view_data[test_case_id];
+        if (d.has_chart) {
             pt_configure_chart_async(
                 'chart_' + test_case_id,
-                test_case_data.chart_type,
-                test_case_data.has_failures,
-                test_case_data.x_categories,
-                test_case_data.x_name,
-                test_case_data.x_type,
-                test_case_data.x_rotate,
-                test_case_data.y_name,
-                test_case_data.series,
+                d.chart_type,
+                d.has_failures,
+                d.x_categories,
+                d.x_name,
+                d.x_type,
+                d.x_rotate,
+                d.y_name,
+                d.series,
             )
         }
     });
@@ -210,49 +180,60 @@ function show_all_charts() {
 
 None = undefined;
 
+var group_data = {
+{% for g_tag, g in cmp_view.groups.items %}
+   {{ g.id }} : {
+        title: '{{ g.group_obj.title|safe }}',
+        rendered: false
+       },
+{% endfor %}
+};
+
 var view_data = {
     {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
-        '{{ g.id }}_{{ s.id }}': { rendered: false, s_tag: '{{ s_tag }}', g_tag: '{{ g_tag }}', s_id: '{{ s.id }}',
-            g_id: '{{ g.id }}', s_title: '{{ s.title }}', g_group_obj_title: '{{ g.group_obj.title }}',
+        '{{ g.id }}_{{ s.id }}': { rendered: false, s_id: '{{ s.id }}', g_id: '{{ g.id }}', 
+            s_title: '{{ s.title }}',
             has_chart: {% if s.chart_type != PTCmpChartType.NOCHART %}true{% else %}false{% endif %},
         {% if s.chart_type != PTCmpChartType.NOCHART %}
             has_failures: {% if s.has_failures %}true{% else %}false{% endif %},
             chart_type: {{ s.chart_type }}, x_categories: {{ s.x_axis_categories|safe }},
-            x_name: '{{ s.x_axis_name }}', x_type: '{{ s.x_axis_type }}',
-            x_rotate: {{ s.x_axis_rotate }}, y_name: '{{ s.y_axis_name }}',
-            series: [{% for serie in s.series %}{name: '{{ serie.legend|safe }}',
-                    data: {{ serie.data|safe }}{% if s.chart_trend_line %},trend: true{% endif %}},{% endfor %}],
-        {% endif %}},{% endfor %} {% endfor %}
+            x_name: '{{ s.x_axis_name }}', x_type: '{{ s.x_axis_type }}', x_rotate: {{ s.x_axis_rotate }},
+            y_name: '{{ s.y_axis_name }}',
+            series: [{% for serie in s.series %}{name: '{{ serie.legend|safe }}', data: {{ serie.data|safe }}{% if s.chart_trend_line %},trend: true{% endif %}},{% endfor %}],
+        {% endif %}},{% endfor %}{% endfor %}
 };
 
 $(document).ready(function() {
 
+    var main = $('#main_content_container');
+
+    Object.keys(group_data).map(g_id => {
+        var g = group_data[g_id];
+        var group = `<h3 class='pt_collapse expanded' id='gh_${g_id}' data-toggle='collapse' data-target='#data_${g_id}' aria-expanded='true'>` +
+            `<a id='g_${g_id}'>${g.title}</a><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
+            `<div class='collapse in' id='data_${g_id}'>`;
+        main.append(group);
+        pt_handle_collapsing(`#gh_${g_id}`);
+    });
+
     Object.keys(view_data).map(test_case_id => {
-        var test_case_data = view_data[test_case_id];
-        [g_id, s_id] = [test_case_data.g_id, test_case_data.s_id];
+        var tc = view_data[test_case_id];
+        var tc_id = `${tc.g_id}_${tc.s_id}`;
 
-        var chart_div = (test_case_data.has_chart) ?
-            `<div id="chart_${g_id}_${s_id}" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>` :
-            ``;
+        var chart_div = (tc.has_chart) ?
+            `<div id="chart_${tc_id}" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>` : "";
 
-        $('#main_content_container').append(`
-          <h3 class='pt_collapse expanded' data-toggle='collapse' data-target='#data_${g_id}'><a id='g_${g_id}'>${test_case_data.g_group_obj_title}</a></h3>
-          <div class='collapse in' id='data_${g_id}'>
-
-            <span><h4 style="display: inline">${test_case_data.s_title}</h4>
-            <span style="float: right"><a href='#g_${g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
-            <a href='#s_${g_id}_${s_id}' id='s_${g_id}_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
-            <a onclick="toggle_table(${g_id}, ${s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
-            </span></span>
-            {% spaceless %}` + chart_div + `
-            <div id='results_${g_id}_${s_id}' class='container collapse in pt_div_cmp' ></div>
-            {% endspaceless %}
-          </div>
-        `);
+        $(`#data_${tc.g_id}`).append(
+           `<span><h4 style="display: inline">${tc.s_title}</h4>
+            <span style="float: right"><a href='#g_${tc.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
+            <a href='#tc_${tc_id}' id='tc_${tc_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"></span></a>
+            <a onclick="toggle_table(${tc.g_id}, ${tc.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"></span></a>
+            </span></span>${chart_div}<div id='results_${tc_id}' class='container collapse in pt_div_cmp' ></div>`
+        );
     });
 
 {% for job in jobs %}
-  pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
+   pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
 {% endfor %}
 
 {% if obj.charts_type != PTCmpChartType.NOCHART %} show_all_charts(); {% endif %}
