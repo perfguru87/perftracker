@@ -972,15 +972,3 @@ function pt_cmp_test_details_draw(ar, err_msg) {
     return s;
 }
 
-function pt_table_loading_error_handler(test_case_id, error) {
-    if ($("#table_{0}_loading_error".ptFormat(test_case_id)).length) {
-        return;
-    }
-
-    var s = "";
-    s += "<div id=error_{0} class='alert alert-danger alert-dismissable'>".ptFormat(test_case_id);
-    s += "<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&#215;</button>";
-    s += "Table data loading error: " + error;
-    s += "</div>";
-    $('#results_{0}'.ptFormat(test_case_id)).append(s);
-}

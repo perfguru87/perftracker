@@ -136,16 +136,17 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
     except ComparisonModel.DoesNotExist:
         raise Http404
 
-    ret = {}
-    cmp_view = PTComparisonServSideView(obj)
+    section_ids = [] if group_id is None and section_id is None else [int(section_id)]
 
-    requested_tables = [] if group_id is None and section_id is None else [(int(group_id), int(section_id))]
+    ret = {}
+    obj.tables_type = PTCmpTableType.SHOW   # override optional table hiding
+    cmp_view = PTComparisonServSideView(obj, section_ids)
 
     for group in cmp_view.groups.values():
         for section in group.sections.values():
-            if not requested_tables or (group.id, section.id) in requested_tables:
-                ret[f'{group.id}_{section.id}'] = {
-                    'table_data': [t.table_data for t in section.tests.values()],
+            if not section_ids or section.id in section_ids:
+                ret[str(section.id)] = {
+                    'table_data': section.table_data,
                     'table_type': section.table_type,
                     'pageable': int(section.pageable),
                 }
