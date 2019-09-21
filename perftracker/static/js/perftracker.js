@@ -635,7 +635,7 @@ function pt_cmp_table_html(element, titles) {
      <tr>\
        <th colspan='4'></th>";
        titles.forEach(function(title, index) {
-           s += "<th class='pt_job' colspan='{0}'>{1}</th>".ptFormat(index + 2, title);
+           s += "<th class='pt_job' colspan='{0}'>{1}</th>".ptFormat(index + 3, title);
        });
 
        s +=
@@ -650,7 +650,7 @@ function pt_cmp_table_html(element, titles) {
               "<th class='colScore pt_lborder'>Score</th>" +
               "<th class='colDeviation pt_right'>&plusmn;%</th>" +
               "<th class='colHidden'/>";
-           for(var i = 1; i < index; i++) {
+           for(var i = 1; i <= index; i++) {
                s += "<th class='colDiff pt_lborder pt_right'>% vs #{0}</th>".ptFormat(i);
            }
        });
