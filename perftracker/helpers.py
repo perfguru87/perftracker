@@ -128,7 +128,6 @@ def _pt_cut_common_sfx(lines, separators=None):
 
 def pt_cut_common_sfx(lines, separators=None):
     common_sfx, prefixes = _pt_cut_common_sfx(lines, separators)
-    print(common_sfx, prefixes)
     numeric = {}
     for orig_idx, p in enumerate(prefixes):
         try:
