@@ -309,6 +309,10 @@ table.pt_regr_summary td {
   overflow-x: scroll;
 }
 
+.pt_smaller {
+  font-size: 70%
+}
+
 /* Hw Nodes Tasks */
 .pt_timeline {
   margin-bottom: 30px;

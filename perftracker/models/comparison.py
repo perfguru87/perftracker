@@ -257,6 +257,13 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 # Comparison viewer
 ######################################################################
 
+def test_errors2str(t):
+    s = "%d errors" % t.errors if t.errors else ""
+    if t.status == 'FAILED':
+        if s:
+            s += ", "
+        s += t.status
+    return s
 
 class PTComparisonServSideTestView:
     def __init__(self, jobs):
@@ -282,9 +289,11 @@ class PTComparisonServSideTestView:
             if t[n]:
                 ret.append(pt_float2human(t[n].avg_score))
                 ret.append(int(round(100 * t[n].avg_dev / t[n].avg_score, 0)) if t[n].avg_score else 0)
+                ret.append(test_errors2str(t[n]))
             else:
                 ret.append("-")
                 ret.append("-")
+                ret.append("")
 
             for prev in range(0, n):
                 if t[prev] is None or t[n] is None:
@@ -347,7 +356,7 @@ class PTComparisonServSideSeriesView:
             i = self.sect.test_cat_to_axis_cat_seqnum[t.category]
             maxi = max(maxi, i)
             self._scores[i] = pt_float2human(t.avg_score)
-            self._errors[i] = t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
+            self._errors[i] = test_errors2str(t)   # t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
         self._scores = self._scores[:maxi + 1]
         self._errors = self._errors[:maxi + 1]
 

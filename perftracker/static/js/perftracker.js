@@ -520,13 +520,12 @@ function pt_configure_chart(element, chart_type, has_failures, x_categories, x_n
                 var s = params.seriesName + "<br>";
                 if (is_xy) {
                     if (params.data.errors)
-                        s += params.data.value[0] + " : " + params.data.value[1] + "<br>"
-                            + params.data.errors + " iteration(s) failed";
+                        s += params.data.value[0] + " : " + params.data.value[1] + "<br>" + params.data.errors;
                     else
                         s += params.data[0] + " : " + params.data[1];
                 } else {
                     if (params.data.errors)
-                        s += params.data.value + "<br>" + params.data.errors + " iteration(s) failed";
+                        s += params.data.value + "<br>" + params.data.errors;
                     else
                         s += params.data;
                 }
@@ -649,7 +648,8 @@ function pt_cmp_table_html(element, titles) {
        titles.forEach(function(title, index) {
            s +=
               "<th class='colScore pt_lborder'>Score</th>" +
-              "<th class='colDeviation pt_right'>&plusmn;%</th>";
+              "<th class='colDeviation pt_right'>&plusmn;%</th>" +
+              "<th class='colHidden'/>";
            for(var i = 1; i < index; i++) {
                s += "<th class='colDiff pt_lborder pt_right'>% vs #{0}</th>".ptFormat(i);
            }
@@ -676,7 +676,7 @@ var pt_cmp_table_config = {
             }
         },
         {
-            "targets": ["colId", "colCategory"],
+            "targets": ["colId", "colCategory", "colHidden"],
             "type": "string",
             "visible": false,
         },
@@ -689,6 +689,14 @@ var pt_cmp_table_config = {
             "targets": "colScore",
             "type": "string",
             "className": 'pt_lborder',
+            "createdCell": function (td, cellData, rowData, rowIndex, colIndex) {
+                var errors = rowData[colIndex + 2];
+                if (errors) {
+                    $(td).addClass("pt_test_errors");
+                    errors = "<br><span class='pt_smaller'>" + errors + "</span>";
+                }
+                $(td).html(cellData + errors);
+            }
         },
         {
             "targets": "colDeviation",
@@ -848,7 +856,7 @@ function update_nav_bar(auth_response) {
 function test_errors2str(data) {
     var rv = "";
     if (data.errors) {
-        rv = String(data.errors);
+        rv = String(data.errors) + " errors";
     }
     if (data.status === "FAILED") {
         rv += rv ? ", ": "";
@@ -947,7 +955,7 @@ function pt_cmp_test_details_draw(ar, err_msg) {
     s += pt_cmp_test_details_draw_row('Errors', ar, function(d) {
         var errors = test_errors2str(d);
         var inner = errors ? "<td class='pt_test_errors'>{0}</td>" : "{0}";
-        return inner.ptFormat(d.errors);
+        return inner.ptFormat(errors);
     });
     s += pt_cmp_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
     s += pt_cmp_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
