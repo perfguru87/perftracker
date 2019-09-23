@@ -145,11 +145,15 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
     for group in cmp_view.groups.values():
         for section in group.sections.values():
             if not section_ids or section.id in section_ids:
-                ret[str(section.id)] = {
+                d = {
                     'table_data': section.table_data,
                     'table_type': section.table_type,
                     'pageable': int(section.pageable),
+                    'add_title': int(section.same_tag),
                 }
+                if section.same_tag:
+                    d['title'] = list(section.tests_tags)[0]
+                ret[str(section.id)] = d
 
     return JsonResponse(ret, safe=False)
 

@@ -65,39 +65,32 @@ const NOCHART = {{ PTCmpChartType.NOCHART }};
 const NOTABLE = {{ PTCmpTableType.HIDE }};
 
 function hide_all_tables() {
-    Object.keys(sect_data).map(s_id => hide_table(s_id));
+    Object.keys(sect_data).map(hide_table);
 }
 
 function show_all_tables() {
-    var request_failed = false;
-    if (Object.values(sect_data).filter(s => !s.table_rendered).length) {
+    if (Object.values(sect_data).filter(s => !s.table_data).length) {
         $.ajax({
             url: api_root + "/tables",
             data: null,
             type: 'GET',
-            async: false,
             timeout: 10000,
             success: function (response) {
                 Object.keys(response).forEach(s_id => {
                     sect_data[s_id] = Object.assign({}, sect_data[s_id], response[s_id]);
+                    show_table(s_id);
                 });
             },
             error: function (data, status, error) {
                 Object.keys(data).forEach(s_id => table_loading_error_handler(s_id, error));
-                request_failed = true;
             }
         });
     }
-
-    if (request_failed) {
-        return;
-    }
-
-    Object.keys(sect_data).forEach(s_id => show_table(s_id));
 }
 
 function toggle_table(s_id) {
-    if (!sect_data[s_id].table_rendered) {
+    var s = sect_data[s_id];
+    if (!s.table_data) {
         $.ajax({
             url: api_root + "/group/{0}/section/{1}".ptFormat(0, s_id),
             data: null,
@@ -112,7 +105,7 @@ function toggle_table(s_id) {
             }
         });
     } else {
-        $("#table_" + s_id).is(":visible") ? hide_table(s_id) : show_table(s_id);
+        s.table_hidden ? show_table(s_id) : hide_table(s_id);
     }
 }
 
@@ -130,46 +123,50 @@ function table_loading_error_handler(s_id, error) {
 }
 
 function hide_table(s_id) {
-    if ($("#table_" + s_id).is(":visible")) {
+    var s = sect_data[s_id];
+    if (!s.table_hidden) {
         $("#results_" + s_id).children().hide();
+        s.table_hidden = true;
     }
 }
 
 function show_table(s_id) {
     $("#table_error_" + s_id).remove();
+    var s = sect_data[s_id];
 
-    var tab_el = "#table_" + s_id;
-    var tab = $(tab_el);
-    if (tab.length) {
-        if (tab.is(":hidden")) {
-            $("#results_" + s_id).children().show();
-        }
-        return;
+    var res =  $("#results_" + s_id);
+    if (s.table_rendered) {
+        res.children().show();
     }
-
-    $("#results_" + s_id).append(pt_cmp_table_html(tab_el.substr(1), all_jobs));
-
-    var sdata = sect_data[s_id];
-    pt_configure_table_async(tab_el, sdata.pageable, api_root + "/group/0/test/", sdata.table_data);
-
-    sect_data[s_id].table_rendered = true;
+    else if (isInViewport(res[0])) {
+        pt_cmp_configure_table(res, "table_" + s_id, all_jobs,
+                s.pageable, s.table_data, s.add_title ? s.title : "",
+                api_root + "/group/0/test/");
+        s.table_rendered = true;
+    }
+    s.table_hidden = false;
 }
 
-function show_charts() {
-    Object.keys(sect_data).map(s_id => {
-        var d = sect_data[s_id];
-        if (d.chart_type !== NOCHART) {
-            pt_configure_chart_async(
-                'chart_' + s_id,
-                d.chart_type,
-                d.has_failures,
-                d.x_categories,
-                d.x_name,
-                d.x_type,
-                d.x_rotate,
-                d.y_name,
-                d.series,
-            )
+function show_chart(s_id) {
+    var s = sect_data[s_id];
+    pt_configure_chart('chart_' + s_id, s.chart_type, s.has_failures,
+            s.x_categories, s.x_name, s.x_type, s.x_rotate,
+            s.y_name, s.series);
+    s.chart_rendered = true;
+}
+
+function delayed_render() {
+    console.log("render start");
+    Object.keys(sect_data).forEach(s_id => {
+        var s = sect_data[s_id];
+        if (group_data[s.g_id].collapsed)
+            return; // we have to avoid rendering collapsed charts - the rendering is wrong
+        if (!s.chart_rendered && s.chart_type !== NOCHART && isInViewport($("#chart_" + s_id)[0])) {
+            show_chart(s_id);
+            console.log(s_id);
+        }
+        if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && isInViewport($("#results_" + s_id)[0])) {
+            show_table(s_id);
         }
     });
 }
@@ -179,8 +176,7 @@ None = undefined;
 var group_data = {
 {% for g_tag, g in cmp_view.groups.items %}
  '{{ g.id }}' : {
-      title: '{{ g.group_obj.title|safe }}',
-      rendered: false
+      title: '{{ g.group_obj.title|safe }}'
      },
 {% endfor %}
 };
@@ -188,13 +184,13 @@ var group_data = {
 var sect_data = {
 {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
 '{{ s.id }}': { g_id: '{{ g.id }}', s_id: '{{ s.id }}',
-    s_title: '{{ s.title }}', has_failures: {% if s.has_failures %}true{% else %}false{% endif %},
+    title: '{{ s.title }}', has_failures: {% if s.has_failures %}true{% else %}false{% endif %},
     chart_type: {{ s.chart_type }}, {% if s.chart_type != PTCmpChartType.NOCHART %}
     x_categories: {{ s.x_axis_categories|safe }},
     x_name: '{{ s.x_axis_name }}', x_type: '{{ s.x_axis_type }}', x_rotate: {{ s.x_axis_rotate }}, y_name: '{{ s.y_axis_name }}',
     series: [{% for serie in s.series %}{name: '{{ serie.legend|safe }}', data: {{ serie.data|safe }}{% if s.chart_trend_line %},trend: true{% endif %}},{% endfor %}],
 {% endif %}    table_type: {{ s.table_type }}, {% if s.table_type == PTCmpTableType.SHOW %}
-    pageable: {{ s.pageable|lower }}, table_data: {{ s.table_data|safe }}, {% endif %}
+    pageable: {{ s.pageable|lower }}, add_title: {{ s.same_tag|lower }}, table_data: {{ s.table_data|safe }}, {% endif %}
      },{% endfor %}{% endfor %}
 };
 
@@ -204,36 +200,41 @@ $(document).ready(function() {
 
     Object.keys(group_data).map(g_id => {
         var g = group_data[g_id];
+        g.collapsed = false;
         var group = `<h3 class='pt_collapse expanded' id='gh_${g_id}' data-toggle='collapse' data-target='#data_${g_id}' aria-expanded='true'>` +
             `<a id='g_${g_id}'>${g.title}</a><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
             `<div class='collapse in' id='data_${g_id}'>`;
         main.append(group);
-        pt_handle_collapsing(`#gh_${g_id}`);
+        pt_handle_collapsing("#gh_" + g_id, function (el, collapsed) {
+            g.collapsed = collapsed;  // we have to avoid rendering collapsed charts - the rendering is wrong
+        });
     });
 
     Object.keys(sect_data).map(s_id => {
         var s = sect_data[s_id];
         s.chart_rendered = false;
         s.table_rendered = false;
+        s.table_hidden = false;
 
         var chart_div = (s.chart_type !== NOCHART) ?
-            `<div id="chart_${s_id}" class='container collapse in pt_div_cmp pt_chart'>Loading chart...</div>` : "";
+            `<div id="chart_${s_id}" class='pt_chart'>Loading chart...</div>` : "";
 
         $(`#data_${s.g_id}`).append(
-           `<span><h4 style="display: inline">${s.s_title}</h4>
+           `<span><h4 style="display: inline">${s.title}</h4>
             <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
-            <a href='#tc_${s_id}' id='tc_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
+            <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
-            </span></span>${chart_div}<div id='results_${s_id}' class='container collapse in pt_div_cmp' ></div>`
+            </span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ></div>`
         );
     });
 
 {% for job in jobs %}
-   pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
+    pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
 {% endfor %}
 
-   show_charts();
-   Object.values(sect_data).forEach(s => s.table_data ? show_table(s.s_id) : 0);
+    $(window).on('DOMContentLoaded load resize scroll', delayed_render);
+    $('.collapse').on("shown.bs.collapse hidden.bs.collapse", delayed_render);
+    delayed_render();
 });
 </script>
 
