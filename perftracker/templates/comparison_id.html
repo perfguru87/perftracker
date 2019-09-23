@@ -85,6 +85,8 @@ function show_all_tables() {
                 Object.keys(data).forEach(s_id => table_loading_error_handler(s_id, error));
             }
         });
+    } else {
+        Object.keys(sect_data).map(show_table);
     }
 }
 
