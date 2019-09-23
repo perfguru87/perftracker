@@ -156,14 +156,14 @@ function show_chart(s_id) {
 }
 
 function delayed_render() {
-    console.log("render start");
+//    console.log("render start");
     Object.keys(sect_data).forEach(s_id => {
         var s = sect_data[s_id];
         if (group_data[s.g_id].collapsed)
             return; // we have to avoid rendering collapsed charts - the rendering is wrong
         if (!s.chart_rendered && s.chart_type !== NOCHART && isInViewport($("#chart_" + s_id)[0])) {
             show_chart(s_id);
-            console.log(s_id);
+            // console.log(s_id);
         }
         if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && isInViewport($("#results_" + s_id)[0])) {
             show_table(s_id);
