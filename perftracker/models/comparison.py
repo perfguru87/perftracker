@@ -275,17 +275,16 @@ class PTComparisonServSideTestView:
     def pt_add_test(self, job, job_n, test_obj):
         self.tests[job_n] = test_obj
         if not self.id:
-            self.title = ('%s {%s}' % (test_obj.tag, test_obj.category)) if test_obj.category else test_obj.tag
+            self.title = test_obj.category or test_obj.tag
             self.id = test_obj.id
             self.seq_num = test_obj.seq_num
 
-    @property
     def table_row(self):
         if not len(self.tests):
             return []
         t = self.tests
         ret = ['', self.id, self.seq_num, self.title]
-        for n in range(0, len(self.tests)):
+        for n in range(0, len(t)):
             if t[n]:
                 ret.append(pt_float2human(t[n].avg_score))
                 ret.append(int(round(100 * t[n].avg_dev / t[n].avg_score, 0)) if t[n].avg_score else 0)
@@ -396,7 +395,7 @@ class PTComparisonServSideSectView:
         self.tests_tags = set()
         self.chart_type = PTCmpChartType.NOCHART
         self.chart_trend_line = False
-        self.table_type = PTCmpTableType.HIDE
+        self.table_type = cmp_obj.tables_type
         self.tests_categories = []
         self.x_axis_categories = []
         self.test_cat_to_axis_cat_seqnum = []
@@ -445,7 +444,11 @@ class PTComparisonServSideSectView:
 
     @property
     def table_data(self):
-        return [t.table_row for t in self.tests.values()]
+        return [t.table_row() for t in self.tests.values()]
+
+    @property
+    def same_tag(self):
+        return len(self.tests_tags) == 1
 
     def _pt_init_chart_type(self):
         if self.cmp_obj.charts_type == PTCmpChartType.XYLINE_WITH_TREND:
@@ -462,7 +465,7 @@ class PTComparisonServSideSectView:
         if self.cmp_obj.charts_type != PTCmpChartType.AUTO:
             return
 
-        if len(self.tests_tags) != 1:
+        if not self.same_tag:
             self.chart_type = PTCmpChartType.NOCHART
             return
 
@@ -489,11 +492,11 @@ class PTComparisonServSideSectView:
         if self.chart_type == PTCmpChartType.XYLINE and self.has_failures:
             self.legends += [{"name": "Failed test", "icon": "diamond"}]
 
-        if len(self.tests_tags) == 1:
-            if self.cmp_obj.tables_type == PTCmpTableType.AUTO:
+        if self.same_tag:
+            if self.table_type == PTCmpTableType.AUTO:
                 self.table_type = PTCmpTableType.HIDE if len(self.tests) > 10 else PTCmpTableType.SHOW
         else:
-            if self.cmp_obj.tables_type == PTCmpTableType.AUTO:
+            if self.table_type == PTCmpTableType.AUTO:
                 self.table_type = PTCmpTableType.SHOW
 
     @property

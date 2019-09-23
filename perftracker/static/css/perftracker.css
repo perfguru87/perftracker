@@ -237,6 +237,11 @@ div.pt_tests_group_selector select {
   margin-bottom: 20px;
 }
 
+/* Charts */
+.pt_table {
+  margin-bottom: 20px;
+}
+
 /* Object management menu */
 div.pt_obj_management {
   text-align: right;

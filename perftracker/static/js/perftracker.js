@@ -488,13 +488,16 @@ function pt_gen_comparison_title(job_ids, job_titles)
     return title;
 }
 
-function pt_handle_collapsing(selector) {
+function pt_handle_collapsing(selector, callback) {
     $(selector).on('click', function() {
-        var x = $(this).hasClass('collapsed');
+        el = $(this);
+        var x = el.hasClass('collapsed');
         if (x) {
-            $(this).find(".glyphicon-triangle-right").removeClass("glyphicon-triangle-right").addClass("glyphicon-triangle-bottom");
+            el.find(".glyphicon-triangle-right").removeClass("glyphicon-triangle-right").addClass("glyphicon-triangle-bottom");
+            callback && callback(el, false);
         } else {
-            $(this).find(".glyphicon-triangle-bottom").removeClass("glyphicon-triangle-bottom").addClass("glyphicon-triangle-right");
+            el.find(".glyphicon-triangle-bottom").removeClass("glyphicon-triangle-bottom").addClass("glyphicon-triangle-right");
+            callback && callback(el, true);
         }
     });
 }
@@ -507,13 +510,14 @@ $(document).ready(function() {
 
 function pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series) {
     chart = echarts.init(document.getElementById(element));
-    if (chart_type != 2 && chart_type != 4) {
+    if (chart_type !== 2 && chart_type !== 4) {
         throw "Unsupported chart type " + chart_type;
     }
-    var is_xy = (chart_type == 2);
+    var is_xy = (chart_type === 2);
     var legends = [];
     var option = {
         title: { },
+        animation: false,
         tooltip: {
             transitionDuration: 0,
             formatter: function(params) {
@@ -621,12 +625,6 @@ function pt_configure_chart(element, chart_type, has_failures, x_categories, x_n
     chart.setOption(option);
 }
 
-function pt_configure_chart_async(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series) {
-    var fn = function() {
-        pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series);
-    }
-    setTimeout(fn, 10)
-}
 
 function pt_cmp_table_html(element, titles) {
     var s =
@@ -657,7 +655,7 @@ function pt_cmp_table_html(element, titles) {
        s +=
      "</tr>\
    </thead>\
-</table><br><br>";
+</table>";
 
     return s;
 }
@@ -666,6 +664,11 @@ var pt_cmp_table_config = {
     lengthMenu: [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]],
 
     columnDefs: [
+        {
+            "targets": "colTag",
+            "type": "string",
+            "className": 'pt_left',
+        },
         {
             "targets": "colExpander",
             "type": "string",
@@ -679,11 +682,6 @@ var pt_cmp_table_config = {
             "targets": ["colId", "colCategory", "colHidden"],
             "type": "string",
             "visible": false,
-        },
-        {
-            "targets": "colTag",
-            "type": "string",
-            "className": 'pt_left',
         },
         {
             "targets": "colScore",
@@ -735,7 +733,7 @@ var pt_cmp_table_config = {
     ]
 };
 
-function pt_configure_table(element, pageable, testlink, data) {
+function pt_cmp_configure_table(container, table_id, job_titles, pageable, data, common_prefix, testlink) {
     var tableOpts = {
         "lengthMenu": pt_cmp_table_config.lengthMenu,
         "bFilter": false,
@@ -744,15 +742,26 @@ function pt_configure_table(element, pageable, testlink, data) {
         "columnDefs": pt_cmp_table_config.columnDefs
     };
 
-    if (!pageable){
-        tableOpts["bLengthChange"] = false;
-        tableOpts["bInfo"] = false;
-        tableOpts["bPaginate"] = false;
+    if (common_prefix) {  // override tag column rendering
+        tableOpts.columnDefs[0] = Object.assign({}, tableOpts.columnDefs[0], {
+            "render": function (data, type, row) {
+                return common_prefix + " " + data;
+            }
+        });
     }
-    var table = $(element).DataTable(tableOpts);
+    if (!pageable){
+        tableOpts.bLengthChange = false;
+        tableOpts.bInfo = false;
+        tableOpts.bPaginate = false;
+    }
+
+    container.append(pt_cmp_table_html(table_id, all_jobs));
+
+    var tab_el = $("#" + table_id);
+    var table = tab_el.DataTable(tableOpts);
 
     // Add event listener for opening and closing details
-    $(element).on('click', 'td.pt_row_details_toggle', function () {
+    tab_el.on('click', 'td.pt_row_details_toggle', function () {
         // FIXME, merge with jobs.html
         var tr = $(this).closest('tr');
         var row = table.row( tr );
@@ -791,12 +800,6 @@ function pt_configure_table(element, pageable, testlink, data) {
     });
 }
 
-function pt_configure_table_async(element, pageable, testlink, data) {
-    var fn = function() {
-        pt_configure_table(element, pageable, testlink, data);
-    }
-    setTimeout(fn, 10)
-}
 
 /*
  * Authentication stuff
@@ -972,3 +975,12 @@ function pt_cmp_test_details_draw(ar, err_msg) {
     return s;
 }
 
+function isInViewport(elem) {
+    var bounding = elem.getBoundingClientRect();
+    return (
+        bounding.bottom >= 0 &&
+        bounding.right >= 0 &&
+        bounding.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+        bounding.left <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+};
