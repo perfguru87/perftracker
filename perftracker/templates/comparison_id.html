@@ -38,6 +38,18 @@
     <div class="panel__unit_show-tables">
         <h4><button onclick="show_all_tables()">Show table</button></h4>
     </div>
+    <div class="panel__unit_go-to">
+        <button class="panel__btn_drop">Group...</button>
+        <div class="panel_dropup-content">
+          {% for g_tag, g in cmp_view.groups.items %}
+            {% if g.group_obj.title|length %}
+              <a href="#g_{{ g.id }}">{{ g.group_obj.title }}</a>
+            {% else %}
+              <a href="#g_{{ g.id }}">Undefined</a>
+            {% endif %}
+          {% endfor %}
+        </div>
+    </div>
 </div>
 
 {% comment %}
