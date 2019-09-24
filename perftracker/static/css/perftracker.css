@@ -3,11 +3,14 @@
  */
 
 /* Grids */
-tr.odd td.pt_job_test_errors {
+tr.odd td.pt_test_errors {
   background-color: #F5B7B1 !important;
 }
-tr.even td.pt_job_test_errors {
+tr.even td.pt_test_errors {
   background-color: #FADBD8 !important;
+}
+tr td.pt_test_errors {
+  background-color: #F5B7B1 !important;
 }
 td.pt_row_details_toggle {
   cursor: pointer;
@@ -112,14 +115,15 @@ table.pt_obj_details tr:nth-child(even) td {
 table.pt_obj_details tr:nth-child(odd) td {
   background-color: #f4f4f4;
 }
-table.pt_obj_details tr.redClass td {
-  color: red;
-}
 table.pt_obj_details thead tr th {
   border-right: 1px solid #ddd;
 }
 table.pt_obj_details tbody tr td {
   border-right: 1px solid #fff;
+}
+
+.pt_redClass {
+  color: red;
 }
 
 /* Slider */
@@ -233,6 +237,11 @@ div.pt_tests_group_selector select {
   margin-bottom: 20px;
 }
 
+/* Charts */
+.pt_table {
+  margin-bottom: 20px;
+}
+
 /* Object management menu */
 div.pt_obj_management {
   text-align: right;
@@ -303,6 +312,10 @@ table.pt_regr_summary td {
   font-size: 11px;
   white-space: nowrap;
   overflow-x: scroll;
+}
+
+.pt_smaller {
+  font-size: 70%
 }
 
 /* Hw Nodes Tasks */

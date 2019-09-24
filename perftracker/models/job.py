@@ -55,7 +55,10 @@ class JobModel(models.Model):
     deleted         = models.BooleanField(help_text="True means the Job was deleted", db_index=True, default=False)
 
     def __str__(self):
-        return "#%d, %s" % (self.id, self.title)
+        s = "#%d, %s" % (self.id, self.title)
+        if self.product_name or self.product_ver:
+            s += " [" + self.product_name + " " + self.product_ver + "]"
+        return s
 
     def pt_update(self, json_data):
         from perftracker.models.test import TestModel

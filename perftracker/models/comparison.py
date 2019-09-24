@@ -257,6 +257,13 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 # Comparison viewer
 ######################################################################
 
+def test_errors2str(t):
+    s = "%d errors" % t.errors if t.errors else ""
+    if t.status == 'FAILED':
+        if s:
+            s += ", "
+        s += t.status
+    return s
 
 class PTComparisonServSideTestView:
     def __init__(self, jobs):
@@ -268,23 +275,24 @@ class PTComparisonServSideTestView:
     def pt_add_test(self, job, job_n, test_obj):
         self.tests[job_n] = test_obj
         if not self.id:
-            self.title = ('%s {%s}' % (test_obj.tag, test_obj.category)) if test_obj.category else test_obj.tag
+            self.title = test_obj.category or test_obj.tag
             self.id = test_obj.id
             self.seq_num = test_obj.seq_num
 
-    @property
-    def table_data(self):
+    def table_row(self):
         if not len(self.tests):
             return []
         t = self.tests
         ret = ['', self.id, self.seq_num, self.title]
-        for n in range(0, len(self.tests)):
+        for n in range(0, len(t)):
             if t[n]:
                 ret.append(pt_float2human(t[n].avg_score))
                 ret.append(int(round(100 * t[n].avg_dev / t[n].avg_score, 0)) if t[n].avg_score else 0)
+                ret.append(test_errors2str(t[n]))
             else:
                 ret.append("-")
                 ret.append("-")
+                ret.append("")
 
             for prev in range(0, n):
                 if t[prev] is None or t[n] is None:
@@ -341,13 +349,13 @@ class PTComparisonServSideSeriesView:
         self._errors = [None] * len(self.sect.x_axis_categories)
         maxi = 0
         for t in self.tests:
-            if t.category not in self.sect.test_cat_to_axis_cat_seqnum:
+            i = self.sect.test_cat_to_axis_cat_seqnum.get(t.category)
+            if i is None:
                 print("WARNING: test category '%s' is not found in %s" % (t.category, str(self.sect.test_cat_to_axis_cat_seqnum)))
                 continue
-            i = self.sect.test_cat_to_axis_cat_seqnum[t.category]
             maxi = max(maxi, i)
             self._scores[i] = pt_float2human(t.avg_score)
-            self._errors[i] = t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
+            self._errors[i] = test_errors2str(t)   # t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
         self._scores = self._scores[:maxi + 1]
         self._errors = self._errors[:maxi + 1]
 
@@ -379,15 +387,15 @@ class PTComparisonServSideSeriesView:
 
 
 class PTComparisonServSideSectView:
-    def __init__(self, id, cmp_obj, jobs, title):
+    def __init__(self, cmp_obj, jobs, title):
         self.cmp_obj = cmp_obj
-        self.title = "Tests results" if title == "" else title
+        self.title = title or "Tests results"
         self.jobs = jobs
         self.tests = OrderedDict()
         self.tests_tags = set()
         self.chart_type = PTCmpChartType.NOCHART
         self.chart_trend_line = False
-        self.table_type = PTCmpTableType.HIDE
+        self.table_type = cmp_obj.tables_type
         self.tests_categories = []
         self.x_axis_categories = []
         self.test_cat_to_axis_cat_seqnum = []
@@ -395,12 +403,27 @@ class PTComparisonServSideSectView:
         self.x_axis_type = 'category'
         self.x_axis_rotate = 0
         self.y_axis_name = ''
-        self.id = id
         self.has_failures = False
 
-        self.legends = [j.title for j in jobs]
-        if len(set(self.legends)) != len(self.legends):
-            self.legends = ["%d - %s" % (j.id, j.title) for j in jobs]
+        titles = set(j.title for j in jobs)
+        titles_vers = set(",".join((j.title, j.product_name, j.product_ver)) for j in jobs)
+        add_title = len(titles) > 1
+        add_ver = not add_title and len(titles_vers) != 1
+
+        def job_legend(job):
+            if len(jobs) == 1:
+                s = job.title  # nothing to compare with, so no need for uniqueness
+            else:
+                s = "#%s: " % (jobs.index(job) + 1)
+                if add_title or (not add_title and not add_ver):
+                    s += job.title
+                if add_ver and (job.product_name or job.product_ver):
+                    tmpl = " [%s %s]" if add_title else " %s %s"
+                    s += tmpl % (job.product_name, job.product_ver)
+            job.calculated_legend = s  # requested from template
+            return s
+
+        self.legends = [job_legend(j) for j in jobs]
         self.series = [PTComparisonServSideSeriesView(self, l) for l in self.legends]
 
     def pt_add_test(self, job, job_n, test_obj):
@@ -412,6 +435,20 @@ class PTComparisonServSideSectView:
         self.series[job_n].pt_add_test(job, job_n, test_obj)
         self.tests[key].pt_add_test(job, job_n, test_obj)
         self.tests_tags.add(test_obj.tag)
+
+    @property
+    def id(self):
+        if not self.tests:
+            return 0
+        return min((t.seq_num, t.id) for t in self.tests.values())[1]  # id of test with min seq_num
+
+    @property
+    def table_data(self):
+        return [t.table_row() for t in self.tests.values()]
+
+    @property
+    def same_tag(self):
+        return len(self.tests_tags) == 1
 
     def _pt_init_chart_type(self):
         if self.cmp_obj.charts_type == PTCmpChartType.XYLINE_WITH_TREND:
@@ -428,7 +465,7 @@ class PTComparisonServSideSectView:
         if self.cmp_obj.charts_type != PTCmpChartType.AUTO:
             return
 
-        if len(self.tests_tags) != 1:
+        if not self.same_tag:
             self.chart_type = PTCmpChartType.NOCHART
             return
 
@@ -455,16 +492,16 @@ class PTComparisonServSideSectView:
         if self.chart_type == PTCmpChartType.XYLINE and self.has_failures:
             self.legends += [{"name": "Failed test", "icon": "diamond"}]
 
-        if len(self.tests_tags) == 1:
-            if self.cmp_obj.tables_type == PTCmpTableType.AUTO:
-                self.table_type = PTCmpTableType.HIDE if len(self.tests) > 10 else PTCmpTableType.SHOW
+        if self.same_tag:
+            if self.table_type == PTCmpTableType.AUTO:
+                self.table_type = PTCmpTableType.HIDE if len(self.tests) > 5 else PTCmpTableType.SHOW
         else:
-            if self.cmp_obj.tables_type == PTCmpTableType.AUTO:
+            if self.table_type == PTCmpTableType.AUTO:
                 self.table_type = PTCmpTableType.SHOW
 
     @property
     def pageable(self):
-        return len(self.tests) > 10
+        return len(self.tests) > 20
 
 
 class PTComparisonServSideGroupView:
@@ -478,7 +515,7 @@ class PTComparisonServSideGroupView:
     def pt_add_test(self, job, job_n, test_obj):
         key = test_obj.tag if test_obj.category else ""
         if key not in self.sections:
-            self.sections[key] = PTComparisonServSideSectView(len(self.sections), self.cmp_obj, self.jobs, key)
+            self.sections[key] = PTComparisonServSideSectView(self.cmp_obj, self.jobs, key)
         self.sections[key].pt_add_test(job, job_n, test_obj)
 
     def pt_init_chart_and_table(self):
@@ -491,22 +528,39 @@ class PTComparisonServSideGroupView:
 
 
 class PTComparisonServSideView:
-    def __init__(self, cmp_obj):
+    def __init__(self, cmp_obj, section_ids=None):
         self.cmp_obj = cmp_obj
         self.job_objs = self.cmp_obj.pt_get_jobs()
         self.groups = OrderedDict()
 
-        self.init()
+        self.init(section_ids)
 
     def pt_add_test(self, job, job_n, test_obj):
         if test_obj.group not in self.groups:
             self.groups[test_obj.group] = PTComparisonServSideGroupView(len(self.groups), self.cmp_obj, self.job_objs, test_obj.group)
         self.groups[test_obj.group].pt_add_test(job, job_n, test_obj)
 
-    def init(self):
+    def init(self, section_ids):
+        # section_ids is a list of ids of 'sample' tests that give a reference to the sections in interest
+        # see PTComparisonServSideSectView.id - min test ID is section id.
+        # to get all other tests we need to filter by sample test tag (if it has category) or group (if no category)
+        tags = []
+        groups = []
+        if section_ids:
+            sample_tests = TestModel.objects.filter(id__in=section_ids).only("tag", "group", "category")
+            for t in sample_tests:
+                if t.category:
+                    tags.append(t.tag)
+                else:
+                    groups.append(t.group)
+
         for i, job in enumerate(self.job_objs):
-            tests = TestModel.objects.filter(job=job).order_by('seq_num')
-            for t in tests:
+            tests = TestModel.objects.filter(job=job)
+            if tags:
+                tests = tests.filter(tag__in=tags)
+            if groups:
+                tests = tests.filter(group__in=groups)
+            for t in tests.order_by('seq_num'):
                 self.pt_add_test(job, i, t)
 
         for g in self.groups.values():

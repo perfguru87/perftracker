@@ -488,41 +488,48 @@ function pt_gen_comparison_title(job_ids, job_titles)
     return title;
 }
 
+function pt_handle_collapsing(selector, callback) {
+    $(selector).on('click', function() {
+        el = $(this);
+        var x = el.hasClass('collapsed');
+        if (x) {
+            el.find(".glyphicon-triangle-right").removeClass("glyphicon-triangle-right").addClass("glyphicon-triangle-bottom");
+            callback && callback(el, false);
+        } else {
+            el.find(".glyphicon-triangle-bottom").removeClass("glyphicon-triangle-bottom").addClass("glyphicon-triangle-right");
+            callback && callback(el, true);
+        }
+    });
+}
+
 $(document).ready(function() {
     $('.pt_collapse.expanded').append('<span class="glyphicon glyphicon-triangle-bottom"></span>');
     $('.pt_collapse.collapsed').append('<span class="glyphicon glyphicon-triangle-right"></span>');
-    $('.pt_collapse').on('click', function() {
-        var x = $(this).hasClass('collapsed');
-        if (x) {
-            $(this).find(".glyphicon-triangle-right").removeClass("glyphicon-triangle-right").addClass("glyphicon-triangle-bottom");
-        } else {
-            $(this).find(".glyphicon-triangle-bottom").removeClass("glyphicon-triangle-bottom").addClass("glyphicon-triangle-right");
-        }
-    });
+    pt_handle_collapsing('.pt_collapse');
 });
 
 function pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series) {
     chart = echarts.init(document.getElementById(element));
-    if (chart_type != 2 && chart_type != 4) {
+    if (chart_type !== 2 && chart_type !== 4) {
         throw "Unsupported chart type " + chart_type;
     }
-    var is_xy = (chart_type == 2);
+    var is_xy = (chart_type === 2);
     var legends = [];
     var option = {
         title: { },
+        animation: false,
         tooltip: {
             transitionDuration: 0,
             formatter: function(params) {
                 var s = params.seriesName + "<br>";
                 if (is_xy) {
                     if (params.data.errors)
-                        s += params.data.value[0] + " : " + params.data.value[1] + "<br>"
-                            + params.data.errors + " iteration(s) failed";
+                        s += params.data.value[0] + " : " + params.data.value[1] + "<br>" + params.data.errors;
                     else
                         s += params.data[0] + " : " + params.data[1];
                 } else {
                     if (params.data.errors)
-                        s += params.data.value + "<br>" + params.data.errors + " iteration(s) failed";
+                        s += params.data.value + "<br>" + params.data.errors;
                     else
                         s += params.data;
                 }
@@ -618,17 +625,50 @@ function pt_configure_chart(element, chart_type, has_failures, x_categories, x_n
     chart.setOption(option);
 }
 
-function pt_configure_chart_async(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series) {
-    var fn = function() {
-        pt_configure_chart(element, chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series);
-    }
-    setTimeout(fn, 0)
+
+function pt_cmp_table_html(element, titles) {
+    var s =
+"<table id='" + element + "' class='display dataTable' cellspacing='0' width='100%'>\
+   <thead>\
+     <tr>\
+       <th colspan='4'></th>";
+       titles.forEach(function(title, index) {
+           s += "<th class='pt_job' colspan='{0}'>{1}</th>".ptFormat(index + 3, title);
+       });
+
+       s +=
+    "</tr>\
+     <tr>\
+       <th class='colExpander'></th>\
+       <th class='colId'></th>\
+       <th class='colSeqNum'>#</th>\
+       <th class='colTag pt_left'>Tag</th>";
+       titles.forEach(function(title, index) {
+           s +=
+              "<th class='colScore pt_lborder'>Score</th>" +
+              "<th class='colDeviation pt_right'>&plusmn;%</th>" +
+              "<th class='colHidden'/>";
+           for(var i = 1; i <= index; i++) {
+               s += "<th class='colDiff pt_lborder pt_right'>% vs #{0}</th>".ptFormat(i);
+           }
+       });
+       s +=
+     "</tr>\
+   </thead>\
+</table>";
+
+    return s;
 }
 
-var tableConfig = {
+var pt_cmp_table_config = {
     lengthMenu: [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]],
 
     columnDefs: [
+        {
+            "targets": "colTag",
+            "type": "string",
+            "className": 'pt_left',
+        },
         {
             "targets": "colExpander",
             "type": "string",
@@ -639,19 +679,22 @@ var tableConfig = {
             }
         },
         {
-            "targets": ["colId", "colCategory"],
+            "targets": ["colId", "colCategory", "colHidden"],
             "type": "string",
             "visible": false,
-        },
-        {
-            "targets": "colTag",
-            "type": "string",
-            "className": 'pt_left',
         },
         {
             "targets": "colScore",
             "type": "string",
             "className": 'pt_lborder',
+            "createdCell": function (td, cellData, rowData, rowIndex, colIndex) {
+                var errors = rowData[colIndex + 2];
+                if (errors) {
+                    $(td).addClass("pt_test_errors");
+                    errors = "<br><span class='pt_smaller'>" + errors + "</span>";
+                }
+                $(td).html(cellData + errors);
+            }
         },
         {
             "targets": "colDeviation",
@@ -690,24 +733,35 @@ var tableConfig = {
     ]
 };
 
-function pt_configure_table(element, pageable, testlink, data) {
+function pt_cmp_configure_table(container, table_id, job_titles, pageable, data, tag_modifier, testlink) {
     var tableOpts = {
-        "lengthMenu": tableConfig.lengthMenu,
+        "lengthMenu": pt_cmp_table_config.lengthMenu,
         "bFilter": false,
         "data": data,
         "order": [[ 2, "asc" ]],
-        "columnDefs": tableConfig.columnDefs
+        "columnDefs": pt_cmp_table_config.columnDefs
     };
 
-    if (!pageable){
-        tableOpts["bLengthChange"] = false;
-        tableOpts["bInfo"] = false;
-        tableOpts["bPaginate"] = false;
+    if (tag_modifier) {  // override tag column rendering
+        tableOpts.columnDefs[0] = Object.assign({}, tableOpts.columnDefs[0], {
+            "render": function (data, type, row) {
+                return tag_modifier(data);
+            }
+        });
     }
-    var table = $(element).DataTable(tableOpts);
+    if (!pageable){
+        tableOpts.bLengthChange = false;
+        tableOpts.bInfo = false;
+        tableOpts.bPaginate = false;
+    }
+
+    container.append(pt_cmp_table_html(table_id, all_jobs));
+
+    var tab_el = $("#" + table_id);
+    var table = tab_el.DataTable(tableOpts);
 
     // Add event listener for opening and closing details
-    $(element).on('click', 'td.pt_row_details_toggle', function () {
+    tab_el.on('click', 'td.pt_row_details_toggle', function () {
         // FIXME, merge with jobs.html
         var tr = $(this).closest('tr');
         var row = table.row( tr );
@@ -730,13 +784,13 @@ function pt_configure_table(element, pageable, testlink, data) {
                 type: 'GET',
                 timeout: 2000,
                 success: function(data, status) {
-                    row.child(pt_test_details_draw(data, null)).show();
+                    row.child(pt_cmp_test_details_draw(data, null)).show();
                     tr.next('tr').children().toggleClass('pt_row_details');
                     tr.addClass('shown');
                     tr.next('tr').children().find('.pt_slider').slideDown();
                 },
                 error: function(data, status, error) {
-                    row.child(pt_test_details_draw(row.data(), error)).show();
+                    row.child(pt_cmp_test_details_draw(row.data(), error)).show();
                     tr.next('tr').children().toggleClass('pt_row_details');
                     tr.addClass('shown');
                     tr.next('tr').children().find('.pt_slider').slideDown();
@@ -746,12 +800,6 @@ function pt_configure_table(element, pageable, testlink, data) {
     });
 }
 
-function pt_configure_table_async(element, pageable, testlink, data) {
-    var fn = function() {
-        pt_configure_table(element, pageable, testlink, data);
-    }
-    setTimeout(fn, 0)
-}
 
 /*
  * Authentication stuff
@@ -808,14 +856,83 @@ function update_nav_bar(auth_response) {
     $('#username').text(auth_response.username);
 }
 
-function pt_test_details_draw_row(title, ar, func) {
+function test_errors2str(data) {
+    var rv = "";
+    if (data.errors) {
+        rv = String(data.errors) + " errors";
+    }
+    if (data.status === "FAILED") {
+        rv += rv ? ", ": "";
+        rv += data.status;
+    }
+    return rv;
+}
+
+function pt_job_test_details_draw(d, err_msg)
+{
+    var s = '';
+    var env_node = d.env_node;
+    var vms = d.vms;
+    var clients = d.clients;
+
+    console.log(d);
+
+    s += "<div class='pt_slider' id='test_details_slider_{0}'>".ptFormat(d.id);
+
+    s += "<div class='row'>";
+
+    s += "<div class='col-md-4'>";
+    s += "<h4>Test details</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th>Value</th></thead></tbody>";
+    s += "<tr><td>Raw scores</td><td>{0} {1}</td></tr>".ptFormat(d.scores, d.metrics);
+    s += "<tr><td>&plusmn; %</td><td>{0}</td></tr>".ptFormat(d.avg_plusmin);
+    var errors = test_errors2str(d);
+    var estyle = errors ? " class='pt_test_errors'" : "";
+    s += "<tr><td>Errors</td><td{0}>{1}</td></tr>".ptFormat(estyle, errors);
+    s += "<tr><td>Raw deviations</td><td>{0}</td></tr>".ptFormat(d.deviations);
+    s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : '');
+    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true));
+    s += "<tr><td>Duration (s)</td><td>{0}</td></tr>".ptFormat(d.duration);
+    s += "</tbody></table>";
+    s += "</div>";
+
+    s += "<div class='col-md-8'>";
+    s += "<h4>Test info</h4>";
+    s += "<table class='pt_obj_details'>";
+    s += "<thead><th>Parameter</th><th>Value</th></thead><tbody>";
+    s += "<tr><td>Score</td><td>{0} {1} ({2})</td></tr>".ptFormat(d.avg_score, d.metrics, d.less_better ? 'smaller is better' : 'bigger is better');
+    s += "<tr><td>Cmdline</td><td><span class='pt_ellipsis'>{0}</td></tr>".ptFormat(d.cmdline);
+    s += "<tr><td>Description</td><td>{0}</td></tr>".ptFormat(d.description);
+
+    s += "<tr><td>Group</td><td>{0}</td></tr>".ptFormat(d.group);
+    s += "<tr><td>Category</td><td>{0}</td></tr>".ptFormat(d.category);
+
+    s += "<tr><td>Attributes</td><td>{0}</td></tr>".ptFormat(d.attribs ? pt_draw_attribs(d.attribs) : "");
+    s += "<tr><td>Links</td><td>{0}</td></tr>".ptFormat(d.links ? pt_draw_links(d.links) : "");
+    s += "</tbody></table>";
+    s += "</div>";
+
+
+    s += "</div>"; /* row */
+
+    s += "</div>"; /* pt_slider */
+
+    return s;
+}
+
+function pt_cmp_test_details_draw_row(title, ar, func) {
     var s = '<tr><td>' + title + '</td>';
-    for (n = 0; n < ar.length; n++)
-        s += '<td>' + func(ar[n]) + '</td>';
+    for (n = 0; n < ar.length; n++) {
+        var c = func(ar[n]);
+        if (!c.startsWith("<td"))
+            c = '<td>' + c + '</td>';
+        s += c;
+    }
     return s + '</tr>';
 }
 
-function pt_test_details_draw(ar, err_msg) {
+function pt_cmp_test_details_draw(ar, err_msg) {
     var s = '';
     var d = ar[0];
     var env_node = d.env_node;
@@ -830,20 +947,25 @@ function pt_test_details_draw(ar, err_msg) {
     s += "<h4>Test details</h4>";
     s += "<table class='pt_obj_details'>";
     s += "<thead><th>Parameter</th><th colspan='" + ar.length + "'>Values</th></thead></tbody>";
-    s += pt_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
+    s += pt_cmp_test_details_draw_row('ID', ar, function(d) { return "{0}".ptFormat(d.id);});
+    s += pt_cmp_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
     s += "<tr><td>Metrics</td><td colspan='" + ar.length + "'>" + "{0} ({1})".ptFormat(
            d.metrics, d.less_better ? 'smaller is better' : 'bigger is better') + "</td></tr>";
     s += "<tr><td>Group</td><td colspan='" + ar.length + "'>" + "{0}</td></tr>".ptFormat(d.group);
     s += "<tr><td>Category</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.category);
-    s += pt_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
-    s += pt_test_details_draw_row('Descriptions', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description);});
-    s += pt_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
-    s += pt_test_details_draw_row('Errors', ar, function(d) { return "{0}".ptFormat(d.errors); });
-    s += pt_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
-    s += pt_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
-    s += pt_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin), pt_date2str(d.end)); });
-    s += pt_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
-    s += pt_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
+    s += pt_cmp_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
+    s += pt_cmp_test_details_draw_row('Descriptions', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description);});
+    s += pt_cmp_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
+    s += pt_cmp_test_details_draw_row('Errors', ar, function(d) {
+        var errors = test_errors2str(d);
+        var inner = errors ? "<td class='pt_test_errors'>{0}</td>" : "{0}";
+        return inner.ptFormat(errors);
+    });
+    s += pt_cmp_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
+    s += pt_cmp_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
+    s += pt_cmp_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true)); });
+    s += pt_cmp_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
+    s += pt_cmp_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
     s += "</tbody></table>";
     s += "</div>";
 
@@ -854,15 +976,12 @@ function pt_test_details_draw(ar, err_msg) {
     return s;
 }
 
-function pt_table_loading_error_handler(test_case_id, error) {
-    if ($("#table_{0}_loading_error".ptFormat(test_case_id)).length) {
-        return;
-    }
-
-    var s = "";
-    s += "<div id=error_{0} class='alert alert-danger alert-dismissable'>".ptFormat(test_case_id);
-    s += "<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&#215;</button>";
-    s += "Table data loading error: " + error;
-    s += "</div>";
-    $('#results_{0}'.ptFormat(test_case_id)).append(s);
-}
+function isInViewport(elem) {
+    var bounding = elem.getBoundingClientRect();
+    return (
+        bounding.bottom >= 0 &&
+        bounding.right >= 0 &&
+        bounding.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+        bounding.left <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+};
