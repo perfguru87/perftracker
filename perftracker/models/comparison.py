@@ -389,7 +389,7 @@ class PTComparisonServSideSeriesView:
 class PTComparisonServSideSectView:
     def __init__(self, cmp_obj, jobs, title):
         self.cmp_obj = cmp_obj
-        self.title = "Tests results" if title == "" else title
+        self.title = title or "Tests results"
         self.jobs = jobs
         self.tests = OrderedDict()
         self.tests_tags = set()
