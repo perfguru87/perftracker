@@ -138,7 +138,7 @@ function show_table(s_id) {
     if (s.table_rendered) {
         res.children().show();
     }
-    else if (isInViewport(res[0])) {
+    else if (pt_isInViewport(res[0])) {
         pt_cmp_configure_table(res, "table_" + s_id, all_jobs,
                 s.pageable, s.table_data, s.add_title ? (row => s.title + ' {' + row + '}'): null,
                 api_root + "/group/0/test/");
@@ -161,11 +161,11 @@ function delayed_render() {
         var s = sect_data[s_id];
         if (group_data[s.g_id].collapsed)
             return; // we have to avoid rendering collapsed charts - the rendering is wrong
-        if (!s.chart_rendered && s.chart_type !== NOCHART && isInViewport($("#chart_" + s_id)[0])) {
+        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($("#chart_" + s_id)[0])) {
             show_chart(s_id);
             // console.log(s_id);
         }
-        if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && isInViewport($("#results_" + s_id)[0])) {
+        if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && pt_isInViewport($("#results_" + s_id)[0])) {
             show_table(s_id);
         }
     });
@@ -173,7 +173,7 @@ function delayed_render() {
 
 var group_data = {
 {% for g_tag, g in cmp_view.groups.items %}
- '{{ g.id }}' : { title: '{{ g.group_obj.title }}' },
+ '{{ g.id }}' : { title: '{{ g.group_obj.title }}', sections: {{ g.num_sections }} },
 {% endfor %}
 };
 
@@ -198,7 +198,7 @@ $(document).ready(function() {
         var g = group_data[g_id];
         g.collapsed = false;
         var group = `<h3 class='pt_collapse expanded' id='gh_${g_id}' data-toggle='collapse' data-target='#data_${g_id}' aria-expanded='true'>` +
-            `<a id='g_${g_id}'>${g.title}</a><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
+            `<a id='g_${g_id}'>${g.title}</a><span class='pt_smaller'>  [${pt_pluralize(g.sections, "test")}]</span><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
             `<div class='collapse in' id='data_${g_id}'>`;
         main.append(group);
         pt_handle_collapsing("#gh_" + g_id, function (el, collapsed) {
