@@ -733,7 +733,7 @@ var pt_cmp_table_config = {
     ]
 };
 
-function pt_cmp_configure_table(container, table_id, job_titles, pageable, data, common_prefix, testlink) {
+function pt_cmp_configure_table(container, table_id, job_titles, pageable, data, tag_modifier, testlink) {
     var tableOpts = {
         "lengthMenu": pt_cmp_table_config.lengthMenu,
         "bFilter": false,
@@ -742,10 +742,10 @@ function pt_cmp_configure_table(container, table_id, job_titles, pageable, data,
         "columnDefs": pt_cmp_table_config.columnDefs
     };
 
-    if (common_prefix) {  // override tag column rendering
+    if (tag_modifier) {  // override tag column rendering
         tableOpts.columnDefs[0] = Object.assign({}, tableOpts.columnDefs[0], {
             "render": function (data, type, row) {
-                return common_prefix + " " + data;
+                return tag_modifier(data);
             }
         });
     }
@@ -947,6 +947,7 @@ function pt_cmp_test_details_draw(ar, err_msg) {
     s += "<h4>Test details</h4>";
     s += "<table class='pt_obj_details'>";
     s += "<thead><th>Parameter</th><th colspan='" + ar.length + "'>Values</th></thead></tbody>";
+    s += pt_cmp_test_details_draw_row('ID', ar, function(d) { return "{0}".ptFormat(d.id);});
     s += pt_cmp_test_details_draw_row('Scores', ar, function(d) { return "{0}".ptFormat(d.avg_score);});
     s += "<tr><td>Metrics</td><td colspan='" + ar.length + "'>" + "{0} ({1})".ptFormat(
            d.metrics, d.less_better ? 'smaller is better' : 'bigger is better') + "</td></tr>";
