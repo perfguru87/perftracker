@@ -389,7 +389,7 @@ class PTComparisonServSideSeriesView:
 class PTComparisonServSideSectView:
     def __init__(self, cmp_obj, jobs, title):
         self.cmp_obj = cmp_obj
-        self.title = "Tests results" if title == "" else title
+        self.title = title or "Tests results"
         self.jobs = jobs
         self.tests = OrderedDict()
         self.tests_tags = set()
@@ -440,7 +440,7 @@ class PTComparisonServSideSectView:
     def id(self):
         if not self.tests:
             return 0
-        return min((t.seq_num, t.id) for t in self.tests.values())[1]  # if of test with min seq_num
+        return min((t.seq_num, t.id) for t in self.tests.values())[1]  # id of test with min seq_num
 
     @property
     def table_data(self):
@@ -494,14 +494,14 @@ class PTComparisonServSideSectView:
 
         if self.same_tag:
             if self.table_type == PTCmpTableType.AUTO:
-                self.table_type = PTCmpTableType.HIDE if len(self.tests) > 10 else PTCmpTableType.SHOW
+                self.table_type = PTCmpTableType.HIDE if len(self.tests) > 5 else PTCmpTableType.SHOW
         else:
             if self.table_type == PTCmpTableType.AUTO:
                 self.table_type = PTCmpTableType.SHOW
 
     @property
     def pageable(self):
-        return len(self.tests) > 10
+        return len(self.tests) > 20
 
 
 class PTComparisonServSideGroupView:

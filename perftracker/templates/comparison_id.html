@@ -1,6 +1,6 @@
 {% extends '_base.html' %}
 
-{% load range_tag %}
+{% load tojson %}
 
 {% block title %}Comparison: #{{ obj.id }} / {{ obj.title }}{% endblock %}
 
@@ -78,7 +78,6 @@ function show_all_tables() {
     if (Object.values(sect_data).filter(s => !s.table_data).length) {
         $.ajax({
             url: api_root + "/tables",
-            data: null,
             type: 'GET',
             timeout: 10000,
             success: function (response) {
@@ -91,6 +90,8 @@ function show_all_tables() {
                 Object.keys(data).forEach(s_id => table_loading_error_handler(s_id, error));
             }
         });
+    } else {
+        Object.keys(sect_data).map(show_table);
     }
 }
 
@@ -99,7 +100,6 @@ function toggle_table(s_id) {
     if (!s.table_data) {
         $.ajax({
             url: api_root + "/group/{0}/section/{1}".ptFormat(0, s_id),
-            data: null,
             type: 'GET',
             timeout: 10000,
             success: function (response) {
@@ -146,7 +146,7 @@ function show_table(s_id) {
     }
     else if (isInViewport(res[0])) {
         pt_cmp_configure_table(res, "table_" + s_id, all_jobs,
-                s.pageable, s.table_data, s.add_title ? s.title : "",
+                s.pageable, s.table_data, s.add_title ? (row => s.title + ' {' + row + '}'): null,
                 api_root + "/group/0/test/");
         s.table_rendered = true;
     }
@@ -177,13 +177,9 @@ function delayed_render() {
     });
 }
 
-None = undefined;
-
 var group_data = {
 {% for g_tag, g in cmp_view.groups.items %}
- '{{ g.id }}' : {
-      title: '{{ g.group_obj.title|safe }}'
-     },
+ '{{ g.id }}' : { title: '{{ g.group_obj.title }}' },
 {% endfor %}
 };
 
@@ -192,11 +188,11 @@ var sect_data = {
 '{{ s.id }}': { g_id: '{{ g.id }}', s_id: '{{ s.id }}',
     title: '{{ s.title }}', has_failures: {% if s.has_failures %}true{% else %}false{% endif %},
     chart_type: {{ s.chart_type }}, {% if s.chart_type != PTCmpChartType.NOCHART %}
-    x_categories: {{ s.x_axis_categories|safe }},
+    x_categories: {{ s.x_axis_categories|tojson }},
     x_name: '{{ s.x_axis_name }}', x_type: '{{ s.x_axis_type }}', x_rotate: {{ s.x_axis_rotate }}, y_name: '{{ s.y_axis_name }}',
-    series: [{% for serie in s.series %}{name: '{{ serie.legend|safe }}', data: {{ serie.data|safe }}{% if s.chart_trend_line %},trend: true{% endif %}},{% endfor %}],
+    series: [{% for serie in s.series %}{name: '{{ serie.legend }}', data: {{ serie.data|tojson }}{% if s.chart_trend_line %},trend: true{% endif %}},{% endfor %}],
 {% endif %}    table_type: {{ s.table_type }}, {% if s.table_type == PTCmpTableType.SHOW %}
-    pageable: {{ s.pageable|lower }}, add_title: {{ s.same_tag|lower }}, table_data: {{ s.table_data|safe }}, {% endif %}
+    pageable: {{ s.pageable|tojson }}, add_title: {{ s.same_tag|tojson }}, table_data: {{ s.table_data|tojson }}, {% endif %}
      },{% endfor %}{% endfor %}
 };
 

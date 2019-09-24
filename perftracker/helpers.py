@@ -125,7 +125,6 @@ def _pt_cut_common_sfx(lines, separators=None):
         ret.append(l)
     return common_sfx, ret
 
-
 def pt_cut_common_sfx(lines, separators=None):
     common_sfx, prefixes = _pt_cut_common_sfx(lines, separators)
     numeric = {}
@@ -134,10 +133,12 @@ def pt_cut_common_sfx(lines, separators=None):
             numeric[float(p)] = orig_idx
         except ValueError:
             break
-    if len(numeric) == len(lines):
+    if len(numeric) == len(lines):  # all unique prefixes are numeric
         num_ordered = sorted(numeric.items())
         order = [orig_idx for (_, orig_idx) in num_ordered]
-        prefixes = [prefixes[orig_idx] for orig_idx in order]
+        def str2num(s):
+            return float(s) if "." in s else int(s)
+        prefixes = [str2num(prefixes[orig_idx]) for orig_idx in order]
     else:
         order = list(range(len(lines)))
     line2seqnum = {}
