@@ -68,3 +68,70 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4 {
 .modal-header a:hover {
   color: #fff;
 }
+
+/*
+Panel styles
+ */
+
+.panel {
+  display: grid;
+  grid-template-columns: 25% 25% 25% 25%;
+  grid-template-rows: 33% 33% 33%;
+  align-items: center;
+  min-height: 0;
+  min-width: 0;
+  text-overflow: ellipsis;
+
+  position: fixed;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.65);
+  border-color: rgba(0, 0, 0, 0.7);
+  border-radius: 0;
+  left: 0;
+  bottom: 0;
+  color: white;
+  height: 70px;
+  margin: 0;
+}
+
+.panel__btn_toggle {
+  position: fixed;
+  bottom: 70px;
+  right: 2%;
+  width: 4%;
+  height: 2%;
+  min-height: 17px;
+  min-width: 50px;
+  border: 1px solid black;
+  background-color: white;
+}
+
+.panel__unit_hide-tables {
+  grid-area: 1/1/2/2;
+  overflow: hidden;
+}
+
+.panel__unit_show-tables {
+  grid-area: 2/1/3/2;
+  overflow: hidden;
+}
+
+.panel h4 {
+  margin: 0 0 0 4px;
+}
+
+.panel__unit_hide-tables button {
+  background-color: transparent;
+  border: none;
+}
+
+.panel__unit_show-tables button {
+  background-color: transparent;
+  border: none;
+}
+
+@media (max-width: 850px) {
+  .panel h4 {
+    font-size: 1.25rem;
+  }
+}

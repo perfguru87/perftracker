@@ -27,12 +27,18 @@
     </div>
   </div>
 </div>
-<span style="float: right">
-  <a onclick="show_all_tables()">Show tables</a>
-  <a onclick="hide_all_tables()">Hide tables</a>
-</span>
 
 <div id="main_content_container"></div>
+
+<button class="panel__btn_toggle"><i class="fa fa-angle-down"></i></button>
+<div class="panel panel_opened">
+    <div class="panel__unit_hide-tables">
+        <h4><button onclick="hide_all_tables()">Hide tables</button></h4>
+    </div>
+    <div class="panel__unit_show-tables">
+        <h4><button onclick="show_all_tables()">Show table</button></h4>
+    </div>
+</div>
 
 {% comment %}
 
@@ -235,6 +241,19 @@ $(document).ready(function() {
     $(window).on('DOMContentLoaded load resize scroll', delayed_render);
     $('.collapse').on("shown.bs.collapse hidden.bs.collapse", delayed_render);
     delayed_render();
+
+    $('.panel__btn_toggle').click(function () {
+        $('.panel').toggle(0);
+        if ($('.panel').hasClass('panel_opened')) {
+          $('.panel').removeClass('panel_opened').addClass('panel_hidden');
+          $(this).css({"bottom": "0"});
+          $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
+        } else {
+          $('.panel').removeClass('panel_hidden').addClass('panel_opened');
+          $(this).css({"bottom": "70px"});
+          $("i.fa.fa-angle-up").replaceWith('<i class="fa fa-angle-down"></i>');
+        }
+    });
 });
 </script>
 
