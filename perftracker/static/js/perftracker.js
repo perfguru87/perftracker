@@ -661,7 +661,7 @@ function pt_cmp_table_html(element, titles) {
 }
 
 var pt_cmp_table_config = {
-    lengthMenu: [[50, 20, 200, 1000, -1], [50, 20, 200, 1000, "All"]],
+    lengthMenu: [[20, 50, 200, -1], [20, 50, 200, "All"]],
 
     columnDefs: [
         {
@@ -891,9 +891,9 @@ function pt_job_test_details_draw(d, err_msg)
     var estyle = errors ? " class='pt_test_errors'" : "";
     s += "<tr><td>Errors</td><td{0}>{1}</td></tr>".ptFormat(estyle, errors);
     s += "<tr><td>Raw deviations</td><td>{0}</td></tr>".ptFormat(d.deviations);
-    s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : '');
-    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true));
+    s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : 'n/a');
     s += "<tr><td>Duration (s)</td><td>{0}</td></tr>".ptFormat(d.duration);
+    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true));
     s += "</tbody></table>";
     s += "</div>";
 
@@ -925,6 +925,8 @@ function pt_cmp_test_details_draw_row(title, ar, func) {
     var s = '<tr><td>' + title + '</td>';
     for (n = 0; n < ar.length; n++) {
         var c = func(ar[n]);
+        if (!c && !ar[n].id)
+            c = '-';
         if (!c.startsWith("<td"))
             c = '<td>' + c + '</td>';
         s += c;
@@ -953,8 +955,8 @@ function pt_cmp_test_details_draw(ar, err_msg) {
            d.metrics, d.less_better ? 'smaller is better' : 'bigger is better') + "</td></tr>";
     s += "<tr><td>Group</td><td colspan='" + ar.length + "'>" + "{0}</td></tr>".ptFormat(d.group);
     s += "<tr><td>Category</td><td colspan='" + ar.length + "'>{0}</td></tr>".ptFormat(d.category);
-    s += pt_cmp_test_details_draw_row('Cmdlines', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline);});
-    s += pt_cmp_test_details_draw_row('Descriptions', ar, function(d) { return "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description);});
+    s += pt_cmp_test_details_draw_row('Cmdlines', ar, function(d) { return d.cmdline ? "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.cmdline) : d.cmdline;});
+    s += pt_cmp_test_details_draw_row('Descriptions', ar, function(d) { return d.description ? "<span class='pt_ellipsis'>{0}</span>".ptFormat(d.description) : d.description;});
     s += pt_cmp_test_details_draw_row('Raw scores', ar, function(d) { return "{0}".ptFormat(d.scores); });
     s += pt_cmp_test_details_draw_row('Errors', ar, function(d) {
         var errors = test_errors2str(d);
@@ -962,9 +964,9 @@ function pt_cmp_test_details_draw(ar, err_msg) {
         return inner.ptFormat(errors);
     });
     s += pt_cmp_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
-    s += pt_cmp_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.loops ? d.loops : ''); });
-    s += pt_cmp_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true)); });
+    s += pt_cmp_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.id ? (d.loops || 'n/a') : ""); });
     s += pt_cmp_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
+    s += pt_cmp_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true)); });
     s += pt_cmp_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
     s += "</tbody></table>";
     s += "</div>";
@@ -976,12 +978,16 @@ function pt_cmp_test_details_draw(ar, err_msg) {
     return s;
 }
 
-function isInViewport(elem) {
+function pt_isInViewport(elem) {
     var bounding = elem.getBoundingClientRect();
     return (
-        bounding.bottom >= 0 &&
+        bounding.bottom > 5 &&
         bounding.right >= 0 &&
         bounding.top <= (window.innerHeight || document.documentElement.clientHeight) &&
         bounding.left <= (window.innerWidth || document.documentElement.clientWidth)
     );
-};
+}
+
+function pt_pluralize(count, noun, suffix = 's') {
+    return `${count} ${noun}${count !== 1 ? suffix : ''}`;
+}
