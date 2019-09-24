@@ -27,14 +27,44 @@
     </div>
   </div>
 </div>
+
 <span style="float: right">
-  <a onclick="show_all_tables()">Show tables</a>
-  <a onclick="hide_all_tables()">Hide tables</a>
   <a id="analyze_button" onclick="pt_charts_analyze()">Analyze</a>
   <a onclick="pt_label_data()">Label data</a>
 </span>
 
 <div id="main_content_container"></div>
+
+<button class="panel__btn_toggle"><i class="fa fa-angle-up"></i></button>
+<nav id="panel_id" class="navbar-default navbar-fixed-bottom panel">
+  <div class="panel__button-controller panel__unit_hide-tables">
+      <h4><button onclick="hide_all_tables()">Hide tables</button></h4>
+  </div>
+  <div class="panel__button-controller panel__unit_show-tables">
+      <h4><button onclick="show_all_tables()">Show tables</button></h4>
+  </div>
+  <div class="panel__button-controller panel__unit_unselect">
+      <h4><button onclick="unselectGraphs()">Unselect All</button></h4>
+  </div>
+  <div class="panel__button-controller panel__unit_show-selected">
+      <h4><button onclick="showSelectedGraphs()">Show Selected</button></h4>
+  </div>
+  <div class="panel__button-controller panel__unit_go-to">
+      <h4><button>Group...</button></h4>
+      <div class="panel_dropup-content">
+          {% for g_tag, g in cmp_view.groups.items %}
+              <a href="#g_{{ g.id }}">{{ g.group_obj.title|default:"undefined" }}</a>
+          {% endfor %}
+      </div>
+  </div>
+  <div class="panel__input-search">
+      <span class="panel__input-search-span">
+          <input class="panel__input-search_text"type="text" name="graphs-search" placeholder="search">
+      </span>
+  </div>
+</nav>
+
+<div class="panel__show_cntl"></div>
 
 {% comment %}
 
@@ -164,9 +194,8 @@ function delayed_render() {
         var s = sect_data[s_id];
         if (group_data[s.g_id].collapsed)
             return; // we have to avoid rendering collapsed charts - the rendering is wrong
-        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($(`#chart_${s_id}`)[0])) {
+        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($("#chart_" + s_id)[0]) && s.section_hidden !== true) {
             show_chart(s_id);
-            // console.log(s_id);
         }
         if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && pt_isInViewport($(`#results_${s_id}`)[0])) {
             show_table(s_id);
@@ -271,6 +300,28 @@ var graph_properties = {
     anomaly: [{% for _, text in CHART_ANOMALY %} '{{ text }}', {% endfor %}]
 };
 
+function showPanel() {
+    var panel = $('#panel_id');
+    panel.show(0);
+    $('.panel__btn_toggle').css({"bottom": "130px"});
+    $("i.fa.fa-angle-up").replaceWith('<i class="fa fa-angle-down"></i>');
+}
+
+function hidePanel() {
+    var panel = $('#panel_id');
+    panel.hide(0);
+    $('.panel__btn_toggle').css({"bottom": "17px"});
+    $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
+}
+
+function showSelectedGraphs() {
+    alert('Not implemented, sorry');
+}
+
+function unselectGraphs() {
+    alert('Not implemented, sorry');
+}
+
 var group_data = {
 {% for g_tag, g in cmp_view.groups.items %}
  '{{ g.id }}' : { title: '{{ g.group_obj.title }}', sections: {{ g.num_sections }} },
@@ -290,9 +341,16 @@ var sect_data = {
      },{% endfor %}{% endfor %}
 };
 
+var plotsTitles = {};
+Object.values(sect_data).forEach(function(element) {
+    plotsTitles[element['s_id']] = element['title'];
+});
+
 $(document).ready(function() {
 
     var main = $('#main_content_container');
+    var panel = $('#panel_id');
+    panel.hide();
 
     Object.keys(group_data).map(g_id => {
         var g = group_data[g_id];
@@ -311,6 +369,7 @@ $(document).ready(function() {
         s.chart_rendered = false;
         s.table_rendered = false;
         s.table_hidden = false;
+        s.section_hidden = false;
 
         var chart_div = (s.chart_type !== NOCHART) ?
             `<div id="chart_${s_id}" class='pt_chart'>Loading chart...</div>` : "";
@@ -319,11 +378,12 @@ $(document).ready(function() {
             `<a id="survey_label_${s_id}" onclick="pt_charts_label_data(${s.s_id})" title="Label data"><span class="glyphicon glyphicon-tag"/></a>` : "";
 
         $(`#data_${s.g_id}`).append(
-           `<span><h4 style="display: inline">${s.title}</h4>
+           `<div class="graph__container_${s_id}">
+            <span><h4 style="display: inline">${s.title}</h4>
             <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
-            ${label_div}</span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div>`
+            ${label_div}</span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div></div>`
         );
         $(`#survey_label_${s_id}`).hide();
     });
@@ -335,7 +395,78 @@ $(document).ready(function() {
     $(window).on('DOMContentLoaded load resize scroll', delayed_render);
     $('.collapse').on("shown.bs.collapse hidden.bs.collapse", delayed_render);
     delayed_render();
+
+    $('.panel__btn_toggle').click(function () {
+        if (!(panel.is(":hidden"))) {
+          panel.removeClass('panel_pinned');
+          hidePanel();
+        } else {
+          panel.addClass('panel_pinned');
+          showPanel()();
+        }
+    });
+
+    panel.mouseleave(function () {
+        if (!(panel.is(":hidden")) && !(panel.hasClass('panel_pinned'))) {
+          hidePanel();
+        }
+    });
+
+    $(".panel__show_cntl").hover(function() {
+        if ((panel.is(":hidden")) && !(panel.hasClass('panel_pinned'))) {
+            showPanel();
+        }
+    });
+
+    var keyUpStack = [];
+    $(".panel__input-search_text").keyup(function(e) {
+        keyUpStack.push(1);
+        $('h4').unmark();
+
+        setTimeout(function() {
+            keyUpStack.pop();
+
+            if(keyUpStack.length === 0) {
+                var buf = this.value;
+
+                var filteredList = {};
+                var plotsToShow = {};
+                Object.keys(plotsTitles).forEach(function(key) {
+                    if(!plotsTitles[key].replace(/\s/g, '').includes(buf.replace(/\s/g, ''))) {
+                        filteredList[key] = plotsTitles[key];
+                    }
+                });
+
+                Object.keys(plotsTitles).forEach(function(key) {
+                    if(plotsTitles[key].replace(/\s/g, '').includes(buf.replace(/\s/g, ''))) {
+                        plotsToShow[key] = plotsTitles[key];
+                    }
+                });
+
+                if(this.value.length >= 3) {
+                    Object.keys(filteredList).forEach(function(key) {
+                        sect_data[key].section_hidden = true;
+                        $('.graph__container_' + key).hide();
+                    });
+                } else if(e.keyCode === 13) {
+                    Object.keys(filteredList).forEach(function(key) {
+                        sect_data[key].section_hidden = true;
+                        $('.graph__container_' + key).hide();
+                    });
+                }
+
+                Object.keys(plotsToShow).forEach(function(key) {
+                    sect_data[key].section_hidden = false;
+                    $('.graph__container_' + key).show();
+                });
+                $('h4').mark(buf, {
+                    "accuracy": "partially",
+                    "separateWordSearch": false,
+                });
+                delayed_render();
+            }
+        }.bind(this), 300);
+    });
 });
 </script>
-
 {% endblock %}
