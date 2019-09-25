@@ -526,6 +526,9 @@ class PTComparisonServSideGroupView:
                 if s.title == "":
                     s.title = "Tests results"
 
+    @property
+    def num_sections(self):
+        return len(self.sections)
 
 class PTComparisonServSideView:
     def __init__(self, cmp_obj, section_ids=None):

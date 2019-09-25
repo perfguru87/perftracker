@@ -109,6 +109,7 @@ class TestModel(models.Model):
         self.less_better = j.get_bool('less_better')
         self.begin = j.get_datetime('begin')
         self.end = j.get_datetime('end')
+        self.loops = j.get_int('loops')
         self.status = j.get_str('status', "SUCCESS")
         if self.status not in TEST_STATUSES:
             raise SuspiciousOperation("invalid 'status' value '%s', must be one of: %s" % (self.status, str(TEST_STATUSES)))
