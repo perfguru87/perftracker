@@ -743,6 +743,7 @@ function pt_cmp_configure_table(container, table_id, job_titles, pageable, data,
     };
 
     if (tag_modifier) {  // override tag column rendering
+        tableOpts.columnDefs = tableOpts.columnDefs.map(def => def); // new array, old values
         tableOpts.columnDefs[0] = Object.assign({}, tableOpts.columnDefs[0], {
             "render": function (data, type, row) {
                 return tag_modifier(data);
