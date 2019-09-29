@@ -137,17 +137,16 @@ class JobModel(models.Model):
 
         self.deleted = False
 
-        if append and j.get_bool('is_edited') == False:
-            if self.duration:
-                self.duration += end - begin
-            else:
-                self.duration = end - begin
-            if not self.begin:
-                self.begin = begin
-            self.end = end
-        else:
+        if not append or j.get_bool('is_edited') or not self.duration or not self.begin:
             self.duration = end - begin
             self.begin = begin
+            self.end = end
+        else:
+            # job is being appended, do correct duration math
+            if self.end < begin:  # 1st upload
+                self.duration += end - begin
+            else:  # subsequent upload
+                self.duration += end - self.end
             self.end = end
 
 
@@ -222,12 +221,22 @@ class JobModel(models.Model):
         verbose_name_plural = "Jobs"
 
 
+def handle_job_duration(job):
+    if not job.duration:
+        return 0
+    dur = int(round(job.duration.total_seconds()))
+    if not job.begin or not job.end:
+        return dur
+    maxdur = int(round((job.end - job.begin).total_seconds()))
+    return min(dur, maxdur)
+
+
 class JobBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
     is_linked = serializers.SerializerMethodField()
     artifacts = serializers.SerializerMethodField()
     project = serializers.SerializerMethodField()
-    duration = PTDurationField()
+    duration = serializers.SerializerMethodField()
 
     def get_is_linked(self, job):
         return job.regression_linked is not None
@@ -254,6 +263,9 @@ class JobBaseSerializer(serializers.ModelSerializer):
                 continue
         return ArtifactMetaSerializer(artifacts, many=True).data
 
+    def get_duration(self, job):
+        return handle_job_duration(job)
+
 
 class JobSimpleSerializer(JobBaseSerializer):
     class Meta:
@@ -273,6 +285,11 @@ class JobNestedSerializer(JobBaseSerializer):
 
 
 class JobDetailedSerializer(serializers.ModelSerializer):
+    duration = serializers.SerializerMethodField()
+
+    def get_duration(self, job):
+        return handle_job_duration(job)
+
     class Meta:
         model = JobModel
         depth = 1

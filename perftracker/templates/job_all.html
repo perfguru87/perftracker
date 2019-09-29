@@ -22,7 +22,7 @@
       <th class='colProdVer'>Product ver</th>
       <th class='colRunTitle'>Test run title</th>
       <th class='colTestVer'>Test ver</th>
-      <th class='colDuration'>Dur (sec)</th>
+      <th class='colDuration'>Duration</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
@@ -40,7 +40,7 @@
       <th class='colProdVer'>Product ver</th>
       <th class='colRunTitle'>Test run title</th>
       <th class='colTestVer'>Test ver</th>
-      <th class='colDuration'>Dur (sec)</th>
+      <th class='colDuration'>Duration</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
@@ -246,6 +246,13 @@ $(document).ready(function() {
                 "type": "integer",
                 "render": function ( data, type, row ) {
                     return "<a href='/{0}/job/{1}'>{2}</a>".ptFormat(row.project.id, row.id, data);
+                },
+            },
+            {
+                "targets": "colDuration",
+                "type": "date",
+                "render": function ( data, type, row ) {
+                    return pt_dur2str(data);
                 },
             },
             {

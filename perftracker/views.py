@@ -275,7 +275,6 @@ def pt_job_id_html(request, project_id, job_id):
         raise Http404
 
     if request.GET.get('as_json', False):
-        j = JobDetailedSerializer(job).data
         resp = JsonResponse(JobDetailedSerializer(job, allow_null=False).data, safe=False, json_dumps_params={'indent': 2})
         resp['Content-Disposition'] = 'attachment; filename=%s.json' % job.pt_gen_filename()
         return resp
