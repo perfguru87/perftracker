@@ -1,51 +1,45 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import datetime
-import json
-import http.client
 import base64
+import http.client
+import json
+import logging
 
-import numpy as np
-from sklearn.metrics import mean_squared_error
-from statistics import mean
-
-from django.views.generic.base import TemplateView
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import SuspiciousOperation, ValidationError
+from django.db.models import Count
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import JsonResponse, Http404
 from django.template import RequestContext
 from django.template.response import TemplateResponse
-from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
-from django.http import JsonResponse, Http404
-from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
-from django.core.serializers import serialize
-from django.core.exceptions import SuspiciousOperation, ObjectDoesNotExist, ValidationError
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
 from django_datatables_view.base_datatable_view import BaseDatatableView
-from django.db.models import Q
-from django.db.models import Count
-from django.db.models.query import QuerySet
 
 from perftracker import __pt_version__
-from perftracker.models.project import ProjectModel
-from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, PTComparisonServSideView
-from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, PTRegressionServSideView
-from perftracker.models.comparison import PTCmpTableType, PTCmpChartType, PTCmpChartInclineType, CMP_CHART_INCLINES, PTComparisonChartTrainDataModel
-from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
+from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
+from perftracker.graphs_analysis import pt_comparison_graphs_analyze
+from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
+from perftracker.models.artifact import ArtifactMetaModel, ArtifactMetaSerializer
+from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, \
+    PTComparisonServSideView
+from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
+from perftracker.models.train_data import PTTrainDataModel, CHART_FUNCTION_TYPES, \
+    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesLocksTimeline
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, \
+    HwFarmNodesLocksTimeline
+from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
+from perftracker.models.project import ProjectModel
+from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, \
+    PTRegressionServSideView
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
-from perftracker.models.env_node import EnvNodeModel
-from perftracker.models.artifact import ArtifactMetaModel, ArtifactLinkModel, ArtifactMetaSerializer
-
-from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
-from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
 
-import logging
 logger = logging.getLogger(__name__)
 
 API_VER = '1.0'
@@ -170,12 +164,25 @@ def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, 
         return HttpResponseBadRequest("Wrong json")
 
     data = data[str(section_id)]
-    PTComparisonChartTrainDataModel.pt_validate_json(data)
+    PTTrainDataModel.pt_validate_json(data)
 
-    formatted_data = '|'.join([f'{x};{y}' for x, y in data['data']])
-    incline = ComparisonModel._pt_get_type(CMP_CHART_INCLINES, data, 'incline')
+    try:
+        formatted_data = '|'.join([f'{x};{y}' for x, y in data['data']])
+    except ValueError:
+        return HttpResponseBadRequest("Wrong data")
 
-    record = PTComparisonChartTrainDataModel(data=formatted_data, incline=incline)
+    function_type = ComparisonModel._pt_get_type(CHART_FUNCTION_TYPES, data, 'function_type')
+    outliers = ComparisonModel._pt_get_type(CHART_OUTLIERS, data, 'outliers')
+    oscillation = ComparisonModel._pt_get_type(CHART_OSCILLATION, data, 'oscillation')
+    anomaly = ComparisonModel._pt_get_type(CHART_ANOMALY, data, 'anomaly')
+
+    record = PTTrainDataModel(
+        data=formatted_data,
+        function_type=function_type,
+        outliers=outliers,
+        oscillation=oscillation,
+        anomaly=anomaly,
+    )
     record.save()
 
     return JsonResponse(data, safe=False)
@@ -183,74 +190,12 @@ def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, 
 
 @csrf_exempt
 def pt_comparison_analyze_json(request, api_ver, project_id, cmp_id):
-
     try:
         data = json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Wrong json")
 
-    round_to = 3
-    mse_categories = ('low', 'med', 'high')
-    mse_categories_amount = len(mse_categories)
-    mse_values = []
-    rv = {}
-
-    # coefficient belongs to (0, 1) for little outliers detection
-    # coefficient belongs to (1, +inf) for rough outliers detection
-    # default value is 1.
-    outlier_coefficient = 1.
-
-    for graph_id, graph_data in data.items():
-        try:
-            # point(x, y)
-            x_array = np.array([float(point[0]) for point in graph_data])
-            y_array = np.array([float(point[1]) for point in graph_data])
-        except (TypeError, KeyError):
-            continue
-
-        # desired equation: y = k * x + b
-        k, b = np.linalg.lstsq(np.vstack([x_array, np.ones(len(x_array))]).T, y_array, rcond=None)[0]
-
-        mean_y = mean(y_array)
-
-        # mse <=> normalized mean squared error
-        mse_absolute = mean_squared_error(y_array, [k * x + b for x in x_array])
-        mse = round(mse_absolute / (mean_y ** 2), round_to) if mean_y else 0
-        mse_values.append(mse)
-
-        if k > 0:
-            trend = "increase"
-        elif k < 0:
-            trend = "decrease"
-        else:
-            trend = "const"
-
-        outliers = []
-        for i, y in enumerate(y_array):
-            if abs(y - mean_y) >= 3 * np.std(y_array) * outlier_coefficient:
-                outliers.append(x_array[i])
-
-        rv[graph_id] = {
-            'incline': round(k, round_to),
-            'mean_counted': round(b, round_to),
-            'mse_absolute': round(mse_absolute, round_to),
-            'mean_true': round(mean_y, round_to),
-            'trend': trend,
-            'mse': mse,
-            'outliers': outliers
-        }
-
-    mse_values.sort()
-    boundaries = [mse_values[int(len(mse_values) / mse_categories_amount) * i] for i in range(1, mse_categories_amount)]
-    boundaries.append(mse_values[-1])
-
-    for graph_data in rv.values():
-        for category in range(mse_categories_amount):
-            if graph_data['mse'] <= boundaries[category]:
-                graph_data['mse_category'] = mse_categories[category]
-                break
-
-    return JsonResponse(rv, safe=False)
+    return JsonResponse(pt_comparison_graphs_analyze(data), safe=False)
 
 
 def pt_comparison_id_html(request, project_id, cmp_id):
@@ -266,7 +211,10 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                               'cmp_view': cmp_view,
                               'PTCmpChartType': PTCmpChartType,
                               'PTCmpTableType': PTCmpTableType,
-                              'CMP_CHART_INCLINES': CMP_CHART_INCLINES,
+                              'CHART_FUNCTION_TYPES': CHART_FUNCTION_TYPES,
+                              'CHART_OUTLIERS': CHART_OUTLIERS,
+                              'CHART_OSCILLATION': CHART_OSCILLATION,
+                              'CHART_ANOMALY': CHART_ANOMALY,
                               },
                       obj=obj)
 

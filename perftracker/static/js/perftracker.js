@@ -991,3 +991,80 @@ function pt_isInViewport(elem) {
 function pt_pluralize(count, noun, suffix = 's') {
     return `${count} ${noun}${count !== 1 ? suffix : ''}`;
 }
+
+function pt_charts_analyze() {
+    if (hide_charts_information) {
+        alert('Not implemented yet!');
+        return;
+    }
+    if (analyze_was_called) return;
+    analyze_was_called = true;
+
+    var payload = {};
+    Object.keys(sect_data).forEach(s_id => {
+        payload[s_id] = sect_data[s_id].series['0'].data;
+    });
+
+    $.ajax({
+        url: api_root + "/analyze",
+        data: JSON.stringify(payload),
+        type: 'POST',
+        timeout: 10000,
+        success: function (response) {
+            Object.keys(sect_data).forEach(s_id => {
+                sect_data[s_id].info = response[s_id];
+                $("#results_" + s_id).append(`<p>${JSON.stringify(response[s_id])}</p>`).hide().show('fast');
+            });
+        },
+        error: function (data, status, error) {
+            console.log(error);
+        }
+    });
+}
+
+function pt_charts_label_data(s_id) {
+
+    const survey = $(`#survey_${s_id}`);
+
+    if (survey.children().length !== 0) {
+        survey.is(':visible') ? survey.hide('fast') : survey.show('fast');
+        return;
+    }
+
+    Object.entries(graph_properties).forEach(([property, options]) => {
+        const selector_id = `${s_id}_${property}_selector`;
+        survey.append(`<p id="${selector_id}" class="pt_data_train"><b>${property}</b></p>`).hide().show('fast');
+        var labels = '';
+        options.forEach(option => {
+            labels += `<input type="radio" id="${selector_id}_${option}" name="${property}" value="${option}">` +
+                `<label for="${selector_id}_${option}">${option}</label>`;
+        });
+        $(`#${selector_id}`).append(labels).hide().show('fast');
+    });
+
+    survey.append(`<button onclick="pt_save_graph_properties(${s_id})"><b>Save</b></button>`);
+}
+
+function pt_save_graph_properties(s_id) {
+    labeled_data[s_id] = {data: sect_data[s_id].series['0'].data};
+    $('input:checked').each(function () {
+        labeled_data[s_id][$(this)['0'].name] = $(this)['0'].value;
+    });
+
+    $.ajax({
+        url: api_root + "/group/{0}/section/{1}/properties".ptFormat(0, s_id),
+        data: JSON.stringify(labeled_data),
+        type: 'POST',
+        timeout: 2000,
+        success: function (response) {
+            $(`#survey_${s_id}`).hide('fast');
+        },
+        error: function (data, status, error) {
+            console.log(data.responseText);
+        }
+    });
+}
+
+function pt_label_data() {
+    Object.keys(sect_data).filter(s_id => sect_data[s_id].chart_type !== NOCHART).forEach(pt_charts_label_data);
+}

@@ -1,23 +1,17 @@
-import uuid
-import itertools
 import json
 import re
 import uuid
 
-from datetime import timedelta
-from datetime import datetime
-
-from django.db import models
-from django.utils.dateparse import parse_datetime
-from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
-
+from django.db import models
+from django.utils import timezone
 from rest_framework import serializers
 
-from perftracker.models.project import ProjectModel, ProjectSerializer
-from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
-from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
 from perftracker.helpers import PTDurationField, PTJson
+from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
+from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, \
+    EnvNodeNestedSerializer
+from perftracker.models.project import ProjectModel, ProjectSerializer
 
 
 class JobModel(models.Model):

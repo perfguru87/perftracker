@@ -1,26 +1,19 @@
-import itertools
-import json
-import uuid
-
 from scipy import stats
 
-from datetime import timedelta
-from datetime import datetime
 from collections import OrderedDict
 
-from django.db import models
-from django.utils.dateparse import parse_datetime
-from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
-
+from django.db import models
+from django.utils import timezone
 from rest_framework import serializers
+from scipy import stats
 
+from perftracker.helpers import pt_float2human, pt_cut_common_sfx
+from perftracker.models.env_node import EnvNodeSimpleSerializer
 from perftracker.models.job import JobModel, JobSimpleSerializer
+from perftracker.models.project import ProjectModel, ProjectSerializer
 from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
-from perftracker.models.project import ProjectModel, ProjectSerializer
-from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer
-from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 
 
 class PTCmpChartType:
@@ -568,32 +561,3 @@ class PTComparisonServSideView:
 
         for g in self.groups.values():
             g.pt_init_chart_and_table()
-
-
-class PTCmpChartInclineType:
-    NOT_SPECIFIED = 0
-    CONST = 1
-    INCREASE = 2
-    DECREASE = 3
-
-
-CMP_CHART_INCLINES = (
-    (PTCmpChartInclineType.NOT_SPECIFIED, 'Not specified'),
-    (PTCmpChartInclineType.CONST, 'Constant'),
-    (PTCmpChartInclineType.INCREASE, 'Increase'),
-    (PTCmpChartInclineType.DECREASE, 'Decrease')
-)
-
-
-class PTComparisonChartTrainDataModel(models.Model):
-    data = models.CharField(max_length=1024)
-    incline = models.IntegerField(help_text="Incline type", default=0, choices=CMP_CHART_INCLINES)
-
-    @staticmethod
-    def pt_validate_json(json_data):
-        if 'data' not in json_data:
-            raise SuspiciousOperation("Chart data is not specified: it must be 'data': <dict>")
-        if type(json_data['data']) is not list:
-            raise SuspiciousOperation("Chart data must be a dict: 'data': <dict> ")
-        if 'incline' not in json_data:
-            raise SuspiciousOperation("Graph incline is not specified: it must be 'incline': <int> ")

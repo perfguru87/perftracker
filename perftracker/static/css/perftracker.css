@@ -447,6 +447,23 @@ input[type=file] {
   }
 }
 
+.pt_data_train input[type="radio"]{
+  visibility: hidden;
+}
+
+.pt_data_train label {
+  text-align: center;
+  cursor: pointer;
+  background-color: #f7f7f7;
+  color: #2d2d2d;
+  padding: 5px 10px;
+  border-radius: 3px;
+}
+
+.pt_data_train input[type="radio"]:checked + label{
+  background-color: #aac8f0;
+}
+
 /* Lock type selector */
 .lock-type-picker .divider { margin: 0px 0px; }
 .lock-type-picker .lock-types { padding: 3px; }
