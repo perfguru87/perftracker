@@ -30,6 +30,7 @@
 <span style="float: right">
   <a onclick="show_all_tables()">Show tables</a>
   <a onclick="hide_all_tables()">Hide tables</a>
+  <a onclick="analyze()">Analyze</a>
 </span>
 
 <div id="main_content_container"></div>
@@ -171,6 +172,82 @@ function delayed_render() {
     });
 }
 
+var analyze_was_called = false;
+
+function analyze() {
+    if (analyze_was_called === true) return;
+    else analyze_was_called = true;
+
+    var payload = {};
+    Object.keys(sect_data).map(s_id => {
+        payload[s_id] = sect_data[s_id].series['0'].data;
+    });
+
+    $.ajax({
+        url: api_root + "/analyze",
+        data: JSON.stringify(payload),
+        type: 'POST',
+        timeout: 10000,
+        success: function (response) {
+            Object.keys(sect_data).map(s_id => {
+                sect_data[s_id].info = response[s_id];
+                $("#results_" + s_id).append(`<p>${JSON.stringify(response[s_id])}</p>`).hide().show('slow');
+            });
+        },
+        error: function (data, status, error) {
+            console.log(error);
+        }
+    });
+}
+
+var labeled_data = {};
+
+function label_data(s_id) {
+    labeled_data[s_id] = {data: sect_data[s_id].series['0'].data};
+
+    var div_to_append = $('#results_' + s_id);
+
+    var selectList = document.createElement('select');
+    selectList.setAttribute('id', `incline_selector_${s_id}`);
+    div_to_append.append(selectList);
+
+    for (var i = 0; i < graph_properties.length; i++) {
+        var option = document.createElement('option');
+        option.setAttribute('value', graph_properties[i]);
+        option.text = graph_properties[i];
+        selectList.appendChild(option);
+    }
+
+    div_to_append.append(`<button onclick="save_graph_properties(${s_id})">Save</button>`);
+}
+
+function set_checkbox_value(checkbox, key, s_id) {
+    labeled_data[s_id][key] = checkbox.checked;
+}
+
+function save_graph_properties(s_id) {
+    labeled_data[s_id].incline = $(`#incline_selector_${s_id}`).find(':selected').text();
+
+    $.ajax({
+        url: api_root + "/group/{0}/section/{1}/properties".ptFormat(0, s_id),
+        data: JSON.stringify(labeled_data),
+        type: 'POST',
+        timeout: 2000,
+        success: function (response) {
+            console.log(response);
+        },
+        error: function (data, status, error) {
+            console.log(error);
+        }
+    });
+}
+
+var graph_properties = [
+    {% for value, text in CMP_CHART_INCLINES %}
+        '{{ text }}',
+    {% endfor %}
+];
+
 var group_data = {
 {% for g_tag, g in cmp_view.groups.items %}
  '{{ g.id }}' : { title: '{{ g.group_obj.title }}', sections: {{ g.num_sections }} },
@@ -220,6 +297,7 @@ $(document).ready(function() {
             <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
+            <a onclick="label_data(${s.s_id})" title="Label data"><span class="glyphicon glyphicon-tag"/></a>
             </span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ></div>`
         );
     });

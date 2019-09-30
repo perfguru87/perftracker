@@ -6,6 +6,10 @@ import json
 import http.client
 import base64
 
+import numpy as np
+from sklearn.metrics import mean_squared_error
+from statistics import mean
+
 from django.views.generic.base import TemplateView
 from django.template import RequestContext
 from django.template.response import TemplateResponse
@@ -27,7 +31,7 @@ from perftracker import __pt_version__
 from perftracker.models.project import ProjectModel
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, PTComparisonServSideView
 from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, PTRegressionServSideView
-from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
+from perftracker.models.comparison import PTCmpTableType, PTCmpChartType, PTCmpChartInclineType, CMP_CHART_INCLINES, PTComparisonChartTrainDataModel
 from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
@@ -158,6 +162,97 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
     return JsonResponse(ret, safe=False)
 
 
+@csrf_exempt
+def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, group_id, section_id):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Wrong json")
+
+    data = data[str(section_id)]
+    PTComparisonChartTrainDataModel.pt_validate_json(data)
+
+    formatted_data = '|'.join([f'{x};{y}' for x, y in data['data']])
+    incline = ComparisonModel._pt_get_type(CMP_CHART_INCLINES, data, 'incline')
+
+    record = PTComparisonChartTrainDataModel(data=formatted_data, incline=incline)
+    record.save()
+
+    return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+def pt_comparison_analyze_json(request, api_ver, project_id, cmp_id):
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Wrong json")
+
+    round_to = 3
+    mse_categories = ('low', 'med', 'high')
+    mse_categories_amount = len(mse_categories)
+    mse_values = []
+    rv = {}
+
+    # coefficient belongs to (0, 1) for little outliers detection
+    # coefficient belongs to (1, +inf) for rough outliers detection
+    # default value is 1.
+    outlier_coefficient = 1.
+
+    for graph_id, graph_data in data.items():
+        try:
+            # point(x, y)
+            x_array = np.array([float(point[0]) for point in graph_data])
+            y_array = np.array([float(point[1]) for point in graph_data])
+        except (TypeError, KeyError):
+            continue
+
+        # desired equation: y = k * x + b
+        k, b = np.linalg.lstsq(np.vstack([x_array, np.ones(len(x_array))]).T, y_array, rcond=None)[0]
+
+        mean_y = mean(y_array)
+
+        # mse <=> normalized mean squared error
+        mse_absolute = mean_squared_error(y_array, [k * x + b for x in x_array])
+        mse = round(mse_absolute / (mean_y ** 2), round_to) if mean_y else 0
+        mse_values.append(mse)
+
+        if k > 0:
+            trend = "increase"
+        elif k < 0:
+            trend = "decrease"
+        else:
+            trend = "const"
+
+        outliers = []
+        for i, y in enumerate(y_array):
+            if abs(y - mean_y) >= 3 * np.std(y_array) * outlier_coefficient:
+                outliers.append(x_array[i])
+
+        rv[graph_id] = {
+            'incline': round(k, round_to),
+            'mean_counted': round(b, round_to),
+            'mse_absolute': round(mse_absolute, round_to),
+            'mean_true': round(mean_y, round_to),
+            'trend': trend,
+            'mse': mse,
+            'outliers': outliers
+        }
+
+    mse_values.sort()
+    boundaries = [mse_values[int(len(mse_values) / mse_categories_amount) * i] for i in range(1, mse_categories_amount)]
+    boundaries.append(mse_values[-1])
+
+    for graph_data in rv.values():
+        for category in range(mse_categories_amount):
+            if graph_data['mse'] <= boundaries[category]:
+                graph_data['mse_category'] = mse_categories[category]
+                break
+
+    return JsonResponse(rv, safe=False)
+
+
 def pt_comparison_id_html(request, project_id, cmp_id):
     try:
         obj = ComparisonModel.objects.get(pk=cmp_id)
@@ -170,7 +265,8 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                       params={'jobs': cmp_view.job_objs,
                               'cmp_view': cmp_view,
                               'PTCmpChartType': PTCmpChartType,
-                              'PTCmpTableType': PTCmpTableType
+                              'PTCmpTableType': PTCmpTableType,
+                              'CMP_CHART_INCLINES': CMP_CHART_INCLINES,
                               },
                       obj=obj)
 

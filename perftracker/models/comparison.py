@@ -568,3 +568,32 @@ class PTComparisonServSideView:
 
         for g in self.groups.values():
             g.pt_init_chart_and_table()
+
+
+class PTCmpChartInclineType:
+    NOT_SPECIFIED = 0
+    CONST = 1
+    INCREASE = 2
+    DECREASE = 3
+
+
+CMP_CHART_INCLINES = (
+    (PTCmpChartInclineType.NOT_SPECIFIED, 'Not specified'),
+    (PTCmpChartInclineType.CONST, 'Constant'),
+    (PTCmpChartInclineType.INCREASE, 'Increase'),
+    (PTCmpChartInclineType.DECREASE, 'Decrease')
+)
+
+
+class PTComparisonChartTrainDataModel(models.Model):
+    data = models.CharField(max_length=1024)
+    incline = models.IntegerField(help_text="Incline type", default=0, choices=CMP_CHART_INCLINES)
+
+    @staticmethod
+    def pt_validate_json(json_data):
+        if 'data' not in json_data:
+            raise SuspiciousOperation("Chart data is not specified: it must be 'data': <dict>")
+        if type(json_data['data']) is not list:
+            raise SuspiciousOperation("Chart data must be a dict: 'data': <dict> ")
+        if 'incline' not in json_data:
+            raise SuspiciousOperation("Graph incline is not specified: it must be 'incline': <int> ")
