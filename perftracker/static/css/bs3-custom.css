@@ -83,8 +83,6 @@ Panel styles
   min-width: 0;
   text-overflow: ellipsis;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  /*position: fixed;*/
-  /*width: 100%;*/
   border-radius: 0;
   border-top: 1px solid #b0b5b1;
   left: 0;
@@ -159,20 +157,20 @@ Go To button styles: BEGIN
 }
 
 .panel_dropup-content {
-    display: none;
-    position: absolute;
-    font-weight: bold;
-    bottom: 128px;
-    right: 16%;
-    background-color: #f0f0f0;
-    border: 1px solid #b0b5b1;
-    min-width: 200px;
-    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
-    z-index: 1;
-    width: 10%;
-    height: 150%;
-    overflow-y: auto;
-    overflow-x: hidden;
+  display: none;
+  position: absolute;
+  font-weight: bold;
+  bottom: 128px;
+  right: 16%;
+  background-color: #f0f0f0;
+  border: 1px solid #b0b5b1;
+  min-width: 200px;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+  z-index: 1;
+  width: 10%;
+  height: 150%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .panel_dropup-content a {
@@ -183,7 +181,9 @@ Go To button styles: BEGIN
   font-size: 1.5rem;
 }
 
-.panel_dropup-content a:hover {background-color: rgba(0, 0, 0, 0.3)}
+.panel_dropup-content a:hover {
+  background-color: rgba(0, 0, 0, 0.3)
+}
 
 .panel__unit_go-to:hover .panel_dropup-content {
   display: block;
@@ -212,8 +212,8 @@ Go To button styles: END
   position: fixed;
     height: 15px;
     background-color: #cfccc4;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    margin-bottom: 0px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-bottom: 0;
 }

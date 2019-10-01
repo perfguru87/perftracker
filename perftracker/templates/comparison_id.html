@@ -34,13 +34,13 @@
 <nav class="navbar-default navbar-fixed-bottom panel">
   <div class="panel__unit_hide-tables">
         <h4><button onclick="hide_all_tables()">Hide tables</button></h4>
-    </div>
-    <div class="panel__unit_show-tables">
-        <h4><button onclick="show_all_tables()">Show tables</button></h4>
-    </div>
-    <div class="panel__unit_go-to">
-        <button class="panel__btn_drop">Group...</button>
-        <div class="panel_dropup-content">
+  </div>
+  <div class="panel__unit_show-tables">
+      <h4><button onclick="show_all_tables()">Show tables</button></h4>
+  </div>
+  <div class="panel__unit_go-to">
+      <button class="panel__btn_drop">Group...</button>
+      <div class="panel_dropup-content">
           {% for g_tag, g in cmp_view.groups.items %}
             {% if g.group_obj.title|length %}
               <a href="#g_{{ g.id }}">{{ g.group_obj.title }}</a>
@@ -48,8 +48,8 @@
               <a href="#g_{{ g.id }}">Undefined</a>
             {% endif %}
           {% endfor %}
-        </div>
-    </div>
+      </div>
+  </div>
 </nav>
 
 <div class="panel__show_cntl"></div>
@@ -191,6 +191,20 @@ function delayed_render() {
     });
 }
 
+function showPanel() {
+    $('.panel').removeClass('panel_hidden').addClass('panel_opened');
+    $('.panel').show(0);
+    $('.panel__btn_toggle').css({"bottom": "130px"});
+    $("i.fa.fa-angle-up").replaceWith('<i class="fa fa-angle-down"></i>');
+}
+
+function hidePanel() {
+    $('.panel').removeClass('panel_opened').addClass('panel_hidden');
+    $('.panel').hide(0);
+    $('.panel__btn_toggle').css({"bottom": "15px"});
+    $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
+}
+
 var group_data = {
 {% for g_tag, g in cmp_view.groups.items %}
  '{{ g.id }}' : { title: '{{ g.group_obj.title }}' },
@@ -255,33 +269,23 @@ $(document).ready(function() {
 
     $('.panel__btn_toggle').click(function () {
         if ($('.panel').hasClass('panel_opened')) {
-          $('.panel').removeClass('panel_opened').addClass('panel_hidden').removeClass('panel_pinned');
-          $('.panel').hide(0);
-          $(this).css({"bottom": "15px"});
-          $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
+          $('.panel').removeClass('panel_pinned');
+          hidePanel();
         } else {
-          $('.panel').removeClass('panel_hidden').addClass('panel_opened').addClass('panel_pinned');
-          $('.panel').show(0);
-          $(this).css({"bottom": "130px"});
-          $("i.fa.fa-angle-up").replaceWith('<i class="fa fa-angle-down"></i>');
+          $('.panel').addClass('panel_pinned');
+          showPanel()();
         }
     });
 
     $('.panel').mouseleave(function () {
         if ($('.panel').hasClass('panel_opened') && !($('.panel').hasClass('panel_pinned'))) {
-          $('.panel').removeClass('panel_opened').addClass('panel_hidden');
-          $('.panel').hide(0);
-          $('.panel__btn_toggle').css({"bottom": "15px"});
-          $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
+          hidePanel();
         }
     });
 
     $(".panel__show_cntl").hover(function() {
         if (!($('.panel').hasClass('panel_opened')) && !($('.panel').hasClass('panel_pinned'))) {
-            $('.panel').removeClass('panel_hidden').addClass('panel_opened');
-            $('.panel').show(0);
-            $('.panel__btn_toggle').css({"bottom": "130px"});
-            $("i.fa.fa-angle-up").replaceWith('<i class="fa fa-angle-down"></i>');
+            showPanel();
         }
     });
 });
