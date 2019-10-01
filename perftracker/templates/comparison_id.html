@@ -32,14 +32,20 @@
 
 <button class="panel__btn_toggle"><i class="fa fa-angle-up"></i></button>
 <nav class="navbar-default navbar-fixed-bottom panel">
-  <div class="panel__unit_hide-tables">
-        <h4><button onclick="hide_all_tables()">Hide tables</button></h4>
+  <div class="panel__button-controller panel__unit_hide-tables">
+      <h4><button onclick="hide_all_tables()">Hide tables</button></h4>
   </div>
-  <div class="panel__unit_show-tables">
+  <div class="panel__button-controller panel__unit_show-tables">
       <h4><button onclick="show_all_tables()">Show tables</button></h4>
   </div>
-  <div class="panel__unit_go-to">
-      <button class="panel__btn_drop">Group...</button>
+  <div class="panel__button-controller panel__unit_unselect">
+      <h4><button onclick="unselectGraphs()">Unselect All</button></h4>
+  </div>
+  <div class="panel__button-controller panel__unit_show-selected">
+      <h4><button onclick="showSelectedGraphs()">Show Selected Only</button></h4>
+  </div>
+  <div class="panel__button-controller panel__unit_go-to">
+      <h4><button>Group...</button></h4>
       <div class="panel_dropup-content">
           {% for g_tag, g in cmp_view.groups.items %}
             {% if g.group_obj.title|length %}
@@ -203,6 +209,14 @@ function hidePanel() {
     $('.panel').hide(0);
     $('.panel__btn_toggle').css({"bottom": "15px"});
     $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
+}
+
+function showSelectedGraphs() {
+    alert('Not implemented, sorry');
+}
+
+function unselectGraphs() {
+    alert('Not implemented, sorry');
 }
 
 var group_data = {

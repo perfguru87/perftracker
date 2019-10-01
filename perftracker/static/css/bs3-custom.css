@@ -76,7 +76,7 @@ Panel styles
 .panel {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(6, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   grid-row-gap: 2px;
   align-items: center;
   min-height: 0;
@@ -120,48 +120,37 @@ Panel styles
   overflow: hidden;
 }
 
+.panel__unit_show-selected {
+  grid-area: 1/2/2/3;
+  overflow: hidden;
+}
+
+.panel__unit_unselect {
+  grid-area: 2/2/3/3;
+  overflow: hidden;
+}
+
 span.input-group.input-group-sm.mb-3 input[class="form-control"] {
   border-radius: 10px;
 }
 
 .panel h4 {
-  margin: 0 0 0 4px;
+  margin: 4px 0 0 4px;
 }
 
 .panel__btn_drop {
   margin: 0 0 0 4px;
-}
-
-.panel__unit_hide-tables button {
-  background-color: transparent;
-  border: none;
-}
-
-.panel__unit_show-tables button {
-  background-color: transparent;
-  border: none;
 }
 
 /*
 Go To button styles: BEGIN
 */
-
-.panel__btn_drop {
-  background-color: transparent;
-  color: #333333;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  padding: 0;
-  font-weight: 500;
-  font-size: 13px;
-  border: none;
-}
-
 .panel_dropup-content {
   display: none;
   position: absolute;
   font-weight: bold;
-  bottom: 128px;
-  right: 16%;
+  bottom: 126px;
+  right: 12%;
   background-color: #f0f0f0;
   border: 1px solid #b0b5b1;
   min-width: 200px;
@@ -216,4 +205,17 @@ Go To button styles: END
     left: 0;
     right: 0;
     margin-bottom: 0;
+}
+
+.panel__button-controller button {
+  padding: 8px 20px;
+  width: 60%;
+  background-color: transparent;
+  border: 1px solid #333333;
+  border-radius: 3px;
+}
+
+.panel__button-controller button:hover {
+  background-color: #414854;
+  color: #fff;
 }
