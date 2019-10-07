@@ -42,7 +42,7 @@
       <h4><button onclick="unselectGraphs()">Unselect All</button></h4>
   </div>
   <div class="panel__button-controller panel__unit_show-selected">
-      <h4><button onclick="showSelectedGraphs()">Show Selected Only</button></h4>
+      <h4><button onclick="showSelectedGraphs()">Show Selected</button></h4>
   </div>
   <div class="panel__button-controller panel__unit_go-to">
       <h4><button>Group...</button></h4>
@@ -203,7 +203,7 @@ function showPanel() {
 function hidePanel() {
     var panel = $('#panel_id');
     panel.hide(0);
-    $('.panel__btn_toggle').css({"bottom": "15px"});
+    $('.panel__btn_toggle').css({"bottom": "20px"});
     $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
 }
 
@@ -238,7 +238,7 @@ $(document).ready(function() {
 
     var main = $('#main_content_container');
     var panel = $('#panel_id');
-    $('#panel_id').hide();
+    panel.hide();
 
     Object.keys(group_data).map(g_id => {
         var g = group_data[g_id];

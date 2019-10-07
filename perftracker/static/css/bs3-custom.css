@@ -95,7 +95,7 @@ Panel styles
 
 .panel__btn_toggle {
   position: fixed;
-  bottom: 15px;
+  bottom: 20px;
   right: 2%;
   width: 4%;
   height: 2%;
@@ -160,7 +160,7 @@ Go To button styles: BEGIN
   width: 10%;
   height: 150%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 .panel_dropup-content a {
@@ -195,13 +195,13 @@ Go To button styles: END
   }
 
   .panel h4 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 }
 
 .panel__show_cntl {
   position: fixed;
-  height: 15px;
+  height: 20px;
   background-color: #cfccc4;
   bottom: 0;
   left: 0;
@@ -211,6 +211,7 @@ Go To button styles: END
 
 .panel__button-controller button {
   padding: 8px 20px;
+  text-align: center;
   width: 60%;
   background-color: transparent;
   border: 1px solid #333333;
