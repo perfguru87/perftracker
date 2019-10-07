@@ -30,7 +30,7 @@
 <span style="float: right">
   <a onclick="show_all_tables()">Show tables</a>
   <a onclick="hide_all_tables()">Hide tables</a>
-  <a onclick="pt_charts_analyze()">Analyze</a>
+  <a id="analyze_button" onclick="pt_charts_analyze()">Analyze</a>
   <a onclick="pt_label_data()">Label data</a>
 </span>
 
@@ -65,6 +65,8 @@ var api_root = "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}";
 var all_jobs = [{% for job in jobs %}"{{ job.calculated_legend|default:job.title }}", {% endfor %}];
 const NOCHART = {{ PTCmpChartType.NOCHART }};
 const NOTABLE = {{ PTCmpTableType.HIDE }};
+const production_mode = true;
+var labeled_data = {};
 
 function hide_all_tables() {
     Object.keys(sect_data).forEach(hide_table);
@@ -173,9 +175,89 @@ function delayed_render() {
     });
 }
 
-var analyze_was_called = false;
-var hide_charts_information = false;
-var labeled_data = {};
+function pt_charts_analyze() {
+    if (production_mode) {
+        alert('Not available in production mode!');
+        return;
+    }
+    $('#analyze_button').hide('fast');
+
+    var payload = {};
+    Object.keys(sect_data).forEach(s_id => {
+        payload[s_id] = sect_data[s_id].series[0].data;
+    });
+
+    $.ajax({
+        url: api_root + "/analyze",
+        contentType: "application/json",
+        data: JSON.stringify(payload),
+        type: 'POST',
+        timeout: 10000,
+        success: function (response) {
+            Object.keys(sect_data).forEach(s_id => {
+                sect_data[s_id].info = response[s_id];
+                $("#results_" + s_id).append(`<p>${JSON.stringify(response[s_id])}</p>`).hide().show('fast');
+            });
+        },
+        error: function (data, status, error) {
+            console.log(error);
+        }
+    });
+}
+
+function pt_charts_label_data(s_id) {
+
+    if (sect_data[s_id].series.length > 1) {
+        console.log('Method not allowed');
+        return;
+    }
+
+    const survey = $(`#survey_${s_id}`);
+
+    if (survey.children().length !== 0) {
+        survey.is(':visible') ? survey.hide('fast') : survey.show('fast');
+        return;
+    }
+
+    Object.entries(graph_properties).forEach(([property, options]) => {
+        const selector_id = `${s_id}_${property}_selector`;
+        survey.append(`<p id="${selector_id}" class="pt_data_train"><b>${property}</b></p>`).hide().show('fast');
+        var labels = '';
+        options.forEach(option => {
+            labels += `<input type="radio" id="${selector_id}_${option}" name="${property}" value="${option}">` +
+                `<label for="${selector_id}_${option}">${option}</label>`;
+        });
+        $(`#${selector_id}`).append(labels).hide().show('fast');
+    });
+
+    survey.append(`<button onclick="pt_save_graph_properties(${s_id})"><b>Save</b></button>`);
+}
+
+function pt_save_graph_properties(s_id) {
+    labeled_data[s_id] = {points: sect_data[s_id].series[0].data};
+    $('input:checked').each(function () {
+        labeled_data[s_id][$(this)[0].name] = $(this)[0].value;
+    });
+
+    $.ajax({
+        url: api_root + "/group/{0}/section/{1}/properties".ptFormat(0, s_id),
+        contentType: "application/json",
+        data: JSON.stringify(labeled_data),
+        type: 'PUT',
+        timeout: 2000,
+        success: function (response) {
+            $(`#survey_${s_id}`).hide('fast');
+        },
+        error: function (data, status, error) {
+            console.log(data.responseText);
+        }
+    });
+}
+
+function pt_label_data() {
+    Object.keys(sect_data).filter(s_id => sect_data[s_id].chart_type !== NOCHART).forEach(pt_charts_label_data);
+}
+
 var graph_properties = {
     function_types: [{% for _, text in CHART_FUNCTION_TYPES %} '{{ text }}', {% endfor %}],
     outliers: [{% for _, text in CHART_OUTLIERS %} '{{ text }}', {% endfor %}],

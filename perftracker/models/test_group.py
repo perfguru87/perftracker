@@ -1,22 +1,6 @@
-import numpy
-import uuid
-import itertools
-import json
-from functools import reduce
-
-from datetime import timedelta
-from datetime import datetime
-
 from django.db import models
-from django.utils.dateparse import parse_datetime
-from django.apps import apps
-from django.db.models import Q
-from django.core.exceptions import SuspiciousOperation
 
 from rest_framework import serializers
-
-from perftracker.models.job import JobModel
-from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, pt_is_valid_uuid
 
 TEST_GROUP_TAG_LENGTH = 128
 

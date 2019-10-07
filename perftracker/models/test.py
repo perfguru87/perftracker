@@ -1,24 +1,18 @@
-import numpy
-import uuid
 import itertools
 import json
-import copy
+import uuid
+from datetime import timedelta
 from functools import reduce
 
-from datetime import timedelta
-from datetime import datetime
-
-from django.db import models
-from django.utils.dateparse import parse_datetime
-from django.apps import apps
-from django.db.models import Q
+import numpy
 from django.core.exceptions import SuspiciousOperation, ValidationError
-
+from django.db import models
+from django.db.models import Q
 from rest_framework import serializers
 
+from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, PTJson, pt_is_valid_uuid
 from perftracker.models.job import JobModel
 from perftracker.models.test_group import TestGroupModel, TEST_GROUP_TAG_LENGTH
-from perftracker.helpers import PTDurationField, PTRoundedFloatField, PTRoundedFloatMKField, PTJson, pt_is_valid_uuid
 
 TEST_STATUSES = ['NOTTESTED', 'SKIPPED', 'INPROGRESS', 'SUCCESS', 'FAILED']
 

@@ -26,7 +26,7 @@ from perftracker.models.artifact import ArtifactMetaModel, ArtifactMetaSerialize
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, \
     PTComparisonServSideView
 from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
-from perftracker.models.train_data import PTTrainDataModel, CHART_FUNCTION_TYPES, \
+from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPES, \
     CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
@@ -164,24 +164,16 @@ def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, 
         return HttpResponseBadRequest("Wrong json")
 
     data = data[str(section_id)]
-    PTTrainDataModel.pt_validate_json(data)
+    TrainDataModel.pt_validate_json(data)
+    formatted_data, fails = TrainDataModel.pt_format_data(data)
 
-    try:
-        formatted_data = '|'.join([f'{x};{y}' for x, y in data['data']])
-    except ValueError:
-        return HttpResponseBadRequest("Wrong data")
-
-    function_type = ComparisonModel._pt_get_type(CHART_FUNCTION_TYPES, data, 'function_type')
-    outliers = ComparisonModel._pt_get_type(CHART_OUTLIERS, data, 'outliers')
-    oscillation = ComparisonModel._pt_get_type(CHART_OSCILLATION, data, 'oscillation')
-    anomaly = ComparisonModel._pt_get_type(CHART_ANOMALY, data, 'anomaly')
-
-    record = PTTrainDataModel(
+    record = TrainDataModel(
         data=formatted_data,
-        function_type=function_type,
-        outliers=outliers,
-        oscillation=oscillation,
-        anomaly=anomaly,
+        fails=fails,
+        function_type=ComparisonModel._pt_get_type(CHART_FUNCTION_TYPES, data, 'function_type'),
+        outliers=ComparisonModel._pt_get_type(CHART_OUTLIERS, data, 'outliers'),
+        oscillation=ComparisonModel._pt_get_type(CHART_OSCILLATION, data, 'oscillation'),
+        anomaly=ComparisonModel._pt_get_type(CHART_ANOMALY, data, 'anomaly'),
     )
     record.save()
 
