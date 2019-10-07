@@ -145,12 +145,13 @@ span.input-group.input-group-sm.mb-3 input[class="form-control"] {
 /*
 Go To button styles: BEGIN
 */
+
 .panel_dropup-content {
   display: none;
   position: absolute;
   font-weight: bold;
   bottom: 126px;
-  right: 12%;
+  margin-left: 4px;
   background-color: #f0f0f0;
   border: 1px solid #b0b5b1;
   min-width: 200px;
@@ -171,7 +172,8 @@ Go To button styles: BEGIN
 }
 
 .panel_dropup-content a:hover {
-  background-color: rgba(0, 0, 0, 0.3)
+  background-color: #414854;
+  color: white;
 }
 
 .panel__unit_go-to:hover .panel_dropup-content {
@@ -199,12 +201,12 @@ Go To button styles: END
 
 .panel__show_cntl {
   position: fixed;
-    height: 15px;
-    background-color: #cfccc4;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin-bottom: 0;
+  height: 15px;
+  background-color: #cfccc4;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin-bottom: 0;
 }
 
 .panel__button-controller button {

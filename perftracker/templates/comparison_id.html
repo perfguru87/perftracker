@@ -31,7 +31,7 @@
 <div id="main_content_container"></div>
 
 <button class="panel__btn_toggle"><i class="fa fa-angle-up"></i></button>
-<nav class="navbar-default navbar-fixed-bottom panel">
+<nav id="panel_id" class="navbar-default navbar-fixed-bottom panel">
   <div class="panel__button-controller panel__unit_hide-tables">
       <h4><button onclick="hide_all_tables()">Hide tables</button></h4>
   </div>
@@ -48,11 +48,7 @@
       <h4><button>Group...</button></h4>
       <div class="panel_dropup-content">
           {% for g_tag, g in cmp_view.groups.items %}
-            {% if g.group_obj.title|length %}
-              <a href="#g_{{ g.id }}">{{ g.group_obj.title }}</a>
-            {% else %}
-              <a href="#g_{{ g.id }}">Undefined</a>
-            {% endif %}
+              <a href="#g_{{ g.id }}">{{ g.group_obj.title|default:"undefined" }}</a>
           {% endfor %}
       </div>
   </div>
@@ -198,15 +194,15 @@ function delayed_render() {
 }
 
 function showPanel() {
-    $('.panel').removeClass('panel_hidden').addClass('panel_opened');
-    $('.panel').show(0);
+    var panel = $('#panel_id');
+    panel.show(0);
     $('.panel__btn_toggle').css({"bottom": "130px"});
     $("i.fa.fa-angle-up").replaceWith('<i class="fa fa-angle-down"></i>');
 }
 
 function hidePanel() {
-    $('.panel').removeClass('panel_opened').addClass('panel_hidden');
-    $('.panel').hide(0);
+    var panel = $('#panel_id');
+    panel.hide(0);
     $('.panel__btn_toggle').css({"bottom": "15px"});
     $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
 }
@@ -241,7 +237,8 @@ var sect_data = {
 $(document).ready(function() {
 
     var main = $('#main_content_container');
-    $('.panel').hide();
+    var panel = $('#panel_id');
+    $('#panel_id').hide();
 
     Object.keys(group_data).map(g_id => {
         var g = group_data[g_id];
@@ -282,23 +279,23 @@ $(document).ready(function() {
     delayed_render();
 
     $('.panel__btn_toggle').click(function () {
-        if ($('.panel').hasClass('panel_opened')) {
-          $('.panel').removeClass('panel_pinned');
+        if (!(panel.is(":hidden"))) {
+          panel.removeClass('panel_pinned');
           hidePanel();
         } else {
-          $('.panel').addClass('panel_pinned');
+          panel.addClass('panel_pinned');
           showPanel()();
         }
     });
 
-    $('.panel').mouseleave(function () {
-        if ($('.panel').hasClass('panel_opened') && !($('.panel').hasClass('panel_pinned'))) {
+    panel.mouseleave(function () {
+        if (!(panel.is(":hidden")) && !(panel.hasClass('panel_pinned'))) {
           hidePanel();
         }
     });
 
     $(".panel__show_cntl").hover(function() {
-        if (!($('.panel').hasClass('panel_opened')) && !($('.panel').hasClass('panel_pinned'))) {
+        if ((panel.is(":hidden")) && !(panel.hasClass('panel_pinned'))) {
             showPanel();
         }
     });
