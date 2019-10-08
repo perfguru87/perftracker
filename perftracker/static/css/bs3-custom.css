@@ -75,7 +75,7 @@ Panel styles
 
 .panel {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(3, 1fr);
   grid-row-gap: 2px;
   align-items: center;
@@ -95,7 +95,7 @@ Panel styles
 
 .panel__btn_toggle {
   position: fixed;
-  bottom: 20px;
+  bottom: 17px;
   right: 2%;
   width: 4%;
   height: 2%;
@@ -115,8 +115,14 @@ Panel styles
   overflow: hidden;
 }
 
+.panel__input-search {
+  grid-area: 2/4/3/5;
+  overflow: hidden;
+}
+
 .panel__unit_go-to {
   grid-area: 1/4/2/5;
+  width: 60%;
   overflow: hidden;
 }
 
@@ -201,8 +207,8 @@ Go To button styles: END
 
 .panel__show_cntl {
   position: fixed;
-  height: 20px;
-  background-color: #cfccc4;
+  height: 17px;
+  background-color: #f0f0f0;
   bottom: 0;
   left: 0;
   right: 0;
@@ -210,7 +216,7 @@ Go To button styles: END
 }
 
 .panel__button-controller button {
-  padding: 8px 20px;
+  padding: 8px 0px;
   text-align: center;
   width: 60%;
   background-color: transparent;
@@ -221,4 +227,17 @@ Go To button styles: END
 .panel__button-controller button:hover {
   background-color: #414854;
   color: #fff;
+}
+
+.panel__input-search input {
+  margin-left: 4px;
+  border: 1px solid #333333;
+  width: 60%;
+  background-color: transparent;
+  padding: 8px 8px;
+  border-radius: 3px;
+}
+
+.panel__button-controller.panel__unit_go-to button {
+  width: 100%;
 }

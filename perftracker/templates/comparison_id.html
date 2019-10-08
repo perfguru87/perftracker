@@ -52,6 +52,11 @@
           {% endfor %}
       </div>
   </div>
+  <div class="panel__input-search">
+      <span class="panel__input-search-span">
+          <input type="text" name="graphs-search" placeholder="search">
+      </span>
+  </div>
 </nav>
 
 <div class="panel__show_cntl"></div>
@@ -203,7 +208,7 @@ function showPanel() {
 function hidePanel() {
     var panel = $('#panel_id');
     panel.hide(0);
-    $('.panel__btn_toggle').css({"bottom": "20px"});
+    $('.panel__btn_toggle').css({"bottom": "17px"});
     $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
 }
 
