@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def pt_comparison_graphs_analyze(data):
+def pt_comparison_series_analyze(data):
     round_to = 3
     mse_categories = ('low', 'med', 'high')
     mse_categories_amount = len(mse_categories)
@@ -13,11 +13,11 @@ def pt_comparison_graphs_analyze(data):
     # default value is 1.
     outlier_coefficient = 1.
 
-    for graph_id, graph_data in data.items():
+    for s_id, s_data in data.items():
         try:
             # point(x, y)
-            x_array = np.array([float(point[0]) for point in graph_data])
-            y_array = np.array([float(point[1]) for point in graph_data])
+            x_array = np.array([float(point[0]) for point in s_data])
+            y_array = np.array([float(point[1]) for point in s_data])
         except (TypeError, KeyError):
             continue
 
@@ -32,26 +32,25 @@ def pt_comparison_graphs_analyze(data):
         mse = round(mse_absolute / (mean_y ** 2), round_to) if mean_y else 0
         mse_values.append(mse)
 
-        outliers = [x_array[i] for i, y in enumerate(y_array) if
-                    abs(y - mean_y) >= 3 * std_y * outlier_coefficient]
+        outliers = [x_array[i] for i, y in enumerate(y_array) if abs(y - mean_y) >= 3 * std_y * outlier_coefficient]
 
-        rv[graph_id] = {
+        rv[s_id] = {
             'incline': round(k, round_to),
             'mean_counted': round(b, round_to),
             'mse_absolute': round(mse_absolute, round_to),
             'mean_true': round(mean_y, round_to),
             'mse': mse,
-            'outliers': outliers
+            'outliers': outliers,
         }
 
     mse_values.sort()
     boundaries = [mse_values[int(len(mse_values) / mse_categories_amount) * i] for i in range(1, mse_categories_amount)]
     boundaries.append(mse_values[-1])
 
-    for graph_data in rv.values():
+    for s_data in rv.values():
         for category in range(mse_categories_amount):
-            if graph_data['mse'] <= boundaries[category]:
-                graph_data['mse_category'] = mse_categories[category]
+            if s_data['mse'] <= boundaries[category]:
+                s_data['mse_category'] = mse_categories[category]
                 break
 
     return rv

@@ -20,14 +20,12 @@ from django_datatables_view.base_datatable_view import BaseDatatableView
 
 from perftracker import __pt_version__
 from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
-from perftracker.graphs_analysis import pt_comparison_graphs_analyze
+from perftracker.series_analysis import pt_comparison_series_analyze
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 from perftracker.models.artifact import ArtifactMetaModel, ArtifactMetaSerializer
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, \
     PTComparisonServSideView
 from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
-from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPES, \
-    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, \
@@ -38,7 +36,10 @@ from perftracker.models.regression import RegressionModel, RegressionSimpleSeria
     PTRegressionServSideView
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
+from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPES, \
+    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
+from perftracker_django.settings import DEBUG
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +188,7 @@ def pt_comparison_analyze_json(request, api_ver, project_id, cmp_id):
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Wrong json")
 
-    return JsonResponse(pt_comparison_graphs_analyze(data), safe=False)
+    return JsonResponse(pt_comparison_series_analyze(data), safe=False)
 
 
 def pt_comparison_id_html(request, project_id, cmp_id):
@@ -207,6 +208,7 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                               'CHART_OUTLIERS': CHART_OUTLIERS,
                               'CHART_OSCILLATION': CHART_OSCILLATION,
                               'CHART_ANOMALY': CHART_ANOMALY,
+                              'DEBUG_MODE': DEBUG,
                               },
                       obj=obj)
 

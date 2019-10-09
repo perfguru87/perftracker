@@ -65,7 +65,7 @@ var api_root = "/api/v{{ api_ver }}/{{ project.id }}/comparison/{{ obj.id }}";
 var all_jobs = [{% for job in jobs %}"{{ job.calculated_legend|default:job.title }}", {% endfor %}];
 const NOCHART = {{ PTCmpChartType.NOCHART }};
 const NOTABLE = {{ PTCmpTableType.HIDE }};
-const production_mode = true;
+const DEBUG_MODE = {{ DEBUG_MODE|tojson }};
 var labeled_data = {};
 
 function hide_all_tables() {
@@ -89,7 +89,7 @@ function show_all_tables() {
             }
         });
     } else {
-        Object.keys(sect_data).map(show_table);
+        Object.keys(sect_data).forEach(show_table);
     }
 }
 
@@ -114,7 +114,7 @@ function toggle_table(s_id) {
 }
 
 function table_loading_error_handler(s_id, error) {
-    if ($("#table_error_" + s_id).length) {
+    if ($(`#table_error_${s_id}`).length) {
         return;
     }
 
@@ -123,29 +123,28 @@ function table_loading_error_handler(s_id, error) {
     s += "<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&#215;</button>";
     s += "Table data loading error: " + error;
     s += "</div>";
-    $('#results_' + s_id).append(s);
+    $(`#results_${s_id}`).append(s);
 }
 
 function hide_table(s_id) {
     var s = sect_data[s_id];
     if (!s.table_hidden) {
-        $("#results_" + s_id).children().hide();
+        $(`#results_${s_id}`).children().hide();
         s.table_hidden = true;
     }
 }
 
 function show_table(s_id) {
-    $("#table_error_" + s_id).remove();
+    $(`#table_error_${s_id}`).remove();
     var s = sect_data[s_id];
 
-    var res =  $("#results_" + s_id);
+    var res = $(`#results_${s_id}`);
     if (s.table_rendered) {
         res.children().show();
-    }
-    else if (pt_isInViewport(res[0])) {
-        pt_cmp_configure_table(res, "table_" + s_id, all_jobs,
-                s.pageable, s.table_data, s.add_title ? (row => s.title + ' {' + row + '}'): null,
-                api_root + "/group/0/test/");
+    } else if (pt_isInViewport(res[0])) {
+        pt_cmp_configure_table(res, `table_${s_id}`, all_jobs,
+            s.pageable, s.table_data, s.add_title ? (row => s.title + ' {' + row + '}') : null,
+            api_root + "/group/0/test/");
         s.table_rendered = true;
     }
     s.table_hidden = false;
@@ -153,9 +152,9 @@ function show_table(s_id) {
 
 function show_chart(s_id) {
     var s = sect_data[s_id];
-    pt_configure_chart('chart_' + s_id, s.chart_type, s.has_failures,
-            s.x_categories, s.x_name, s.x_type, s.x_rotate,
-            s.y_name, s.series);
+    pt_configure_chart(`chart_${s_id}`, s.chart_type, s.has_failures,
+        s.x_categories, s.x_name, s.x_type, s.x_rotate,
+        s.y_name, s.series);
     s.chart_rendered = true;
 }
 
@@ -165,18 +164,18 @@ function delayed_render() {
         var s = sect_data[s_id];
         if (group_data[s.g_id].collapsed)
             return; // we have to avoid rendering collapsed charts - the rendering is wrong
-        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($("#chart_" + s_id)[0])) {
+        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($(`#chart_${s_id}`)[0])) {
             show_chart(s_id);
             // console.log(s_id);
         }
-        if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && pt_isInViewport($("#results_" + s_id)[0])) {
+        if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && pt_isInViewport($(`#results_${s_id}`)[0])) {
             show_table(s_id);
         }
     });
 }
 
 function pt_charts_analyze() {
-    if (production_mode) {
+    if (!DEBUG_MODE) {
         alert('Not available in production mode!');
         return;
     }
@@ -196,7 +195,7 @@ function pt_charts_analyze() {
         success: function (response) {
             Object.keys(sect_data).forEach(s_id => {
                 sect_data[s_id].info = response[s_id];
-                $("#results_" + s_id).append(`<p>${JSON.stringify(response[s_id])}</p>`).hide().show('fast');
+                $(`#results_${s_id}`).append(`<p>${JSON.stringify(response[s_id])}</p>`).hide().show('fast');
             });
         },
         error: function (data, status, error) {
@@ -295,7 +294,7 @@ $(document).ready(function() {
             `<a id='g_${g_id}'>${g.title}</a><span class='pt_smaller'>  [${pt_pluralize(g.sections, "test")}]</span><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
             `<div class='collapse in' id='data_${g_id}'>`;
         main.append(group);
-        pt_handle_collapsing("#gh_" + g_id, function (el, collapsed) {
+        pt_handle_collapsing(`#gh_${g_id}`, function (el, collapsed) {
             g.collapsed = collapsed;  // we have to avoid rendering collapsed charts - the rendering is wrong
         });
     });
