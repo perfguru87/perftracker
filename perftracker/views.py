@@ -20,7 +20,6 @@ from django_datatables_view.base_datatable_view import BaseDatatableView
 
 from perftracker import __pt_version__
 from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
-from perftracker.series_analysis import pt_comparison_series_analyze
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 from perftracker.models.artifact import ArtifactMetaModel, ArtifactMetaSerializer
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, \
@@ -39,7 +38,7 @@ from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPES, \
     CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
-from perftracker_django.settings import DEBUG
+from perftracker_django.settings import DEV_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -166,11 +165,12 @@ def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, 
 
     data = data[str(section_id)]
     TrainDataModel.pt_validate_json(data)
-    formatted_data, fails = TrainDataModel.pt_format_data(data)
+    formatted_data, fails, less_better = TrainDataModel.pt_format_data(data)
 
     record = TrainDataModel(
         data=formatted_data,
         fails=fails,
+        less_better=less_better,
         function_type=ComparisonModel._pt_get_type(CHART_FUNCTION_TYPES, data, 'function_type'),
         outliers=ComparisonModel._pt_get_type(CHART_OUTLIERS, data, 'outliers'),
         oscillation=ComparisonModel._pt_get_type(CHART_OSCILLATION, data, 'oscillation'),
@@ -183,6 +183,7 @@ def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, 
 
 @csrf_exempt
 def pt_comparison_analyze_json(request, api_ver, project_id, cmp_id):
+    from perftracker.series_analysis import pt_comparison_series_analyze
     try:
         data = json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
@@ -208,7 +209,7 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                               'CHART_OUTLIERS': CHART_OUTLIERS,
                               'CHART_OSCILLATION': CHART_OSCILLATION,
                               'CHART_ANOMALY': CHART_ANOMALY,
-                              'DEBUG_MODE': DEBUG,
+                              'DEV_MODE': DEV_MODE,
                               },
                       obj=obj)
 

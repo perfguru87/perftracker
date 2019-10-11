@@ -58,6 +58,7 @@ CHART_ANOMALY = (
 class TrainDataModel(models.Model):
     data = models.TextField()
     fails = models.TextField(null=True, blank=True)
+    less_better = models.TextField(default='_')
     function_type = models.IntegerField(default=0, choices=CHART_FUNCTION_TYPES)
     outliers = models.IntegerField(default=0, choices=CHART_OUTLIERS)
     oscillation = models.IntegerField(default=0, choices=CHART_OSCILLATION)
@@ -65,40 +66,48 @@ class TrainDataModel(models.Model):
 
     @staticmethod
     def pt_format_data(data):
-        points, fails = [], []
-        for point in data['points']:
+        serie, fails = [], []
+        for point in data['serie']:
             try:
-                points.append([float(point[0]), float(point[1])])
+                serie.append([float(point[0]), float(point[1])])
             except KeyError:
                 if isinstance(point, dict):
-                    points.append(point['value'])
+                    serie.append(point['value'])
                     fails.append(point['value'])
                 else:
                     return HttpResponseBadRequest('Wrong data')
             except Exception as e:
                 return HttpResponseBadRequest(f'Wrong data; exception: {type(e).__name__}')
 
-        def pt_list2str(lst):
-            return '|'.join([f'{x};{y}' for x, y in lst])
+        serie_str = '|'.join([f'{x};{y}' for x, y in serie])
+        fails_str = '|'.join([f'{x};{y}' for x, y in fails])
+        less_better_str = '|'.join([str(int(i)) for i in data['less_better']])
 
-        return pt_list2str(points), pt_list2str(fails) or None
+        return serie_str, fails_str, less_better_str
 
     @staticmethod
     def pt_validate_json(json_data):
-        points = json_data.get('points')
-        if not points:
-            raise SuspiciousOperation('Chart points are not specified: it must be "data": <list>')
+        serie = json_data.get('serie')
+        less_better = json_data.get('less_better')
+        if not serie:
+            raise SuspiciousOperation('Chart serie is not specified: it must be "data": <list>')
 
-        if not isinstance(points, list):
-            raise SuspiciousOperation('Chart points must be a list: "points": <list>')
+        if not less_better:
+            raise SuspiciousOperation('Less_better field is not specified: it must be "less_better": <list<bool>>')
+
+        if not isinstance(serie, list):
+            raise SuspiciousOperation('Chart serie must be a list: "serie": <list>')
+
+        if not isinstance(less_better, list):
+            raise SuspiciousOperation('less_better must be a list: "less_better": <list<bool>>')
 
         try:
-            _ = [(float(point[0]), float(point[1])) for point in points]
+            _ = [(float(point[0]), float(point[1])) for point in serie]
         except KeyError:
             pass
         except Exception as e:
             raise SuspiciousOperation(
-                f'Points must be float lists: "point": <[float, float]>; exception: {type(e).__name__}'
+                f'Serie must be float lists: "point": <[float, float]>; exception: {type(e).__name__}'
             )
 
         for field in ('function_types', 'outliers', 'oscillation', 'anomaly'):
