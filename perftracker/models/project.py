@@ -1,6 +1,6 @@
-from rest_framework import serializers
-from django.db import models
 from django.core.exceptions import SuspiciousOperation
+from django.db import models
+from rest_framework import serializers
 
 
 class ProjectModel(models.Model):

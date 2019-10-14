@@ -26,6 +26,9 @@ SECRET_KEY = '!5)es5!)c48g^1z-d#f5s=^d^x&i0ec-ec*k4fa&8z!&ly5)pp'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# show several developer features (e.g. series analysis)
+DEV_MODE = False
+
 ALLOWED_HOSTS = ['*']
 
 

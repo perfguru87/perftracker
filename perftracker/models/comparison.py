@@ -1,26 +1,19 @@
-import itertools
-import json
-import uuid
-
 from scipy import stats
 
-from datetime import timedelta
-from datetime import datetime
 from collections import OrderedDict
 
-from django.db import models
-from django.utils.dateparse import parse_datetime
-from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
-
+from django.db import models
+from django.utils import timezone
 from rest_framework import serializers
+from scipy import stats
 
+from perftracker.helpers import pt_float2human, pt_cut_common_sfx
+from perftracker.models.env_node import EnvNodeSimpleSerializer
 from perftracker.models.job import JobModel, JobSimpleSerializer
+from perftracker.models.project import ProjectModel, ProjectSerializer
 from perftracker.models.test import TestModel
 from perftracker.models.test_group import TestGroupModel
-from perftracker.models.project import ProjectModel, ProjectSerializer
-from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer
-from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 
 
 class PTCmpChartType:
@@ -358,6 +351,11 @@ class PTComparisonServSideSeriesView:
             self._errors[i] = test_errors2str(t)   # t.errors or ((t.loops or "all") if t.status == 'FAILED' else 0)
         self._scores = self._scores[:maxi + 1]
         self._errors = self._errors[:maxi + 1]
+
+    @property
+    def less_better(self):
+        less_better_arr = [int(test.less_better) for test in self.tests]
+        return less_better_arr[0] if len(set(less_better_arr)) == 1 else less_better_arr
 
     @property
     def data(self):

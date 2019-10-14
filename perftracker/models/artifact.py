@@ -1,24 +1,18 @@
-import os
 import bz2
-import uuid
-import mimetypes
 import http.client
+import mimetypes
+import os
 import sys
-
+from datetime import timedelta
 from distutils.dir_util import mkpath
 
-from datetime import timedelta
-from datetime import datetime
-
-from django.db import models
-from django.utils.dateparse import parse_datetime
-from django.utils import timezone
-from django.db.models import Q
-from django.core.exceptions import SuspiciousOperation
 from django.conf import settings
+from django.core.exceptions import SuspiciousOperation
+from django.db import models
 from django.http import HttpResponse
-
+from django.utils import timezone
 from rest_framework import serializers
+
 from perftracker.helpers import PTJson, pt_is_valid_uuid
 from perftracker.rest import pt_rest_err, pt_rest_bad_req, pt_rest_ok
 

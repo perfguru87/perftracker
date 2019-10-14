@@ -1,47 +1,45 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import datetime
-import json
-import http.client
 import base64
+import http.client
+import json
+import logging
 
-from django.views.generic.base import TemplateView
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import SuspiciousOperation, ValidationError
+from django.db.models import Count
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import JsonResponse, Http404
 from django.template import RequestContext
 from django.template.response import TemplateResponse
-from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
-from django.http import JsonResponse, Http404
-from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
-from django.core.serializers import serialize
-from django.core.exceptions import SuspiciousOperation, ObjectDoesNotExist, ValidationError
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
 from django_datatables_view.base_datatable_view import BaseDatatableView
-from django.db.models import Q
-from django.db.models import Count
-from django.db.models.query import QuerySet
 
 from perftracker import __pt_version__
-from perftracker.models.project import ProjectModel
-from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, PTComparisonServSideView
-from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, PTRegressionServSideView
-from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
-from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
-from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesLocksTimeline
-from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
-from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
-from perftracker.models.env_node import EnvNodeModel
-from perftracker.models.artifact import ArtifactMetaModel, ArtifactLinkModel, ArtifactMetaSerializer
-
 from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
+from perftracker.models.artifact import ArtifactMetaModel, ArtifactMetaSerializer
+from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, \
+    PTComparisonServSideView
+from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
+from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, \
+    HwFarmNodesLocksTimeline
+from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
+from perftracker.models.project import ProjectModel
+from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, \
+    PTRegressionServSideView
+from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
+from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
+from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPES, \
+    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
+from perftracker_django.settings import DEV_MODE
 
-import logging
 logger = logging.getLogger(__name__)
 
 API_VER = '1.0'
@@ -158,6 +156,42 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
     return JsonResponse(ret, safe=False)
 
 
+@csrf_exempt
+def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, group_id, section_id):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Wrong json")
+
+    data = data[str(section_id)]
+    TrainDataModel.pt_validate_json(data)
+    formatted_data, fails, less_better = TrainDataModel.pt_format_data(data)
+
+    record = TrainDataModel(
+        data=formatted_data,
+        fails=fails,
+        less_better=less_better,
+        function_type=ComparisonModel._pt_get_type(CHART_FUNCTION_TYPES, data, 'function_type'),
+        outliers=ComparisonModel._pt_get_type(CHART_OUTLIERS, data, 'outliers'),
+        oscillation=ComparisonModel._pt_get_type(CHART_OSCILLATION, data, 'oscillation'),
+        anomaly=ComparisonModel._pt_get_type(CHART_ANOMALY, data, 'anomaly'),
+    )
+    record.save()
+
+    return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+def pt_comparison_analyze_json(request, api_ver, project_id, cmp_id):
+    from perftracker.series_analysis import pt_comparison_series_analyze
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Wrong json")
+
+    return JsonResponse(pt_comparison_series_analyze(data), safe=False)
+
+
 def pt_comparison_id_html(request, project_id, cmp_id):
     try:
         obj = ComparisonModel.objects.get(pk=cmp_id)
@@ -170,7 +204,12 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                       params={'jobs': cmp_view.job_objs,
                               'cmp_view': cmp_view,
                               'PTCmpChartType': PTCmpChartType,
-                              'PTCmpTableType': PTCmpTableType
+                              'PTCmpTableType': PTCmpTableType,
+                              'CHART_FUNCTION_TYPES': CHART_FUNCTION_TYPES,
+                              'CHART_OUTLIERS': CHART_OUTLIERS,
+                              'CHART_OSCILLATION': CHART_OSCILLATION,
+                              'CHART_ANOMALY': CHART_ANOMALY,
+                              'DEV_MODE': DEV_MODE,
                               },
                       obj=obj)
 

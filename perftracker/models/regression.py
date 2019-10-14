@@ -1,24 +1,13 @@
-import uuid
-import itertools
-import json
-import numpy
-
-from datetime import timedelta
-from datetime import datetime
 from collections import OrderedDict
 
-from scipy import stats
-
+import numpy
 from django.db import models
-
 from rest_framework import serializers
 
-from perftracker.models.project import ProjectModel, ProjectSerializer
-from perftracker.models.job import JobModel, JobSimpleSerializer
-from perftracker.models.test import TestModel
-from perftracker.models.test_group import TestGroupModel
-from perftracker.models.comparison import PTCmpChartType, PTCmpTableType
 from perftracker.helpers import pt_float2human
+from perftracker.models.job import JobModel, JobSimpleSerializer
+from perftracker.models.project import ProjectModel, ProjectSerializer
+from perftracker.models.test import TestModel
 
 
 class RegressionModel(models.Model):

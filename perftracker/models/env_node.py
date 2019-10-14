@@ -1,18 +1,7 @@
 import copy
-import itertools
-import inspect
-import datetime
-import uuid
-from dateutil.tz import tzlocal
-from functools import reduce
 
-from collections import OrderedDict
-
+from django.core.exceptions import SuspiciousOperation, ValidationError
 from django.db import models
-from django.utils import timezone
-from django.db.models import Q
-from django.core.exceptions import SuspiciousOperation, FieldError, FieldDoesNotExist, ValidationError
-
 from rest_framework import serializers
 
 
