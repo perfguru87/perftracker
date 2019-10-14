@@ -33,14 +33,14 @@ class JobModel(models.Model):
 
     links           = models.CharField(max_length=1024, help_text="{'link name': 'link url', 'link2': 'url2'}", null=True, blank=True)
 
-    tests_total     = models.IntegerField(help_text="Total number of tests in the job", null=True)
-    tests_completed = models.IntegerField(help_text="Number of tests completed", null=True)
-    tests_failed    = models.IntegerField(default=0, help_text="Number of failed tests", null=True)
-    tests_errors    = models.IntegerField(default=0, help_text="Number of tests with errors (includes failed)", null=True)
-    tests_warnings  = models.IntegerField(default=0, help_text="Number of tests with warnings", null=True)
+    tests_total     = models.IntegerField(help_text="Total number of tests in the job", null=False)
+    tests_completed = models.IntegerField(help_text="Number of tests completed", null=False)
+    tests_failed    = models.IntegerField(default=0, help_text="Number of failed tests", null=False)
+    tests_errors    = models.IntegerField(default=0, help_text="Number of tests with errors (includes failed)", null=False)
+    tests_warnings  = models.IntegerField(default=0, help_text="Number of tests with warnings", null=False)
 
-    testcases_total = models.IntegerField(help_text="Total number of test cases in the job", null=True)
-    testcases_errors= models.IntegerField(help_text="Number of test cases with test errors/failures", null=True)
+    testcases_total = models.IntegerField(help_text="Total number of test cases in the job", null=False)
+    testcases_errors= models.IntegerField(help_text="Number of test cases with test errors/failures", null=False)
 
     project         = models.ForeignKey(ProjectModel, help_text="Job project", on_delete=models.CASCADE)
 
@@ -189,7 +189,7 @@ class JobModel(models.Model):
             if t.warnings:
                 self.tests_warnings += 1
 
-            self.tests_errors += int(test_ok)
+            self.tests_errors += int(not test_ok)
             testcase = t.tag if t.category else t.group
             if testcase in testcases:
                 testcases[testcase] = testcases[testcase] and test_ok
