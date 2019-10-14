@@ -26,8 +26,9 @@
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
+      <th class='colTestcases'>Test cases</th>
+      <th class='colTestcasesErrors'>TC errors</th>
       <th class='colCompare'></th>
-      <th class='colTestcases'></th>
     </tr>
   </thead>
   <tfoot>
@@ -45,8 +46,9 @@
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
       <th class='colErrors'>Errors</th>
+      <th class='colTestcases'>Test cases</th>
+      <th class='colTestcasesErrors'>TC errors</th>
       <th class='colCompare'></th>
-      <th class='colTestcases'></th>
     </tr>
   </tfoot>
 </table>
@@ -196,6 +198,10 @@ $(document).ready(function() {
     /*
      * 1. Jobs list table
      */
+    var project_visible = true;
+    {% if project.id != 0 %}
+    project_visible = false;
+    {% endif %}
 
     var table = $('#jobs').DataTable( {
         "processing": true,
@@ -221,8 +227,9 @@ $(document).ready(function() {
             { "data": "duration" },
             { "data": "tests_total" },
             { "data": "tests_completed" },
-            { "data": "tests_failed" },
+            { "data": "tests_errors" },
             { "data": "testcases" },
+            { "data": "testcases_errors" },
             {
                 "className": 'pt_row_compare_toggle',
                 "orderable": false,
@@ -261,9 +268,7 @@ $(document).ready(function() {
             {
                 "targets": "colProject",
                 "type": "string",
-                {% if project.id != 0 %}
-                   "visible": false,
-                {% endif %}
+                "visible": project_visible,
                 "render": function ( data, type, row ) {
                     return data.name;
                 },
@@ -304,12 +309,12 @@ $(document).ready(function() {
                 "render": function ( data, type, row ) {
                     if (data == row.tests_total)
                         return data;
-                    return data +' (of '+ row.tests_total+')';
+                    return data +' (of ' + row.tests_total + ')';
                 },
             },
             {
                 "targets": "colErrors",
-                "type": "string",
+                "type": "integer",
                 "createdCell": function (td, cellData, rowData, row, col) {
                     if ( cellData > 0 ) {
                         $(td).addClass('pt_test_errors');
@@ -332,7 +337,7 @@ $(document).ready(function() {
     });
 
     /*
-     * 2. Job deails opening / closing
+     * 2. Job details opening / closing
      */
 
     $('#jobs').on('click', 'td.pt_row_details_toggle', function () {
