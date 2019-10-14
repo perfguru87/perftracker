@@ -206,7 +206,8 @@ function pt_charts_analyze() {
 
 function pt_charts_label_data(s_id) {
 
-    if (sect_data[s_id].series.length > 1) {
+    if (sect_data[s_id].series.length > 1 ||
+        sect_data[s_id].chart_type !== {{ PTCmpChartType.XYLINE }}) {
         console.log('Method not allowed');
         return;
     }
@@ -237,7 +238,7 @@ function pt_charts_label_data(s_id) {
 function pt_save_graph_properties(s_id) {
     labeled_data[s_id] = {
         serie: sect_data[s_id].series[0].data,
-        less_better: sect_data[s_id].less_better,
+        less_better: sect_data[s_id].series[0].less_better,
     };
     $('input:checked').each(function () {
         labeled_data[s_id][$(this)[0].name] = $(this)[0].value;
@@ -279,12 +280,11 @@ var group_data = {
 var sect_data = {
 {% for g_tag, g in cmp_view.groups.items %} {% for s_tag, s in g.sections.items %}
 '{{ s.id }}': { g_id: '{{ g.id }}', s_id: '{{ s.id }}',
-    less_better: [{% for test in s.tests.values %} {{ test.tests.0.less_better|tojson }}, {% endfor %}],
     title: '{{ s.title }}', has_failures: {% if s.has_failures %}true{% else %}false{% endif %},
     chart_type: {{ s.chart_type }}, {% if s.chart_type != PTCmpChartType.NOCHART %}
     x_categories: {{ s.x_axis_categories|tojson }},
     x_name: '{{ s.x_axis_name }}', x_type: '{{ s.x_axis_type }}', x_rotate: {{ s.x_axis_rotate }}, y_name: '{{ s.y_axis_name }}',
-    series: [{% for serie in s.series %}{name: '{{ serie.legend }}', data: {{ serie.data|tojson }}{% if s.chart_trend_line %},trend: true{% endif %}},{% endfor %}],
+    series: [{% for serie in s.series %}{name: '{{ serie.legend }}', data: {{ serie.data|tojson }}{% if s.chart_trend_line %},trend: true{% endif %}, less_better: {{ serie.less_better|tojson }}},{% endfor %}],
 {% endif %}    table_type: {{ s.table_type }}, {% if s.table_type == PTCmpTableType.SHOW %}
     pageable: {{ s.pageable|tojson }}, add_title: {{ s.same_tag|tojson }}, table_data: {{ s.table_data|tojson }}, {% endif %}
      },{% endfor %}{% endfor %}

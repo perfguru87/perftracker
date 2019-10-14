@@ -353,6 +353,11 @@ class PTComparisonServSideSeriesView:
         self._errors = self._errors[:maxi + 1]
 
     @property
+    def less_better(self):
+        less_better_arr = [int(test.less_better) for test in self.tests]
+        return less_better_arr[0] if len(set(less_better_arr)) == 1 else less_better_arr
+
+    @property
     def data(self):
         self._init_scores()
         ret = []

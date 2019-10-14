@@ -70,36 +70,34 @@ class TrainDataModel(models.Model):
         for point in data['serie']:
             try:
                 serie.append([float(point[0]), float(point[1])])
-            except KeyError:
+            except KeyError as e:
                 if isinstance(point, dict):
                     serie.append(point['value'])
                     fails.append(point['value'])
                 else:
-                    return HttpResponseBadRequest('Wrong data')
+                    return HttpResponseBadRequest(f'Wrong data; exception: {type(e).__name__}')
             except Exception as e:
                 return HttpResponseBadRequest(f'Wrong data; exception: {type(e).__name__}')
 
         serie_str = '|'.join([f'{x};{y}' for x, y in serie])
         fails_str = '|'.join([f'{x};{y}' for x, y in fails])
-        less_better_str = '|'.join([str(int(i)) for i in data['less_better']])
 
-        return serie_str, fails_str, less_better_str
+        less_better = data['less_better']
+        if isinstance(less_better, int):
+            less_better = str(less_better)
+        elif isinstance(less_better, list):
+            less_better = '|'.join([str(i) for i in less_better])
+
+        return serie_str, fails_str or None, less_better
 
     @staticmethod
     def pt_validate_json(json_data):
         serie = json_data.get('serie')
-        less_better = json_data.get('less_better')
         if not serie:
             raise SuspiciousOperation('Chart serie is not specified: it must be "data": <list>')
 
-        if not less_better:
-            raise SuspiciousOperation('Less_better field is not specified: it must be "less_better": <list<bool>>')
-
         if not isinstance(serie, list):
             raise SuspiciousOperation('Chart serie must be a list: "serie": <list>')
-
-        if not isinstance(less_better, list):
-            raise SuspiciousOperation('less_better must be a list: "less_better": <list<bool>>')
 
         try:
             _ = [(float(point[0]), float(point[1])) for point in serie]
@@ -110,6 +108,6 @@ class TrainDataModel(models.Model):
                 f'Serie must be float lists: "point": <[float, float]>; exception: {type(e).__name__}'
             )
 
-        for field in ('function_types', 'outliers', 'oscillation', 'anomaly'):
+        for field in ('function_types', 'outliers', 'oscillation', 'anomaly', 'less_better'):
             if field not in json_data:
                 raise SuspiciousOperation(f'{field} field is not specified: it must be "{field}": <int>')
