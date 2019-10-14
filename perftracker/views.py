@@ -314,7 +314,6 @@ def pt_job_id_html(request, project_id, job_id):
         raise Http404
 
     if request.GET.get('as_json', False):
-        j = JobDetailedSerializer(job).data
         resp = JsonResponse(JobDetailedSerializer(job, allow_null=False).data, safe=False, json_dumps_params={'indent': 2})
         resp['Content-Disposition'] = 'attachment; filename=%s.json' % job.pt_gen_filename()
         return resp
@@ -363,25 +362,20 @@ def pt_job_all_json(request, api_ver, project_id):
 
         # define the columns that will be returned
         columns = ['', 'id', 'end', 'project', 'env_node', 'product_name', 'product_ver', 'title',
-                   'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_failed']
+                   'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_errors',
+                   'testcases_total', 'testcases_errors']
 
         # define column names that will be used in sorting
         # order is important and should be same as order of columns
         # displayed by datatables. For non sortable columns use empty
         # value like ''
         order_columns = ['', 'id', 'end', 'project', 'env_node', 'product_name', 'product_ver', 'title',
-                         'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_failed']
+                         'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_errors',
+                         'testcases_total', 'testcases_errors']
 
         # set max limit of records returned, this is used to protect our site if someone tries to attack our site
         # and make it return huge amount of data
         max_display_length = 5000
-
-        def render_column(self, row, column):
-            # We want to render user as a custom column
-            if column == 'tests_total':
-                return '{0} {1}'.format(row.tests_total, row.tests_completed)
-            else:
-                return super(JobJson, self).render_column(row, column)
 
         def filter_queryset(self, qs):
             # use parameters passed in GET request to filter queryset

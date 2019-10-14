@@ -34,10 +34,13 @@ class JobModel(models.Model):
     links           = models.CharField(max_length=1024, help_text="{'link name': 'link url', 'link2': 'url2'}", null=True, blank=True)
 
     tests_total     = models.IntegerField(help_text="Total number of tests in the job", null=True)
-    tests_completed = models.IntegerField(help_text="Total number of tests completed", null=True)
-    tests_failed    = models.IntegerField(default=0, help_text="Total number of failed tests", null=True)
-    tests_errors    = models.IntegerField(default=0, help_text="Total number of tests with errors", null=True)
-    tests_warnings  = models.IntegerField(default=0, help_text="Total number of tests with warnings", null=True)
+    tests_completed = models.IntegerField(help_text="Number of tests completed", null=True)
+    tests_failed    = models.IntegerField(default=0, help_text="Number of failed tests", null=True)
+    tests_errors    = models.IntegerField(default=0, help_text="Number of tests with errors (includes failed)", null=True)
+    tests_warnings  = models.IntegerField(default=0, help_text="Number of tests with warnings", null=True)
+
+    testcases_total = models.IntegerField(help_text="Total number of test cases in the job", null=True)
+    testcases_errors= models.IntegerField(help_text="Number of test cases with test errors/failures", null=True)
 
     project         = models.ForeignKey(ProjectModel, help_text="Job project", on_delete=models.CASCADE)
 
@@ -129,19 +132,21 @@ class JobModel(models.Model):
         self.tests_errors = 0
         self.tests_warnings = 0
 
+        self.testcases_total = 0
+        self.testcases_errors = 0
+
         self.deleted = False
 
-        if append and j.get_bool('is_edited') == False:
-            if self.duration:
-                self.duration += end - begin
-            else:
-                self.duration = end - begin
-            if not self.begin:
-                self.begin = begin
-            self.end = end
-        else:
+        if not append or j.get_bool('is_edited') or not self.duration or not self.begin:
             self.duration = end - begin
             self.begin = begin
+            self.end = end
+        else:
+            # job is being appended, do correct duration math
+            if self.end < begin:  # 1st upload
+                self.duration += end - begin
+            else:  # subsequent upload
+                self.duration += end - self.end
             self.end = end
 
 
@@ -163,6 +168,11 @@ class JobModel(models.Model):
                 else:
                     raise SuspiciousOperation(str(serializer.errors) + ", original json: " + str(env_node_json))
 
+        testcases = {}
+        #  Test Case (aka Section in comparison) is defined by 2 possible scenarios:
+        #    - tests with the same tag and different categories
+        #    - tests with no categories, and same group
+
         for t in tests_to_commit.values():
             t.job = self
             t.pt_save()
@@ -170,12 +180,24 @@ class JobModel(models.Model):
             self.tests_total += 1
             if t.pt_status_is_completed():
                 self.tests_completed += 1
+            test_ok = True
             if t.pt_status_is_failed():
                 self.tests_failed += 1
+                test_ok = False
             if t.errors:
-                self.tests_errors += 1
+                test_ok = False
             if t.warnings:
                 self.tests_warnings += 1
+
+            self.tests_errors += int(test_ok)
+            testcase = t.tag if t.category else t.group
+            if testcase in testcases:
+                testcases[testcase] = testcases[testcase] and test_ok
+            else:
+                testcases[testcase] = test_ok
+
+        self.testcases_total = len(testcases)
+        self.testcases_errors = len([1 for ok in testcases.values() if not ok])
 
         if tests_to_delete:
             TestModel.pt_delete_tests(tests_to_delete.keys())
@@ -216,12 +238,22 @@ class JobModel(models.Model):
         verbose_name_plural = "Jobs"
 
 
+def handle_job_duration(job):
+    if not job.duration:
+        return 0
+    dur = int(round(job.duration.total_seconds()))
+    if not job.begin or not job.end:
+        return dur
+    maxdur = int(round((job.end - job.begin).total_seconds()))
+    return min(dur, maxdur)
+
+
 class JobBaseSerializer(serializers.ModelSerializer):
     env_node = serializers.SerializerMethodField()
     is_linked = serializers.SerializerMethodField()
     artifacts = serializers.SerializerMethodField()
     project = serializers.SerializerMethodField()
-    duration = PTDurationField()
+    duration = serializers.SerializerMethodField()
 
     def get_is_linked(self, job):
         return job.regression_linked is not None
@@ -248,13 +280,20 @@ class JobBaseSerializer(serializers.ModelSerializer):
                 continue
         return ArtifactMetaSerializer(artifacts, many=True).data
 
+    def get_duration(self, job):
+        return handle_job_duration(job)
+
+    # def get_testcases(self, job):
+    #     return JobModel.objects.filter(id=job.id).annotate(
+    #         testcases=Count('tests__tag', distinct=True))[0].testcases
+
 
 class JobSimpleSerializer(JobBaseSerializer):
     class Meta:
         model = JobModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'end', 'duration', 'upload',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
-                  'product_name', 'product_ver', 'is_linked')
+                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings',
+                  'project', 'product_name', 'product_ver', 'is_linked', 'testcases', 'testcases_errors')
 
 
 class JobNestedSerializer(JobBaseSerializer):
@@ -262,11 +301,16 @@ class JobNestedSerializer(JobBaseSerializer):
         model = JobModel
         fields = ('id', 'title', 'cmdline', 'uuid', 'suite_name', 'suite_ver', 'product_name', 'product_ver',
                   'links', 'env_node', 'begin', 'end', 'duration', 'upload',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
-                  'product_name', 'product_ver', 'artifacts')
+                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings',
+                  'project', 'product_name', 'product_ver', 'artifacts', 'testcases', 'testcases_errors')
 
 
 class JobDetailedSerializer(serializers.ModelSerializer):
+    duration = serializers.SerializerMethodField()
+
+    def get_duration(self, job):
+        return handle_job_duration(job)
+
     class Meta:
         model = JobModel
         depth = 1

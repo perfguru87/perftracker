@@ -249,10 +249,20 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 ######################################################################
 # Comparison viewer
 ######################################################################
+#  Comparison View Anatomy:
+#  Comparison
+#  +- Group[]       : unique group names among all tests
+#     +- Section[]  : see below, also named Test Case
+#        +- Serie[] : XY data for chart line
+#        +- Test[]  : tabular data for section table
+#
+#  Section (aka Test Case) is defined by 2 possible scenarios:
+#    - tests with the same tag and different categories
+#    - tests with no categories, and same group
 
 def test_errors2str(t):
     s = "%d errors" % t.errors if t.errors else ""
-    if t.status == 'FAILED':
+    if t.pt_status_is_failed():
         if s:
             s += ", "
         s += t.status
@@ -268,7 +278,7 @@ class PTComparisonServSideTestView:
     def pt_add_test(self, job, job_n, test_obj):
         self.tests[job_n] = test_obj
         if not self.id:
-            self.title = test_obj.category or test_obj.tag
+            self.title = test_obj.category or test_obj.tag   # if category is present, it is unique within section
             self.id = test_obj.id
             self.seq_num = test_obj.seq_num
 
@@ -321,7 +331,7 @@ class PTComparisonServSideTestView:
         return ret
 
 
-class PTComparisonServSideSeriesView:
+class PTComparisonServSideSerieView:
     def __init__(self, sect, legend):
         self.sect = sect
         self.tests = []
@@ -331,7 +341,7 @@ class PTComparisonServSideSeriesView:
 
     def pt_add_test(self, job, job_n, test_obj):
         self.tests.append(test_obj)
-        if test_obj.status == 'FAILED' or test_obj.errors:
+        if test_obj.pt_status_is_failed() or test_obj.errors:
             self.sect.has_failures = True
 
     def _init_scores(self):
@@ -422,7 +432,7 @@ class PTComparisonServSideSectView:
             return s
 
         self.legends = [job_legend(j) for j in jobs]
-        self.series = [PTComparisonServSideSeriesView(self, l) for l in self.legends]
+        self.series = [PTComparisonServSideSerieView(self, l) for l in self.legends]
 
     def pt_add_test(self, job, job_n, test_obj):
         key = "%s %s" % (test_obj.tag, test_obj.category)
