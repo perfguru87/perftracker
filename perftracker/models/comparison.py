@@ -259,7 +259,7 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 
 def test_errors2str(t):
     s = "%d errors" % t.errors if t.errors else ""
-    if t.status == 'FAILED':
+    if t.pt_status_is_failed():
         if s:
             s += ", "
         s += t.status
@@ -338,7 +338,7 @@ class PTComparisonServSideSeriesView:
 
     def pt_add_test(self, job, job_n, test_obj):
         self.tests.append(test_obj)
-        if test_obj.status == 'FAILED' or test_obj.errors:
+        if test_obj.pt_status_is_failed() or test_obj.errors:
             self.sect.has_failures = True
 
     def _init_scores(self):

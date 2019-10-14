@@ -8,6 +8,7 @@ from datetime import timedelta
 from datetime import datetime
 
 from django.db import models
+from django.db.models import Count
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
@@ -17,7 +18,7 @@ from rest_framework import serializers
 from perftracker.models.project import ProjectModel, ProjectSerializer
 from perftracker.models.env_node import EnvNodeModel, EnvNodeUploadSerializer, EnvNodeSimpleSerializer, EnvNodeNestedSerializer
 from perftracker.models.artifact import ArtifactLinkModel, ArtifactMetaSerializer, ArtifactMetaModel
-from perftracker.helpers import PTDurationField, PTJson
+from perftracker.helpers import PTJson
 
 
 class JobModel(models.Model):
@@ -237,6 +238,7 @@ class JobBaseSerializer(serializers.ModelSerializer):
     artifacts = serializers.SerializerMethodField()
     project = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
+    testcases = serializers.SerializerMethodField()
 
     def get_is_linked(self, job):
         return job.regression_linked is not None
@@ -266,13 +268,17 @@ class JobBaseSerializer(serializers.ModelSerializer):
     def get_duration(self, job):
         return handle_job_duration(job)
 
+    def get_testcases(self, job):
+        return JobModel.objects.filter(id=job.id).annotate(
+            testcases=Count('tests__tag', distinct=True))[0].testcases
+
 
 class JobSimpleSerializer(JobBaseSerializer):
     class Meta:
         model = JobModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
-                  'product_name', 'product_ver', 'is_linked')
+                  'product_name', 'product_ver', 'is_linked', 'testcases')
 
 
 class JobNestedSerializer(JobBaseSerializer):
@@ -281,7 +287,7 @@ class JobNestedSerializer(JobBaseSerializer):
         fields = ('id', 'title', 'cmdline', 'uuid', 'suite_name', 'suite_ver', 'product_name', 'product_ver',
                   'links', 'env_node', 'begin', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project',
-                  'product_name', 'product_ver', 'artifacts')
+                  'product_name', 'product_ver', 'artifacts', 'testcases')
 
 
 class JobDetailedSerializer(serializers.ModelSerializer):
