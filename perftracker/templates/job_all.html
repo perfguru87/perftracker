@@ -25,9 +25,9 @@
       <th class='colDuration'>Duration</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
-      <th class='colErrors'>Errors</th>
+      <th class='colErrors'>Tests with errors</th>
       <th class='colTestcases'>Test cases</th>
-      <th class='colTestcasesErrors'>TC errors</th>
+      <th class='colTestcasesErrors'>TC with errors</th>
       <th class='colCompare'></th>
     </tr>
   </thead>
@@ -45,9 +45,9 @@
       <th class='colDuration'>Duration</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
-      <th class='colErrors'>Errors</th>
+      <th class='colErrors'>Tests with errors</th>
       <th class='colTestcases'>Test cases</th>
-      <th class='colTestcasesErrors'>TC errors</th>
+      <th class='colTestcasesErrors'>TC with errors</th>
       <th class='colCompare'></th>
     </tr>
   </tfoot>
@@ -228,7 +228,7 @@ $(document).ready(function() {
             { "data": "tests_total" },
             { "data": "tests_completed" },
             { "data": "tests_errors" },
-            { "data": "testcases" },
+            { "data": "testcases_total" },
             { "data": "testcases_errors" },
             {
                 "className": 'pt_row_compare_toggle',
@@ -313,7 +313,7 @@ $(document).ready(function() {
                 },
             },
             {
-                "targets": "colErrors",
+                "targets": ["colErrors", "colTestcasesErrors"],
                 "type": "integer",
                 "createdCell": function (td, cellData, rowData, row, col) {
                     if ( cellData > 0 ) {

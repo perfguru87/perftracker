@@ -283,17 +283,13 @@ class JobBaseSerializer(serializers.ModelSerializer):
     def get_duration(self, job):
         return handle_job_duration(job)
 
-    # def get_testcases(self, job):
-    #     return JobModel.objects.filter(id=job.id).annotate(
-    #         testcases=Count('tests__tag', distinct=True))[0].testcases
-
 
 class JobSimpleSerializer(JobBaseSerializer):
     class Meta:
         model = JobModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings',
-                  'project', 'product_name', 'product_ver', 'is_linked', 'testcases', 'testcases_errors')
+                  'project', 'product_name', 'product_ver', 'is_linked', 'testcases_total', 'testcases_errors')
 
 
 class JobNestedSerializer(JobBaseSerializer):
@@ -302,7 +298,7 @@ class JobNestedSerializer(JobBaseSerializer):
         fields = ('id', 'title', 'cmdline', 'uuid', 'suite_name', 'suite_ver', 'product_name', 'product_ver',
                   'links', 'env_node', 'begin', 'end', 'duration', 'upload',
                   'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings',
-                  'project', 'product_name', 'product_ver', 'artifacts', 'testcases', 'testcases_errors')
+                  'project', 'product_name', 'product_ver', 'artifacts', 'testcases_total', 'testcases_errors')
 
 
 class JobDetailedSerializer(serializers.ModelSerializer):

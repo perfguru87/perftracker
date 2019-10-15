@@ -296,7 +296,8 @@ function pt_draw_comparison_details(d, err_msg)
 
     s += "<div class='col-md-12'><h4>Jobs</h4>";
     s += "<table class='pt_obj_details'>";
-    s += "<thead><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th></thead>";
+    s += "<thead><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th>" +
+         "<th>Tests</th><th>Tests<br>with<br>errors</th><th>Test<br>cases</th><th>Test cases<br>with<br>errors</th></thead>";
 
     for (var j = 0; j < d.jobs.length; j++) {
         var job = d.jobs[j];
@@ -311,9 +312,11 @@ function pt_draw_comparison_details(d, err_msg)
         }
         s += "<td>{0}</td><td>{1}</td><td><a href='{2}'>{3}</a></td>".ptFormat(hw, job.suite_ver, link, job.title);
         if (job.tests_completed == job.tests_total)
-            s += "<td>{0}</td><td>{1}</td><td>{2}</td>".ptFormat(pt_dur2str(job.duration), job.tests_completed, job.tests_errors);
+            s += "<td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td>".ptFormat(pt_dur2str(job.duration),
+                job.tests_completed, job.tests_errors, job.testcases_total, job.testcases_errors);
         else
-            s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(pt_dur2str(job.duration), job.tests_completed, job.tests_total, job.tests_errors);
+            s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td><td>{4}</td><td>{5}</td>".ptFormat(pt_dur2str(job.duration),
+                job.tests_completed, job.tests_total, job.tests_errors, job.testcases_total, job.testcases_errors);
         s += "</tr>";
     }
     s += "</table></div>";

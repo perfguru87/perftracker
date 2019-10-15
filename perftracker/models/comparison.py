@@ -163,10 +163,9 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
     suite_ver = serializers.SerializerMethodField()
     suite_name = serializers.SerializerMethodField()
     tests_total = serializers.SerializerMethodField()
-    tests_completed = serializers.SerializerMethodField()
-    tests_failed = serializers.SerializerMethodField()
     tests_errors = serializers.SerializerMethodField()
-    tests_warnings = serializers.SerializerMethodField()
+    testcases_total = serializers.SerializerMethodField()
+    testcases_errors = serializers.SerializerMethodField()
     project = serializers.SerializerMethodField()
 
     def get_env_node(self, cmp):
@@ -183,10 +182,10 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
         return EnvNodeSimpleSerializer(objs, many=True).data
 
     def _pt_get_jobs_attr(self, cmp, attr):
-        ret = set()
+        ret = []
         for job in cmp.pt_get_jobs():
-            ret.add(job.__dict__[attr])
-        return ", ".join(sorted(ret))
+            ret.append(str(job.__dict__[attr]))
+        return ", ".join(ret)
 
     def _pt_get_jobs_sum(self, cmp, attr):
         ret = 0
@@ -201,19 +200,16 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
         return self._pt_get_jobs_attr(cmp, 'suite_name')
 
     def get_tests_total(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_total')
-
-    def get_tests_completed(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_completed')
-
-    def get_tests_failed(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_failed')
+        return [j.tests_total for j in cmp.pt_get_jobs()]
 
     def get_tests_errors(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_errors')
+        return [j.tests_errors for j in cmp.pt_get_jobs()]
 
-    def get_tests_warnings(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_warnings')
+    def get_testcases_total(self, cmp):
+        return [j.testcases_total for j in cmp.pt_get_jobs()]
+
+    def get_testcases_errors(self, cmp):
+        return [j.testcases_errors for j in cmp.pt_get_jobs()]
 
     def get_project(self, cmp):
         return ProjectSerializer(cmp.project).data
@@ -229,7 +225,7 @@ class ComparisonSimpleSerializer(ComparisonBaseSerializer):
     class Meta:
         model = ComparisonModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
+                  'tests_total', 'tests_errors', 'testcases_total', 'testcases_errors', 'project', 'jobs')
 
 
 class ComparisonNestedSerializer(ComparisonBaseSerializer):
@@ -241,9 +237,9 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 
     class Meta:
         model = ComparisonModel
-        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated', 'tests_total', 'tests_completed',
-                  'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs', 'charts_type', 'tables_type',
-                  'tests_type', 'values_type')
+        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated', 'tests_total',
+                  'tests_errors', 'testcases_total', 'testcases_errors', 'project', 'jobs', 'charts_type',
+                  'tables_type', 'tests_type', 'values_type')
 
 
 ######################################################################
