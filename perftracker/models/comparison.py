@@ -163,10 +163,9 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
     suite_ver = serializers.SerializerMethodField()
     suite_name = serializers.SerializerMethodField()
     tests_total = serializers.SerializerMethodField()
-    tests_completed = serializers.SerializerMethodField()
-    tests_failed = serializers.SerializerMethodField()
     tests_errors = serializers.SerializerMethodField()
-    tests_warnings = serializers.SerializerMethodField()
+    testcases_total = serializers.SerializerMethodField()
+    testcases_errors = serializers.SerializerMethodField()
     project = serializers.SerializerMethodField()
 
     def get_env_node(self, cmp):
@@ -183,10 +182,10 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
         return EnvNodeSimpleSerializer(objs, many=True).data
 
     def _pt_get_jobs_attr(self, cmp, attr):
-        ret = set()
+        ret = []
         for job in cmp.pt_get_jobs():
-            ret.add(job.__dict__[attr])
-        return ", ".join(sorted(ret))
+            ret.append(str(job.__dict__[attr]))
+        return ", ".join(ret)
 
     def _pt_get_jobs_sum(self, cmp, attr):
         ret = 0
@@ -201,19 +200,16 @@ class ComparisonBaseSerializer(serializers.ModelSerializer):
         return self._pt_get_jobs_attr(cmp, 'suite_name')
 
     def get_tests_total(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_total')
-
-    def get_tests_completed(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_completed')
-
-    def get_tests_failed(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_failed')
+        return [j.tests_total for j in cmp.pt_get_jobs()]
 
     def get_tests_errors(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_errors')
+        return [j.tests_errors for j in cmp.pt_get_jobs()]
 
-    def get_tests_warnings(self, cmp):
-        return self._pt_get_jobs_sum(cmp, 'tests_warnings')
+    def get_testcases_total(self, cmp):
+        return [j.testcases_total for j in cmp.pt_get_jobs()]
+
+    def get_testcases_errors(self, cmp):
+        return [j.testcases_errors for j in cmp.pt_get_jobs()]
 
     def get_project(self, cmp):
         return ProjectSerializer(cmp.project).data
@@ -229,7 +225,7 @@ class ComparisonSimpleSerializer(ComparisonBaseSerializer):
     class Meta:
         model = ComparisonModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated',
-                  'tests_total', 'tests_completed', 'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs')
+                  'tests_total', 'tests_errors', 'testcases_total', 'testcases_errors', 'project', 'jobs')
 
 
 class ComparisonNestedSerializer(ComparisonBaseSerializer):
@@ -241,18 +237,28 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
 
     class Meta:
         model = ComparisonModel
-        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated', 'tests_total', 'tests_completed',
-                  'tests_failed', 'tests_errors', 'tests_warnings', 'project', 'jobs', 'charts_type', 'tables_type',
-                  'tests_type', 'values_type')
+        fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated', 'tests_total',
+                  'tests_errors', 'testcases_total', 'testcases_errors', 'project', 'jobs', 'charts_type',
+                  'tables_type', 'tests_type', 'values_type')
 
 
 ######################################################################
 # Comparison viewer
 ######################################################################
+#  Comparison View Anatomy:
+#  Comparison
+#  +- Group[]       : unique group names among all tests
+#     +- Section[]  : see below, also named Test Case
+#        +- Serie[] : XY data for chart line
+#        +- Test[]  : tabular data for section table
+#
+#  Section (aka Test Case) is defined by 2 possible scenarios:
+#    - tests with the same tag and different categories
+#    - tests with no categories, and same group
 
 def test_errors2str(t):
     s = "%d errors" % t.errors if t.errors else ""
-    if t.status == 'FAILED':
+    if t.pt_status_is_failed():
         if s:
             s += ", "
         s += t.status
@@ -268,7 +274,7 @@ class PTComparisonServSideTestView:
     def pt_add_test(self, job, job_n, test_obj):
         self.tests[job_n] = test_obj
         if not self.id:
-            self.title = test_obj.category or test_obj.tag
+            self.title = test_obj.category or test_obj.tag   # if category is present, it is unique within section
             self.id = test_obj.id
             self.seq_num = test_obj.seq_num
 
@@ -321,7 +327,7 @@ class PTComparisonServSideTestView:
         return ret
 
 
-class PTComparisonServSideSeriesView:
+class PTComparisonServSideSerieView:
     def __init__(self, sect, legend):
         self.sect = sect
         self.tests = []
@@ -331,7 +337,7 @@ class PTComparisonServSideSeriesView:
 
     def pt_add_test(self, job, job_n, test_obj):
         self.tests.append(test_obj)
-        if test_obj.status == 'FAILED' or test_obj.errors:
+        if test_obj.pt_status_is_failed() or test_obj.errors:
             self.sect.has_failures = True
 
     def _init_scores(self):
@@ -422,7 +428,7 @@ class PTComparisonServSideSectView:
             return s
 
         self.legends = [job_legend(j) for j in jobs]
-        self.series = [PTComparisonServSideSeriesView(self, l) for l in self.legends]
+        self.series = [PTComparisonServSideSerieView(self, l) for l in self.legends]
 
     def pt_add_test(self, job, job_n, test_obj):
         key = "%s %s" % (test_obj.tag, test_obj.category)
