@@ -298,7 +298,7 @@ $(document).ready(function() {
         var g = group_data[g_id];
         g.collapsed = false;
         var group = `<h3 class='pt_collapse expanded' id='gh_${g_id}' data-toggle='collapse' data-target='#data_${g_id}' aria-expanded='true'>` +
-            `<a id='g_${g_id}'>${g.title}</a><span class='pt_smaller'>  [${pt_pluralize(g.sections, "test")}]</span><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
+            `<a id='g_${g_id}'>${g.title}</a><span class='pt_smaller'>  [${pt_pluralize(g.sections, "test case")}]</span><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
             `<div class='collapse in' id='data_${g_id}'>`;
         main.append(group);
         pt_handle_collapsing(`#gh_${g_id}`, function (el, collapsed) {
