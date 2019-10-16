@@ -183,7 +183,9 @@ function pt_charts_analyze() {
 
     var payload = {};
     Object.keys(sect_data).forEach(s_id => {
-        payload[s_id] = sect_data[s_id].series[0].data;
+        if (sect_data[s_id].chart_type === {{ PTCmpChartType.XYLINE }}) {
+            payload[s_id] = sect_data[s_id].series[0].data;
+        }
     });
 
     $.ajax({
