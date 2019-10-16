@@ -14,25 +14,55 @@ if (!String.prototype.ptFormat) {
   };
 }
 
-function pt_date2str(date_str, seconds = false) {
-    if (typeof date_str == 'undefined')
+function pt_date2str(dt, show_seconds = false) {
+    if (typeof dt == 'undefined')
         return '';
 
     var now = new Date();
-    var date = new Date(date_str);
+    var date = new Date(dt);  // string or Date object accepted
     var hrs = date.getHours();
     var mins = date.getMinutes();
 
-    if (date.getFullYear() != now.getFullYear())
-        return date.toISOString().substring(0, 10);
+    var year = (date.getFullYear() != now.getFullYear()) ? " " + date.toISOString().substring(0, 4) : "";
 
-    var rv = date.getDate() + ' ' + date.ptGetShortMonth() + ', '
+    var rv = date.getDate() + ' ' + date.ptGetShortMonth() + year + ', '
             + (hrs < 10 ? '0' + hrs : hrs) + ":" + (mins < 10 ? '0' + mins: mins);
-    if (seconds) {
+    if (show_seconds) {
         var secs = date.getSeconds();
         rv += ":" + (secs < 10 ? '0' + secs: secs)
     }
     return rv;
+}
+
+function pt_daterange(begin, end, duration) {
+    if (!begin && !end)
+        return [];
+    begin = begin || end;
+    end = end || begin;
+    var b = new Date(begin);
+    var e = new Date(end);
+    if (b.getMilliseconds() === e.getMilliseconds() && duration > 0) {
+        b.setMilliseconds(e.getMilliseconds() - duration * 1000);
+    }
+    return [b, e];
+}
+
+function pt_daterange2str(begin, end, duration, show_seconds = false) {
+    var rng = pt_daterange(begin, end, duration);
+    if (!rng)
+        return "";
+    return pt_date2str(rng[0], show_seconds) + ' - ' + pt_date2str(rng[1], show_seconds) + " (local time)";
+}
+
+function pt_dur2str(duration) {
+    var sec = duration % 60;
+    var min = Math.floor(duration / 60) % 60;
+    var hr = Math.floor(duration / 3600) % 24;
+    var days = Math.floor(duration / 24 / 3600);
+    var rv = days ? pt_pluralize(days, "day") + " " : "";
+    rv += (rv || hr) ? hr + "h " : "";
+    function z(x) { return (x < 10) ? "0" + x: "" + x; }
+    return rv + z(min) + ":" + z(sec);
 }
 
 function pt_env_node_draw(j, parent_id)
@@ -156,7 +186,7 @@ function pt_draw_job_details(d, err_msg)
     s += "<thead><th>Parameter</th><th>Value</th></thead>";
 
     if (d.product_name)
-        s += "<tr><td>Product</td><td><b>{0} {1}</b></td></tr>".ptFormat(d.product_name, d.product_ver)
+        s += "<tr><td>Product</td><td><b>{0} {1}</b></td></tr>".ptFormat(d.product_name, d.product_ver);
 
     if (d.links) {
         var links = pt_draw_links(d.links);
@@ -166,10 +196,10 @@ function pt_draw_job_details(d, err_msg)
 
     s += "<tr><td>Job #</td><td>{0}</td></tr>".ptFormat(d.id)
     s += "<tr><td>UUID</td><td>{0}</td></tr>".ptFormat(d.uuid)
-    s += "<tr><td>Duration</td><td>{0} - {1} ({2}), uploaded: {3}</td></tr>".ptFormat(
-         pt_date2str(d.begin), pt_date2str(d.end), d.duration, pt_date2str(d.upload))
+    s += "<tr><td>Duration</td><td>{0}, time: {1}, uploaded: {2}</td></tr>".ptFormat(
+        pt_dur2str(d.duration), pt_daterange2str(d.begin, d.end, d.duration), pt_date2str(d.upload));
     if (d.cmdline)
-        s += "<tr><td>Cmdline</td><td class='pt_ellipsis'>{0}</td></tr>".ptFormat(d.cmdline)
+        s += "<tr><td>Cmdline</td><td class='pt_ellipsis'>{0}</td></tr>".ptFormat(d.cmdline);
 
     if (d.artifacts) {
         s += "<tr><td>Artifacts</td><td>";
@@ -248,7 +278,7 @@ function pt_draw_comparison_details(d, err_msg)
     var vms = d.vms;
     var clients = d.clients;
 
-    s += "<div class='pt_slider' id='comparison_details_slider_{0}'>".ptFormat(d.id)
+    s += "<div class='pt_slider' id='comparison_details_slider_{0}'>".ptFormat(d.id);
 
     if (err_msg) {
         s += "<div class='row'><div class='col-md-12'>";
@@ -266,23 +296,27 @@ function pt_draw_comparison_details(d, err_msg)
 
     s += "<div class='col-md-12'><h4>Jobs</h4>";
     s += "<table class='pt_obj_details'>";
-    s += "<thead><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th></thead>";
+    s += "<thead><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th>" +
+         "<th>Tests</th><th>Tests<br>with<br>errors</th><th>Test<br>cases</th><th>Test cases<br>with<br>errors</th></thead>";
 
     for (var j = 0; j < d.jobs.length; j++) {
         var job = d.jobs[j];
+        var link = '/{0}/job/{1}'.ptFormat(d.project.id, job.id);
         s += "<tr>";
-        s += "<td>{0}</td><td>{1}</td>".ptFormat(job.id, pt_date2str(job.end));
+        s += "<td><a href='{0}'>{1}</a></td><td>{2}</td>".ptFormat(link, job.id, pt_date2str(job.end));
         var hw = '';
         for (var h = 0; h < job.env_node.length; h++) {
             if (hw)
                 hw += ', ';
             hw += job.env_node[h].name;
         }
-        s += "<td>{0}</td><td>{1}</td><td><a href='/{2}/job/{3}'>{4}</a></td>".ptFormat(hw, job.suite_ver, d.project.id, job.id, job.title);
+        s += "<td>{0}</td><td>{1}</td><td><a href='{2}'>{3}</a></td>".ptFormat(hw, job.suite_ver, link, job.title);
         if (job.tests_completed == job.tests_total)
-            s += "<td>{0}</td><td>{1}</td><td>{2}</td>".ptFormat(job.duration, job.tests_completed, job.tests_errors);
+            s += "<td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td>".ptFormat(pt_dur2str(job.duration),
+                job.tests_completed, job.tests_errors, job.testcases_total, job.testcases_errors);
         else
-            s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td>".ptFormat(job.duration, job.tests_completed, job.tests_total, job.tests_errors);
+            s += "<td>{0}</td><td>{1} (of {2})</td><td>{3}</td><td>{4}</td><td>{5}</td>".ptFormat(pt_dur2str(job.duration),
+                job.tests_completed, job.tests_total, job.tests_errors, job.testcases_total, job.testcases_errors);
         s += "</tr>";
     }
     s += "</table></div>";
@@ -743,6 +777,7 @@ function pt_cmp_configure_table(container, table_id, job_titles, pageable, data,
     };
 
     if (tag_modifier) {  // override tag column rendering
+        tableOpts.columnDefs = tableOpts.columnDefs.map(def => def); // new array, old values
         tableOpts.columnDefs[0] = Object.assign({}, tableOpts.columnDefs[0], {
             "render": function (data, type, row) {
                 return tag_modifier(data);
@@ -893,7 +928,7 @@ function pt_job_test_details_draw(d, err_msg)
     s += "<tr><td>Raw deviations</td><td>{0}</td></tr>".ptFormat(d.deviations);
     s += "<tr><td>Test loops</td><td>{0}</td></tr>".ptFormat(d.loops ? d.loops : 'n/a');
     s += "<tr><td>Duration (s)</td><td>{0}</td></tr>".ptFormat(d.duration);
-    s += "<tr><td>Timing</td><td>{0} - {1}</td></tr>".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true));
+    s += "<tr><td>Timing</td><td>{0}</td></tr>".ptFormat(pt_daterange2str(d.begin, d.end, d.duration, true));
     s += "</tbody></table>";
     s += "</div>";
 
@@ -966,7 +1001,7 @@ function pt_cmp_test_details_draw(ar, err_msg) {
     s += pt_cmp_test_details_draw_row('Raw deviations', ar, function(d) { return "{0}".ptFormat(d.deviations); });
     s += pt_cmp_test_details_draw_row('Test loops', ar, function(d) { return "{0}".ptFormat(d.id ? (d.loops || 'n/a') : ""); });
     s += pt_cmp_test_details_draw_row('Duration (s)', ar, function(d) { return "{0}".ptFormat(d.duration); });
-    s += pt_cmp_test_details_draw_row('Timing', ar, function(d) { return "{0} - {1}".ptFormat(pt_date2str(d.begin, true), pt_date2str(d.end, true)); });
+    s += pt_cmp_test_details_draw_row('Timing', ar, function(d) { return "{0}".ptFormat(pt_daterange2str(d.begin, d.end, d.duration, true)); });
     s += pt_cmp_test_details_draw_row('Links', ar, function(d) { return "{0}".ptFormat(d.links ? pt_draw_links(d.links) : ""); });
     s += "</tbody></table>";
     s += "</div>";

@@ -8,3 +8,4 @@ local_settings.py
 
 
 .idea/
+.venv/

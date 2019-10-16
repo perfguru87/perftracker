@@ -4,13 +4,13 @@
 
 /* Grids */
 tr.odd td.pt_test_errors {
-  background-color: #F5B7B1 !important;
+  background-color: #f5cdc7 !important;
 }
 tr.even td.pt_test_errors {
   background-color: #FADBD8 !important;
 }
 tr td.pt_test_errors {
-  background-color: #F5B7B1 !important;
+  background-color: #f5cdc7 !important;
 }
 td.pt_row_details_toggle {
   cursor: pointer;
