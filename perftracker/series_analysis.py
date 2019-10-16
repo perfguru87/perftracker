@@ -6,6 +6,22 @@ def hyperbola(x, a, c):
     return a / x + c
 
 
+def get_coordinates(s_data):
+    x_array, y_array, fails = [], [], []
+    for point in s_data:
+        try:
+            x_array.append(float(point[0]))
+            y_array.append(float(point[1]))
+        except KeyError:
+            x_array.append(float(point['value'][0]))
+            y_array.append(float(point['value'][1]))
+            fails.append(point['value'])
+            continue
+        except TypeError:
+            break
+    return np.array(x_array), np.array(y_array), fails
+
+
 def pt_comparison_series_analyze(data):
     round_to = 3
 
@@ -24,12 +40,7 @@ def pt_comparison_series_analyze(data):
     outlier_coefficient = 1.
 
     for s_id, s_data in data.items():
-        try:
-            # point(x, y)
-            x_array = np.array([float(point[0]) for point in s_data])
-            y_array = np.array([float(point[1]) for point in s_data])
-        except (TypeError, KeyError):
-            continue
+        x_array, y_array, fails = get_coordinates(s_data)
 
         mean_y = y_array.mean()
         std_y = np.std(y_array)
@@ -60,6 +71,8 @@ def pt_comparison_series_analyze(data):
 
         if outliers:
             rv[s_id]['outliers'] = [round(outlier, round_to) for outlier in outliers]
+        if fails:
+            rv[s_id]['fails'] = fails
 
     mse_lin_values.sort()
     boundaries = [mse_lin_values[int(len(mse_lin_values) / mse_lin_categories_amount) * i]
@@ -67,8 +80,8 @@ def pt_comparison_series_analyze(data):
     boundaries.append(mse_lin_values[-1])
 
     for s_data in rv.values():
-        s_data['hyperbolic'] = int(s_data.pop('mse_hyp') < hyp_threshold)
-        mse_lin = s_data.pop('mse_lin')
+        s_data['hyperbolic'] = int(s_data.get('mse_hyp') < hyp_threshold)
+        mse_lin = s_data.get('mse_lin')
         for category in range(mse_lin_categories_amount):
             if mse_lin <= boundaries[category]:
                 s_data['linear'] = int(mse_lin_categories[category] == 'low')
