@@ -54,7 +54,7 @@
   </div>
   <div class="panel__input-search">
       <span class="panel__input-search-span">
-          <input type="text" name="graphs-search" placeholder="search">
+          <input class="panel__input-search_text"type="text" name="graphs-search" placeholder="search">
       </span>
   </div>
 </nav>
@@ -188,7 +188,7 @@ function delayed_render() {
         var s = sect_data[s_id];
         if (group_data[s.g_id].collapsed)
             return; // we have to avoid rendering collapsed charts - the rendering is wrong
-        if (!s.chart_rendered && s.chart_type !== NOCHART && isInViewport($("#chart_" + s_id)[0])) {
+        if (!s.chart_rendered && s.chart_type !== NOCHART && isInViewport($("#chart_" + s_id)[0]) && s.section_hidden !== true) {
             show_chart(s_id);
             // console.log(s_id);
         }
@@ -239,6 +239,11 @@ var sect_data = {
      },{% endfor %}{% endfor %}
 };
 
+var plotsTitles = {};
+Object.values(sect_data).forEach(function(element) {
+    plotsTitles[element['s_id']] = element['title'];
+});
+
 $(document).ready(function() {
 
     var main = $('#main_content_container');
@@ -262,16 +267,19 @@ $(document).ready(function() {
         s.chart_rendered = false;
         s.table_rendered = false;
         s.table_hidden = false;
+        s.section_hidden = false;
 
         var chart_div = (s.chart_type !== NOCHART) ?
             `<div id="chart_${s_id}" class='pt_chart'>Loading chart...</div>` : "";
 
         $(`#data_${s.g_id}`).append(
-           `<span><h4 style="display: inline">${s.title}</h4>
+           `<div class="graph__container_${s_id}">
+            <span><h4 style="display: inline">${s.title}</h4>
             <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
-            </span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ></div>`
+            </span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ></div>
+            </div>`
         );
     });
 
@@ -304,7 +312,56 @@ $(document).ready(function() {
             showPanel();
         }
     });
+
+    var keyUpStack = [];
+    $(".panel__input-search_text").keyup(function(e) {
+        keyUpStack.push(1);
+        $('h4').unmark();
+
+        setTimeout(function() {
+            keyUpStack.pop();
+
+            if(keyUpStack.length === 0) {
+                var buf = this.value;
+
+                var filteredList = {};
+                var plotsToShow = {};
+                Object.keys(plotsTitles).forEach(function(key) {
+                    if(!plotsTitles[key].replace(/\s/g, '').includes(buf.replace(/\s/g, ''))) {
+                        filteredList[key] = plotsTitles[key];
+                    }
+                });
+
+                Object.keys(plotsTitles).forEach(function(key) {
+                    if(plotsTitles[key].replace(/\s/g, '').includes(buf.replace(/\s/g, ''))) {
+                        plotsToShow[key] = plotsTitles[key];
+                    }
+                });
+
+                if(this.value.length >= 3) {
+                    Object.keys(filteredList).forEach(function(key) {
+                        sect_data[key].section_hidden = true;
+                        $('.graph__container_' + key).hide();
+                    });
+                } else if(e.keyCode === 13) {
+                    Object.keys(filteredList).forEach(function(key) {
+                        sect_data[key].section_hidden = true;
+                        $('.graph__container_' + key).hide();
+                    });
+                }
+
+                Object.keys(plotsToShow).forEach(function(key) {
+                    sect_data[key].section_hidden = false;
+                    $('.graph__container_' + key).show();
+                });
+                $('h4').mark(buf, {
+                    "accuracy": "partially",
+                    "separateWordSearch": false,
+                });
+                delayed_render();
+            }
+        }.bind(this), 300);
+    });
 });
 </script>
-
 {% endblock %}

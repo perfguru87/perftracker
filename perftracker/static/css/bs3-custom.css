@@ -241,3 +241,8 @@ Go To button styles: END
 .panel__button-controller.panel__unit_go-to button {
   width: 100%;
 }
+
+mark {
+    background: greenyellow;
+    color: black;
+}
