@@ -11,7 +11,7 @@ class PTChartFunctionType:
     SQUARE_OR_EXP = 4
 
 
-CHART_FUNCTION_TYPES = (
+CHART_FUNCTION_TYPE = (
     (PTChartFunctionType.NOT_SPECIFIED, 'Not specified'),
     (PTChartFunctionType.CONST, 'Constant'),
     (PTChartFunctionType.LINEAR, 'Linear'),
@@ -57,9 +57,11 @@ CHART_ANOMALY = (
 
 class TrainDataModel(models.Model):
     data = models.TextField()
+    section_id = models.IntegerField(default=0, db_index=True)
+    job_id = models.IntegerField(default=0, db_index=True)
     fails = models.TextField(null=True, blank=True)
     less_better = models.TextField(default='_')
-    function_type = models.IntegerField(default=0, choices=CHART_FUNCTION_TYPES)
+    function_type = models.IntegerField(default=0, choices=CHART_FUNCTION_TYPE)
     outliers = models.IntegerField(default=0, choices=CHART_OUTLIERS)
     oscillation = models.IntegerField(default=0, choices=CHART_OSCILLATION)
     anomaly = models.IntegerField(default=0, choices=CHART_ANOMALY)
@@ -108,6 +110,6 @@ class TrainDataModel(models.Model):
                 f'Serie must be float lists: "point": <[float, float]>; exception: {type(e).__name__}'
             )
 
-        for field in ('function_types', 'outliers', 'oscillation', 'anomaly', 'less_better'):
+        for field in ('function_type', 'outliers', 'oscillation', 'anomaly', 'less_better'):
             if field not in json_data:
                 raise SuspiciousOperation(f'{field} field is not specified: it must be "{field}": <int>')
