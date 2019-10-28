@@ -223,27 +223,31 @@ function pt_charts_label_data(s_id) {
         return;
     }
 
-    Object.entries(graph_properties).forEach(([property, options]) => {
+    Object.entries(serie_properties).forEach(([property, options]) => {
         const selector_id = `${s_id}_${property}_selector`;
         survey.append(`<p id="${selector_id}" class="pt_data_train"><b>${property}</b></p>`).hide().show('fast');
         var labels = '';
-        options.forEach(option => {
-            labels += `<input type="radio" id="${selector_id}_${option}" name="${property}" value="${option}">` +
-                `<label for="${selector_id}_${option}">${option}</label>`;
+        options.forEach(function(option, index) {
+            labels += `<input type="radio" id="${selector_id}_${index}" name="${selector_id}" value="${property}:${option}">` +
+                `<label for="${selector_id}_${index}">${option}</label>`;
         });
         $(`#${selector_id}`).append(labels).hide().show('fast');
     });
 
-    survey.append(`<button onclick="pt_save_graph_properties(${s_id})"><b>Save</b></button>`);
+    survey.append(`<button onclick="pt_save_serie_properties(${s_id})"><b>Save</b></button>`);
 }
 
-function pt_save_graph_properties(s_id) {
+function pt_save_serie_properties(s_id) {
     labeled_data[s_id] = {
         serie: sect_data[s_id].series[0].data,
         less_better: sect_data[s_id].series[0].less_better,
     };
-    $('input:checked').each(function () {
-        labeled_data[s_id][$(this)[0].name] = $(this)[0].value;
+
+    $('input:checked').filter(function () {
+        return $(this)[0].id.startsWith(`${s_id}_`);
+    }).each(function () {
+        const [property, option] = $(this)[0].value.split(':');
+        labeled_data[s_id][property] = option;
     });
 
     $.ajax({
@@ -253,8 +257,7 @@ function pt_save_graph_properties(s_id) {
         type: 'PUT',
         timeout: 2000,
         success: function (response) {
-            $(`#survey_${s_id}`).hide('fast');
-            $(`#survey_label_${s_id}`).show('fast');
+            pt_hide_survey(s_id);
         },
         error: function (data, status, error) {
             console.log(data.responseText);
@@ -262,12 +265,35 @@ function pt_save_graph_properties(s_id) {
     });
 }
 
-function pt_label_data() {
-    Object.keys(sect_data).filter(s_id => sect_data[s_id].chart_type !== NOCHART).forEach(pt_charts_label_data);
+function pt_hide_survey(s_id) {
+    $(`#survey_${s_id}`).hide('fast');
+    $(`#survey_label_${s_id}`).show('fast');
 }
 
-var graph_properties = {
-    function_types: [{% for _, text in CHART_FUNCTION_TYPES %} '{{ text }}', {% endfor %}],
+function pt_label_data() {
+    Object.keys(sect_data).filter(s_id => sect_data[s_id].chart_type !== NOCHART).forEach(pt_charts_label_data);
+
+    $.ajax({
+        url: api_root + "/group/{0}/section/{1}/properties".ptFormat(0, 0),
+        contentType: "application/json",
+        data: null,
+        type: 'GET',
+        timeout: 2000,
+        success: function (sections) {
+            Object.entries(sections).forEach(([s_id, s_data]) => {
+                Object.keys(serie_properties).forEach(property => {
+                    $(`#${s_id}_${property}_selector_${s_data[property]}`).attr('checked', true);
+                });
+            });
+        },
+        error: function (data, status, error) {
+            console.log(data.responseText);
+        }
+    });
+}
+
+const serie_properties = {
+    function_type: [{% for _, text in CHART_FUNCTION_TYPE %} '{{ text }}', {% endfor %}],
     outliers: [{% for _, text in CHART_OUTLIERS %} '{{ text }}', {% endfor %}],
     oscillation: [{% for _, text in CHART_OSCILLATION %} '{{ text }}', {% endfor %}],
     anomaly: [{% for _, text in CHART_ANOMALY %} '{{ text }}', {% endfor %}]
