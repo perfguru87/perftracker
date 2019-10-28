@@ -292,7 +292,7 @@ function pt_label_data() {
     });
 }
 
-var serie_properties = {
+const serie_properties = {
     function_type: [{% for _, text in CHART_FUNCTION_TYPE %} '{{ text }}', {% endfor %}],
     outliers: [{% for _, text in CHART_OUTLIERS %} '{{ text }}', {% endfor %}],
     oscillation: [{% for _, text in CHART_OSCILLATION %} '{{ text }}', {% endfor %}],
