@@ -223,7 +223,7 @@ function pt_charts_label_data(s_id) {
         return;
     }
 
-    Object.entries(graph_properties).forEach(([property, options]) => {
+    Object.entries(serie_properties).forEach(([property, options]) => {
         const selector_id = `${s_id}_${property}_selector`;
         survey.append(`<p id="${selector_id}" class="pt_data_train"><b>${property}</b></p>`).hide().show('fast');
         var labels = '';
@@ -234,17 +234,17 @@ function pt_charts_label_data(s_id) {
         $(`#${selector_id}`).append(labels).hide().show('fast');
     });
 
-    survey.append(`<button onclick="pt_save_graph_properties(${s_id})"><b>Save</b></button>`);
+    survey.append(`<button onclick="pt_save_serie_properties(${s_id})"><b>Save</b></button>`);
 }
 
-function pt_save_graph_properties(s_id) {
+function pt_save_serie_properties(s_id) {
     labeled_data[s_id] = {
         serie: sect_data[s_id].series[0].data,
         less_better: sect_data[s_id].series[0].less_better,
     };
 
     $('input:checked').filter(function () {
-        return $(this)[0].id.includes(s_id.toString());
+        return $(this)[0].id.startsWith(`${s_id}_`);
     }).each(function () {
         const [property, option] = $(this)[0].value.split(':');
         labeled_data[s_id][property] = option;
@@ -281,7 +281,7 @@ function pt_label_data() {
         timeout: 2000,
         success: function (sections) {
             Object.entries(sections).forEach(([s_id, s_data]) => {
-                Object.keys(graph_properties).forEach(property => {
+                Object.keys(serie_properties).forEach(property => {
                     $(`#${s_id}_${property}_selector_${s_data[property]}`).attr('checked', true);
                 });
             });
@@ -292,7 +292,7 @@ function pt_label_data() {
     });
 }
 
-var graph_properties = {
+var serie_properties = {
     function_type: [{% for _, text in CHART_FUNCTION_TYPE %} '{{ text }}', {% endfor %}],
     outliers: [{% for _, text in CHART_OUTLIERS %} '{{ text }}', {% endfor %}],
     oscillation: [{% for _, text in CHART_OSCILLATION %} '{{ text }}', {% endfor %}],
