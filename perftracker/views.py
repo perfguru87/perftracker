@@ -37,7 +37,7 @@ from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetaile
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPE, \
     CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY, CHART_IS_OK
-from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
+from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed, pt_rest_bad_req
 from perftracker_django.settings import DEV_MODE
 
 logger = logging.getLogger(__name__)
