@@ -36,7 +36,7 @@ from perftracker.models.regression import RegressionModel, RegressionSimpleSeria
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPE, \
-    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
+    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY, CHART_IS_OK
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
 from perftracker_django.settings import DEV_MODE
 
@@ -177,6 +177,7 @@ def pt_comparison_section_properties(request, api_ver, project_id, cmp_id, group
                     'outliers': record.outliers,
                     'oscillation': record.oscillation,
                     'anomaly': record.anomaly,
+                    'chart_is_ok': record.chart_is_ok,
                 }
         return JsonResponse(data, safe=False)
 
@@ -198,16 +199,20 @@ def pt_comparison_section_properties(request, api_ver, project_id, cmp_id, group
         if record is not None:
             record.delete()
 
+        def get_type_or_none(types, json_data, type_name):
+            return ComparisonModel._pt_get_type(types, json_data, type_name, not_found_rv=None)
+
         record = TrainDataModel(
             data=formatted_data,
             section_id=section_id,
             job_id=job_id,
             fails=fails,
             less_better=less_better,
-            function_type=ComparisonModel._pt_get_type(CHART_FUNCTION_TYPE, data, 'function_type'),
-            outliers=ComparisonModel._pt_get_type(CHART_OUTLIERS, data, 'outliers'),
-            oscillation=ComparisonModel._pt_get_type(CHART_OSCILLATION, data, 'oscillation'),
-            anomaly=ComparisonModel._pt_get_type(CHART_ANOMALY, data, 'anomaly'),
+            function_type=get_type_or_none(CHART_FUNCTION_TYPE, data, 'function_type'),
+            outliers=get_type_or_none(CHART_OUTLIERS, data, 'outliers'),
+            oscillation=get_type_or_none(CHART_OSCILLATION, data, 'oscillation'),
+            anomaly=get_type_or_none(CHART_ANOMALY, data, 'anomaly'),
+            chart_is_ok=get_type_or_none(CHART_IS_OK, data, 'chart_is_ok'),
         )
         record.save()
         return JsonResponse({}, safe=False)
@@ -241,6 +246,7 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                               'CHART_OUTLIERS': CHART_OUTLIERS,
                               'CHART_OSCILLATION': CHART_OSCILLATION,
                               'CHART_ANOMALY': CHART_ANOMALY,
+                              'CHART_IS_OK': CHART_IS_OK,
                               'DEV_MODE': DEV_MODE,
                               },
                       obj=obj)
