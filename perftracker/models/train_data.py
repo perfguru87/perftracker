@@ -9,6 +9,7 @@ class PTChartFunctionType:
     LINEAR = 2
     LOGARITHM = 3
     SQUARE_OR_EXP = 4
+    HYPERBOLA = 5
 
 
 CHART_FUNCTION_TYPE = (
@@ -17,6 +18,7 @@ CHART_FUNCTION_TYPE = (
     (PTChartFunctionType.LINEAR, 'Linear'),
     (PTChartFunctionType.LOGARITHM, 'Logarithm'),
     (PTChartFunctionType.SQUARE_OR_EXP, 'Square or exp'),
+    (PTChartFunctionType.HYPERBOLA, 'Hyperbola'),
 )
 
 
@@ -55,16 +57,28 @@ CHART_ANOMALY = (
 )
 
 
+class PTChartIsOk:
+    FALSE = 0
+    TRUE = 1
+
+
+CHART_IS_OK = (
+    (PTChartIsOk.FALSE, 'False'),
+    (PTChartIsOk.TRUE, 'True'),
+)
+
+
 class TrainDataModel(models.Model):
-    data = models.TextField()
-    section_id = models.IntegerField(default=0, db_index=True)
-    job_id = models.IntegerField(default=0, db_index=True)
-    fails = models.TextField(null=True, blank=True)
-    less_better = models.TextField(default='_')
-    function_type = models.IntegerField(default=0, choices=CHART_FUNCTION_TYPE)
-    outliers = models.IntegerField(default=0, choices=CHART_OUTLIERS)
-    oscillation = models.IntegerField(default=0, choices=CHART_OSCILLATION)
-    anomaly = models.IntegerField(default=0, choices=CHART_ANOMALY)
+    data = models.TextField(null=False)
+    section_id = models.IntegerField(null=False, db_index=True)
+    job_id = models.IntegerField(null=False, db_index=True)
+    less_better = models.TextField(null=False)
+    chart_is_ok = models.IntegerField(blank=False, default=None, choices=CHART_IS_OK)
+    fails = models.TextField(null=True)
+    function_type = models.IntegerField(null=True, choices=CHART_FUNCTION_TYPE)
+    outliers = models.IntegerField(null=True, choices=CHART_OUTLIERS)
+    oscillation = models.IntegerField(null=True, choices=CHART_OSCILLATION)
+    anomaly = models.IntegerField(null=True, choices=CHART_ANOMALY)
 
     @staticmethod
     def pt_format_data(data):
@@ -110,6 +124,11 @@ class TrainDataModel(models.Model):
                 f'Serie must be float lists: "point": <[float, float]>; exception: {type(e).__name__}'
             )
 
-        for field in ('function_type', 'outliers', 'oscillation', 'anomaly', 'less_better'):
+        require_all_fields = False
+        required_fields = ['less_better', 'chart_is_ok']
+        if require_all_fields:
+            required_fields += ['function_type', 'outliers', 'oscillation', 'anomaly']
+
+        for field in required_fields:
             if field not in json_data:
                 raise SuspiciousOperation(f'{field} field is not specified: it must be "{field}": <int>')
