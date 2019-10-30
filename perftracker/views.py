@@ -35,9 +35,9 @@ from perftracker.models.regression import RegressionModel, RegressionSimpleSeria
     PTRegressionServSideView
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
-from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPES, \
-    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY
-from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
+from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPE, \
+    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY, CHART_IS_OK
+from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed, pt_rest_bad_req
 from perftracker_django.settings import DEV_MODE
 
 logger = logging.getLogger(__name__)
@@ -157,28 +157,65 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
 
 
 @csrf_exempt
-def pt_comparison_section_properties_save(request, api_ver, project_id, cmp_id, group_id, section_id):
+def pt_comparison_section_properties(request, api_ver, project_id, cmp_id, group_id, section_id):
     try:
-        data = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError:
-        return HttpResponseBadRequest("Wrong json")
+        job_id = ComparisonModel.objects.get(pk=cmp_id).pt_get_jobs()[0].id
+    except ComparisonModel.DoesNotExist:
+        return HttpResponseBadRequest()
 
-    data = data[str(section_id)]
-    TrainDataModel.pt_validate_json(data)
-    formatted_data, fails, less_better = TrainDataModel.pt_format_data(data)
+    if request.method == 'GET':
+        try:
+            records = TrainDataModel.objects.filter(job_id=job_id)
+        except TrainDataModel.DoesNotExist:
+            records = None
 
-    record = TrainDataModel(
-        data=formatted_data,
-        fails=fails,
-        less_better=less_better,
-        function_type=ComparisonModel._pt_get_type(CHART_FUNCTION_TYPES, data, 'function_type'),
-        outliers=ComparisonModel._pt_get_type(CHART_OUTLIERS, data, 'outliers'),
-        oscillation=ComparisonModel._pt_get_type(CHART_OSCILLATION, data, 'oscillation'),
-        anomaly=ComparisonModel._pt_get_type(CHART_ANOMALY, data, 'anomaly'),
-    )
-    record.save()
+        data = {}
+        if records is not None:
+            for record in records:
+                data[str(record.section_id)] = {
+                    'function_type': record.function_type,
+                    'outliers': record.outliers,
+                    'oscillation': record.oscillation,
+                    'anomaly': record.anomaly,
+                    'chart_is_ok': record.chart_is_ok,
+                }
+        return JsonResponse(data, safe=False)
 
-    return JsonResponse(data, safe=False)
+    elif request.method == 'PUT':
+        try:
+            record = TrainDataModel.objects.get(section_id=section_id)
+        except TrainDataModel.DoesNotExist:
+            record = None
+
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest("Wrong json")
+
+        data = data[str(section_id)]
+        TrainDataModel.pt_validate_json(data)
+        formatted_data, fails, less_better = TrainDataModel.pt_format_data(data)
+
+        if record is not None:
+            record.delete()
+
+        def get_type_or_none(types, json_data, type_name):
+            return ComparisonModel._pt_get_type(types, json_data, type_name, not_found_rv=None)
+
+        record = TrainDataModel(
+            data=formatted_data,
+            section_id=section_id,
+            job_id=job_id,
+            fails=fails,
+            less_better=less_better,
+            function_type=get_type_or_none(CHART_FUNCTION_TYPE, data, 'function_type'),
+            outliers=get_type_or_none(CHART_OUTLIERS, data, 'outliers'),
+            oscillation=get_type_or_none(CHART_OSCILLATION, data, 'oscillation'),
+            anomaly=get_type_or_none(CHART_ANOMALY, data, 'anomaly'),
+            chart_is_ok=get_type_or_none(CHART_IS_OK, data, 'chart_is_ok'),
+        )
+        record.save()
+        return JsonResponse({}, safe=False)
 
 
 @csrf_exempt
@@ -205,10 +242,11 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                               'cmp_view': cmp_view,
                               'PTCmpChartType': PTCmpChartType,
                               'PTCmpTableType': PTCmpTableType,
-                              'CHART_FUNCTION_TYPES': CHART_FUNCTION_TYPES,
+                              'CHART_FUNCTION_TYPE': CHART_FUNCTION_TYPE,
                               'CHART_OUTLIERS': CHART_OUTLIERS,
                               'CHART_OSCILLATION': CHART_OSCILLATION,
                               'CHART_ANOMALY': CHART_ANOMALY,
+                              'CHART_IS_OK': CHART_IS_OK,
                               'DEV_MODE': DEV_MODE,
                               },
                       obj=obj)
