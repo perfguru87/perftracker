@@ -49,7 +49,7 @@ function pt_daterange(begin, end, duration) {
 
 function pt_daterange2str(begin, end, duration, show_seconds = false) {
     var rng = pt_daterange(begin, end, duration);
-    if (!rng)
+    if (!rng || rng.length == 0)
         return "";
     return pt_date2str(rng[0], show_seconds) + ' - ' + pt_date2str(rng[1], show_seconds) + " (local time)";
 }
