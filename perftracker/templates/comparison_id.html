@@ -295,7 +295,7 @@ function pt_label_data() {
 const serie_properties = {
     function_type: [{% for _, text in CHART_FUNCTION_TYPE %} '{{ text }}', {% endfor %}],
     outliers: [{% for _, text in CHART_OUTLIERS %} '{{ text }}', {% endfor %}],
-    oscillation: [{% for _, text in CHART_OSCILLATION %} '{{ text }}', {% endfor %}],
+    deviation: [{% for _, text in CHART_DEVIATION %} '{{ text }}', {% endfor %}],
     anomaly: [{% for _, text in CHART_ANOMALY %} '{{ text }}', {% endfor %}],
     chart_is_ok: [{% for _, text in CHART_IS_OK %} '{{ text }}', {% endfor %}],
 };

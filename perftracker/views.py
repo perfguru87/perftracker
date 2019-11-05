@@ -36,7 +36,7 @@ from perftracker.models.regression import RegressionModel, RegressionSimpleSeria
 from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
 from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
 from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPE, \
-    CHART_OUTLIERS, CHART_OSCILLATION, CHART_ANOMALY, CHART_IS_OK
+    CHART_OUTLIERS, CHART_DEVIATION, CHART_ANOMALY, CHART_IS_OK
 from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed, pt_rest_bad_req
 from perftracker_django.settings import DEV_MODE
 
@@ -175,7 +175,7 @@ def pt_comparison_section_properties(request, api_ver, project_id, cmp_id, group
                 data[str(record.section_id)] = {
                     'function_type': record.function_type,
                     'outliers': record.outliers,
-                    'oscillation': record.oscillation,
+                    'deviation': record.deviation,
                     'anomaly': record.anomaly,
                     'chart_is_ok': record.chart_is_ok,
                 }
@@ -210,7 +210,7 @@ def pt_comparison_section_properties(request, api_ver, project_id, cmp_id, group
             less_better=less_better,
             function_type=get_type_or_none(CHART_FUNCTION_TYPE, data, 'function_type'),
             outliers=get_type_or_none(CHART_OUTLIERS, data, 'outliers'),
-            oscillation=get_type_or_none(CHART_OSCILLATION, data, 'oscillation'),
+            deviation=get_type_or_none(CHART_DEVIATION, data, 'deviation'),
             anomaly=get_type_or_none(CHART_ANOMALY, data, 'anomaly'),
             chart_is_ok=get_type_or_none(CHART_IS_OK, data, 'chart_is_ok'),
         )
@@ -244,7 +244,7 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                               'PTCmpTableType': PTCmpTableType,
                               'CHART_FUNCTION_TYPE': CHART_FUNCTION_TYPE,
                               'CHART_OUTLIERS': CHART_OUTLIERS,
-                              'CHART_OSCILLATION': CHART_OSCILLATION,
+                              'CHART_DEVIATION': CHART_DEVIATION,
                               'CHART_ANOMALY': CHART_ANOMALY,
                               'CHART_IS_OK': CHART_IS_OK,
                               'DEV_MODE': DEV_MODE,

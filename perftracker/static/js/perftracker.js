@@ -550,7 +550,10 @@ function pt_configure_chart(element, chart_type, has_failures, x_categories, x_n
     var is_xy = (chart_type === 2);
     var legends = [];
     var option = {
-        title: { },
+        title: {
+            subtext: series[0].less_better ? '[lower is better]' : '[higher is better]',
+            x: 'center',
+        },
         animation: false,
         tooltip: {
             transitionDuration: 0,

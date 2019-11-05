@@ -35,14 +35,14 @@ CHART_OUTLIERS = (
 )
 
 
-class PTChartOscillation:
+class PTChartDeviation:
     FALSE = 0
     TRUE = 1
 
 
-CHART_OSCILLATION = (
-    (PTChartOscillation.FALSE, 'False'),
-    (PTChartOscillation.TRUE, 'True'),
+CHART_DEVIATION = (
+    (PTChartDeviation.FALSE, 'False'),
+    (PTChartDeviation.TRUE, 'True'),
 )
 
 
@@ -77,7 +77,7 @@ class TrainDataModel(models.Model):
     fails = models.TextField(null=True)
     function_type = models.IntegerField(null=True, choices=CHART_FUNCTION_TYPE)
     outliers = models.IntegerField(null=True, choices=CHART_OUTLIERS)
-    oscillation = models.IntegerField(null=True, choices=CHART_OSCILLATION)
+    deviation = models.IntegerField(null=True, choices=CHART_DEVIATION)
     anomaly = models.IntegerField(null=True, choices=CHART_ANOMALY)
 
     @staticmethod
@@ -127,7 +127,7 @@ class TrainDataModel(models.Model):
         require_all_fields = False
         required_fields = ['less_better', 'chart_is_ok']
         if require_all_fields:
-            required_fields += ['function_type', 'outliers', 'oscillation', 'anomaly']
+            required_fields += ['function_type', 'outliers', 'deviation', 'anomaly']
 
         for field in required_fields:
             if field not in json_data:
