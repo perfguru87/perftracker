@@ -29,42 +29,97 @@
 </div>
 
 <span style="float: right">
-  <a id="analyze_button" onclick="pt_charts_analyze()">Analyze</a>
   <a onclick="pt_label_data()">Label data</a>
 </span>
 
+<div class="menu-icon"></div>
+<div class="navbar_left">
+    <div class="navbar-inner">
+        <div class="active-cyan-4 mb-4">
+            <input class="form-control panel__input-search_text" type="text" placeholder="Search" aria-label="Search">
+        </div>
+        <h4 class="left-nav__headers">Show Only</h4>
+        <div class="panel__input panel__input_selected">
+            <input type="checkbox" name="selected" id="selected" disabled>
+            <label for="selected"><h5 class="left-nav__headers">Selected</h5></label>
+        </div>
+        <div class="panel__input panel__input_erros">
+            <input type="checkbox" name="error" id="errors" disabled>
+            <label for="erros"><h5 class="left-nav__headers">Errors</h5></label>
+        </div>
+        <div class="panel__input panel__input_degradations">
+            <input type="checkbox" name="degradations" id="degradations" disabled>
+            <label for="degradations"><h5 class="left-nav__headers">Degradations</h5></label>
+        </div>
+
+        <span class="sexy_line"></span>
+
+        <div class="panel__graphs_type">
+            <h4 class="left-nav__headers">Types of Degradations</h4>
+            <div class="panel__input panel__input_not_linear">
+                <input type="checkbox" name="not_linear" id="not_linear" disabled>
+                <label for="not_linear"><h5 class="left-nav__headers">Worse than linear</h5></label>
+            </div>
+            <div class="panel__input panel__input_linear">
+                <input type="checkbox" name="linear" id="linear" disabled>
+                <label for="linear"><h5 class="left-nav__headers">Linear</h5></label>
+            </div>
+            <div class="panel__input panel__input_volatility">
+                <input type="checkbox" name="volatility" id="volatility" disabled>
+                <label for="volatility"><h5 class="left-nav__headers">High Volatility</h5></label>
+            </div>
+            <div class="panel__input panel__input_anomalies">
+                <input type="checkbox" name="anomalies" id="anomalies" disabled>
+                <label for="anomalies"><h5 class="left-nav__headers">Anomalies</h5></label>
+            </div>
+            <div class="panel__input panel__input_outliers">
+                <input type="checkbox" name="outliers" id="outliers" disabled>
+                <label for="outliers"><h5 class="left-nav__headers">Outliers</h5></label>
+            </div>
+        </div>
+
+        <span class="sexy_line"></span>
+
+        <h4 class="left-nav__headers">Tables</h4>
+        <h5 class="left-nav__headers" onclick="show_all_tables()">Show</h5>
+        <h5 class="left-nav__headers" onclick="hide_all_tables()">Hide</h5>
+
+        <span class="sexy_line"></span>
+
+        <h4 class="left-nav__headers">Selection</h4>
+        <h5 class="left-nav__headers">Select Visible</h5>
+        <h5 class="left-nav__headers">Unselect Visible</h5>
+        <h5 class="left-nav__headers">Select All</h5>
+        <h5 class="left-nav__headers">Unselect All</h5>
+
+        <span class="sexy_line"></span>
+
+        <div class="left-nav__go-to">
+            <h4 class="left-nav__headers">Groups</h4>
+            <div>
+                <h5 class="left-nav__headers">Group...</h5>
+                <div class="dropleft_content">
+                    {% for g_tag, g in cmp_view.groups.items %}
+                        <h5 class="left-nav__headers"><a href="#g_{{ g.id }}">{{ g.group_obj.title|default:"undefined" }}</a></h5>
+                    {% endfor %}
+                </div>
+            </div>
+            <h5 class="left-nav__headers">Collapse All</h5>
+            <h5 class="left-nav__headers">Expand All</h5>
+        </div>
+
+        <span class="sexy_line"></span>
+
+        <h4 class="left-nav__headers">Misc</h4>
+        <h5 class="left-nav__headers">Reset all filtering</h5>
+        <h5 class="left-nav__headers">Thumbnail charts</h5>
+        <h5 class="left-nav__headers">Compare Selected</h5>
+        <h5 class="left-nav__headers">Share View</h5>
+        <h5 class="left-nav__headers" onclick="pt_charts_analyze()">Analyze</h5>
+	</div>
+</div>
+
 <div id="main_content_container"></div>
-
-<button class="panel__btn_toggle"><i class="fa fa-angle-up"></i></button>
-<nav id="panel_id" class="navbar-default navbar-fixed-bottom panel">
-  <div class="panel__button-controller panel__unit_hide-tables">
-      <h4><button onclick="hide_all_tables()">Hide tables</button></h4>
-  </div>
-  <div class="panel__button-controller panel__unit_show-tables">
-      <h4><button onclick="show_all_tables()">Show tables</button></h4>
-  </div>
-  <div class="panel__button-controller panel__unit_unselect">
-      <h4><button onclick="unselectGraphs()">Unselect All</button></h4>
-  </div>
-  <div class="panel__button-controller panel__unit_show-selected">
-      <h4><button onclick="showSelectedGraphs()">Show Selected</button></h4>
-  </div>
-  <div class="panel__button-controller panel__unit_go-to">
-      <h4><button>Group...</button></h4>
-      <div class="panel_dropup-content">
-          {% for g_tag, g in cmp_view.groups.items %}
-              <a href="#g_{{ g.id }}">{{ g.group_obj.title|default:"undefined" }}</a>
-          {% endfor %}
-      </div>
-  </div>
-  <div class="panel__input-search">
-      <span class="panel__input-search-span">
-          <input class="panel__input-search_text"type="text" name="graphs-search" placeholder="search">
-      </span>
-  </div>
-</nav>
-
-<div class="panel__show_cntl"></div>
 
 {% comment %}
 
@@ -97,6 +152,7 @@ const NOCHART = {{ PTCmpChartType.NOCHART }};
 const NOTABLE = {{ PTCmpTableType.HIDE }};
 const DEV_MODE = {{ DEV_MODE|tojson }};
 var labeled_data = {};
+var ENTER_KEY = 13;
 
 function hide_all_tables() {
     Object.keys(sect_data).forEach(hide_table);
@@ -194,7 +250,7 @@ function delayed_render() {
         var s = sect_data[s_id];
         if (group_data[s.g_id].collapsed)
             return; // we have to avoid rendering collapsed charts - the rendering is wrong
-        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($("#chart_" + s_id)[0]) && s.section_hidden !== true) {
+        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($(`#chart_${s_id}`)[0]) && !s.section_hidden) {
             show_chart(s_id);
         }
         if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && pt_isInViewport($(`#results_${s_id}`)[0])) {
@@ -300,20 +356,6 @@ var graph_properties = {
     anomaly: [{% for _, text in CHART_ANOMALY %} '{{ text }}', {% endfor %}]
 };
 
-function showPanel() {
-    var panel = $('#panel_id');
-    panel.show(0);
-    $('.panel__btn_toggle').css({"bottom": "130px"});
-    $("i.fa.fa-angle-up").replaceWith('<i class="fa fa-angle-down"></i>');
-}
-
-function hidePanel() {
-    var panel = $('#panel_id');
-    panel.hide(0);
-    $('.panel__btn_toggle').css({"bottom": "17px"});
-    $("i.fa.fa-angle-down").replaceWith('<i class="fa fa-angle-up"></i>');
-}
-
 function showSelectedGraphs() {
     alert('Not implemented, sorry');
 }
@@ -349,8 +391,7 @@ Object.values(sect_data).forEach(function(element) {
 $(document).ready(function() {
 
     var main = $('#main_content_container');
-    var panel = $('#panel_id');
-    panel.hide();
+    var navbar = $('.navbar-inner');
 
     Object.keys(group_data).map(g_id => {
         var g = group_data[g_id];
@@ -396,29 +437,8 @@ $(document).ready(function() {
     $('.collapse').on("shown.bs.collapse hidden.bs.collapse", delayed_render);
     delayed_render();
 
-    $('.panel__btn_toggle').click(function () {
-        if (!(panel.is(":hidden"))) {
-          panel.removeClass('panel_pinned');
-          hidePanel();
-        } else {
-          panel.addClass('panel_pinned');
-          showPanel()();
-        }
-    });
-
-    panel.mouseleave(function () {
-        if (!(panel.is(":hidden")) && !(panel.hasClass('panel_pinned'))) {
-          hidePanel();
-        }
-    });
-
-    $(".panel__show_cntl").hover(function() {
-        if ((panel.is(":hidden")) && !(panel.hasClass('panel_pinned'))) {
-            showPanel();
-        }
-    });
-
     var keyUpStack = [];
+
     $(".panel__input-search_text").keyup(function(e) {
         keyUpStack.push(1);
         $('h4').unmark();
@@ -448,7 +468,7 @@ $(document).ready(function() {
                         sect_data[key].section_hidden = true;
                         $('.graph__container_' + key).hide();
                     });
-                } else if(e.keyCode === 13) {
+                } else if(e.keyCode === ENTER_KEY) {
                     Object.keys(filteredList).forEach(function(key) {
                         sect_data[key].section_hidden = true;
                         $('.graph__container_' + key).hide();
@@ -459,13 +479,30 @@ $(document).ready(function() {
                     sect_data[key].section_hidden = false;
                     $('.graph__container_' + key).show();
                 });
-                $('h4').mark(buf, {
+                $('h4:not(.left-nav__headers)').mark(buf, {
                     "accuracy": "partially",
                     "separateWordSearch": false,
                 });
                 delayed_render();
             }
         }.bind(this), 300);
+    });
+
+    $('.panel__input_degradations input').on('change', function () {
+        var inputs = $('.panel__graphs_type input');
+        if (inputs.is(':disabled')) {
+            inputs.removeAttr('disabled');
+        } else {
+            inputs.attr('disabled', true);
+        }
+    });
+
+    $('.menu-icon').mouseover(function() {
+        navbar.css('display', 'block');
+    });
+
+    navbar.mouseleave(function() {
+        $(this).css('display', 'none');
     });
 });
 </script>
