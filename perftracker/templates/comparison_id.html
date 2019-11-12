@@ -2,6 +2,12 @@
 
 {% load tojson %}
 
+{% load static %}
+
+{% block extra_links %}
+    <script type="text/javascript" charset="utf8" src="{% static 'markjs/jquery.mark.js' %}"></script>
+{% endblock %}
+
 {% block title %}Comparison: #{{ obj.id }} / {{ obj.title }}{% endblock %}
 
 {% block content %}
@@ -383,11 +389,6 @@ var sect_data = {
      },{% endfor %}{% endfor %}
 };
 
-var plotsTitles = {};
-Object.values(sect_data).forEach(function(element) {
-    plotsTitles[element['s_id']] = element['title'];
-});
-
 $(document).ready(function() {
 
     var main = $('#main_content_container');
@@ -419,8 +420,8 @@ $(document).ready(function() {
             `<a id="survey_label_${s_id}" onclick="pt_charts_label_data(${s.s_id})" title="Label data"><span class="glyphicon glyphicon-tag"/></a>` : "";
 
         $(`#data_${s.g_id}`).append(
-           `<div class="graph__container_${s_id}">
-            <span><h4 style="display: inline">${s.title}</h4>
+           `<div class="section__container_${s_id}">
+            <span><h4 class="plot__title" style="display: inline">${s.title}</h4>
             <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
@@ -437,49 +438,55 @@ $(document).ready(function() {
     $('.collapse').on("shown.bs.collapse hidden.bs.collapse", delayed_render);
     delayed_render();
 
-    var keyUpStack = [];
+    var keyUpFlag = 0;
+    var plotsTitles = {};
+    Object.values(sect_data).forEach(function(element) {
+        plotsTitles[element['s_id']] = element['title'].replace(/\s/g, '').toLowerCase();
+    });
+    console.log(plotsTitles);
 
     $(".panel__input-search_text").keyup(function(e) {
-        keyUpStack.push(1);
-        $('h4').unmark();
+        keyUpFlag += 1;
+        $('h4.plot__title').unmark();
 
         setTimeout(function() {
-            keyUpStack.pop();
+            keyUpFlag -= 1;
 
-            if(keyUpStack.length === 0) {
-                var buf = this.value;
+            if(keyUpFlag === 0) {
+                var buf = this.value.replace(/\s/g, '').toLowerCase();
 
-                var filteredList = {};
+                /**
+                 * Constructing two arrays hiddenList and plotsToShow to detect
+                 * which plots we want to hide during our search
+                 */
+                var plotsToHide = {};
                 var plotsToShow = {};
                 Object.keys(plotsTitles).forEach(function(key) {
-                    if(!plotsTitles[key].replace(/\s/g, '').includes(buf.replace(/\s/g, ''))) {
-                        filteredList[key] = plotsTitles[key];
-                    }
-                });
-
-                Object.keys(plotsTitles).forEach(function(key) {
-                    if(plotsTitles[key].replace(/\s/g, '').includes(buf.replace(/\s/g, ''))) {
+                    if(!plotsTitles[key].includes(buf)) {
+                        plotsToHide[key] = plotsTitles[key];
+                    } else {
                         plotsToShow[key] = plotsTitles[key];
                     }
                 });
 
-                if(this.value.length >= 3) {
-                    Object.keys(filteredList).forEach(function(key) {
+                /**
+                 * If the value in search window has length more than 2
+                 * or the ENTER button was pressed, search operation applies
+                 * for plots in hiddenList and plotsToShow
+                 */
+                if(this.value.length >= 3 || e.keyCode === ENTER_KEY) {
+                    Object.keys(plotsToHide).forEach(function(key) {
                         sect_data[key].section_hidden = true;
-                        $('.graph__container_' + key).hide();
-                    });
-                } else if(e.keyCode === ENTER_KEY) {
-                    Object.keys(filteredList).forEach(function(key) {
-                        sect_data[key].section_hidden = true;
-                        $('.graph__container_' + key).hide();
+                        $('.section__container_' + key).hide();
                     });
                 }
 
                 Object.keys(plotsToShow).forEach(function(key) {
                     sect_data[key].section_hidden = false;
-                    $('.graph__container_' + key).show();
+                    $('.section__container_' + key).show();
                 });
-                $('h4:not(.left-nav__headers)').mark(buf, {
+
+                $('h4.plot__title').mark(buf, {
                     "accuracy": "partially",
                     "separateWordSearch": false,
                 });
