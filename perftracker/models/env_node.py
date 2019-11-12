@@ -1,8 +1,10 @@
 import copy
+import re
 
 from django.core.exceptions import SuspiciousOperation, ValidationError
 from django.db import models
 from rest_framework import serializers
+from django.conf import settings
 
 
 class HwChassisModel(models.Model):
@@ -107,6 +109,12 @@ class EnvNodeModel(models.Model):
     hw_chassis = models.ForeignKey(HwChassisModel, blank=True, null=True, on_delete=models.CASCADE, default=None)
     job        = models.ForeignKey('perftracker.JobModel', help_text="Job", on_delete=models.CASCADE, related_name='env_nodes')
 
+    @property
+    def display_name(self):
+        if not hasattr(settings, 'ENV_NODE_DISPLAY_NAME_RE'):
+            return self.name
+        return re.sub(*settings.ENV_NODE_DISPLAY_NAME_RE, self.name)
+
     def __str__(self):
         ret = "%s %s %s" % (self.node_type, self.name, self.version)
         if self.params:
@@ -185,7 +193,7 @@ class EnvNodeUploadSerializer(serializers.ModelSerializer):
 class EnvNodeSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnvNodeModel
-        fields = ('name', 'id')
+        fields = ('name', 'display_name', 'id')
 
 
 class RecursiveField(serializers.Serializer):
@@ -201,6 +209,6 @@ class EnvNodeNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnvNodeModel
-        fields = ('name', 'id', 'uuid', 'version', 'node_type', 'ip', 'hostname', 'params',
+        fields = ('name', 'display_name', 'id', 'uuid', 'version', 'node_type', 'ip', 'hostname', 'params',
                   'cpus', 'cpus_topology', 'ram_mb', 'disk_gb',
                   'links', 'parent', 'job', 'hw_chassis', 'children')

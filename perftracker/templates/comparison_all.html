@@ -130,7 +130,7 @@ $(document).ready(function() {
                 "type": "string",
                 "orderData": [ 4, 1 ],
                 "render": function ( data, type, row ) {
-                    return data.map(env => env.name || '').join("<br>");
+                    return data.map(env => env.display_name || '').join("<br>");
                 },
             },
             {

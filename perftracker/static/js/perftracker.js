@@ -49,7 +49,7 @@ function pt_daterange(begin, end, duration) {
 
 function pt_daterange2str(begin, end, duration, show_seconds = false) {
     var rng = pt_daterange(begin, end, duration);
-    if (!rng)
+    if (!rng || rng.length == 0)
         return "";
     return pt_date2str(rng[0], show_seconds) + ' - ' + pt_date2str(rng[1], show_seconds) + " (local time)";
 }
@@ -550,7 +550,10 @@ function pt_configure_chart(element, chart_type, has_failures, x_categories, x_n
     var is_xy = (chart_type === 2);
     var legends = [];
     var option = {
-        title: { },
+        title: {
+            subtext: series[0].less_better ? '[lower is better]' : '[higher is better]',
+            x: 'center',
+        },
         animation: false,
         tooltip: {
             transitionDuration: 0,

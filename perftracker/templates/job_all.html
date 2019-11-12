@@ -17,7 +17,7 @@
       <th class='colID'>ID</th>
       <th class='colEndDate'>Test run end</th>
       <th class='colProject'>Project</th>
-      <th class='colHw'>Hw</th>
+      <th class='colHw'>Env</th>
       <th class='colProdName'>Product name</th>
       <th class='colProdVer'>Product ver</th>
       <th class='colRunTitle'>Test run title</th>
@@ -37,7 +37,7 @@
       <th class='colID'>ID</th>
       <th class='colEndDate'>Test run end</th>
       <th class='colProject'>Project</th>
-      <th class='colHw'>Hw</th>
+      <th class='colHw'>Env</th>
       <th class='colProdName'>Product name</th>
       <th class='colProdVer'>Product ver</th>
       <th class='colRunTitle'>Test run title</th>
@@ -277,17 +277,7 @@ $(document).ready(function() {
                 "targets": "colHw",
                 "type": "string",
                 "render": function ( data, type, row ) {
-                    var str = '';
-                    if (!data)
-                        return '';
-                    for (var i = 0; i < data.length; i++) {
-                        if (typeof data[i].name == 'undefined')
-                            continue;
-                        if (str)
-                            str += ", ";
-                        str += data[i].name;
-                    }
-                    return str;
+                    return data.map(env => env.display_name || '').join(", ");
                 },
             },
             {

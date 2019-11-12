@@ -102,9 +102,9 @@ class ComparisonModel(models.Model):
             raise SuspiciousOperation("Comparison jobs must be a list: 'jobs': [1, 3, ...] ")
 
     @staticmethod
-    def _pt_get_type(types, json_data, key):
+    def _pt_get_type(types, json_data, key, not_found_rv=0):
         if key not in json_data:
-            return 0
+            return not_found_rv
 
         type2id = {}
         for id, type in types:

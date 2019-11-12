@@ -195,6 +195,8 @@ LOGGING = {
 REQUEST_LOGGING_ENABLE_COLORIZE = False
 REQUEST_LOGGING_MAX_BODY_LENGTH = 1024
 
+ENV_NODE_DISPLAY_NAME_RE = ('', '')  # passed to re.sub() to replace parts of HW names
+
 curr_dir = os.path.abspath(os.path.dirname(__file__))
 if os.path.exists(os.path.join(curr_dir, "settings_local.py")):
     sys.path.append(curr_dir)
