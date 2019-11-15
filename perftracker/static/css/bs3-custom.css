@@ -80,17 +80,16 @@ mark {
 .menu-icon {
   position:fixed;
   background: #f0f0f0;
-  width: 35px;
+  width: 50px;
   height: 120px;
   border-top-right-radius: 24px;
   border-bottom-right-radius: 24px;
-  left: -24px;
+  left: -34px;
   box-shadow: 0px 0px 3px #444;
   top:45%;
 }
 
 .navbar_left {
-  height: 780px;
   top: 10%;
   position: fixed;
   left: 0;
@@ -103,12 +102,10 @@ mark {
   z-index: 10000;
   box-shadow: 0px 0px 3px #444;
   background: #f0f0f0;
-  min-width: 210px;
-  width: 13%;
+  width: 210px;
   border-radius: 5px;
-  height: 83%;
-  overflow-y: scroll;
-  position: fixed;
+  height: auto;
+  overflow-y: auto;
   left: 0;
   top: 10%;
   vertical-align: middle;
@@ -159,9 +156,13 @@ h5.left-nav__headers {
   margin: 0 auto;
 }
 
-h5.left-nav__headers:hover {
+h5.left-nav__headers:not(.disabled):hover {
   color: #b0807d;
-  cursor: nw-resize;
+  cursor: default;
+}
+
+.disabled {
+  opacity: 0.2;
 }
 
 .panel__input {
@@ -176,16 +177,21 @@ h5.left-nav__headers:hover {
 
 .dropleft_content {
   display: none;
-  position: relative;
-  left: 10px;
+  position: absolute;
+  top: 65%;
+  left: 207px;
+  border: 1px solid #b0b5b1;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  background-color: #f0f0f0;
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
   font-weight: bold;
-  background-color: inherit;
   min-width: 190px;
   z-index: 1;
   width: 10%;
   height: auto;
-  overflow-y: scroll;
-  overflow-x: scroll;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .left-nav__go-to:hover .dropleft_content {

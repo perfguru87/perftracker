@@ -41,87 +41,89 @@
 <div class="menu-icon"></div>
 <div class="navbar_left">
     <div class="navbar-inner">
-        <div class="active-cyan-4 mb-4">
-            <input class="form-control panel__input-search_text" type="text" placeholder="Search" aria-label="Search">
-        </div>
-        <h4 class="left-nav__headers">Show Only</h4>
-        <div class="panel__input panel__input_selected">
-            <input type="checkbox" name="selected" id="selected" disabled>
-            <label for="selected"><h5 class="left-nav__headers">Selected</h5></label>
-        </div>
-        <div class="panel__input panel__input_erros">
-            <input type="checkbox" name="error" id="errors" disabled>
-            <label for="erros"><h5 class="left-nav__headers">Errors</h5></label>
-        </div>
-        <div class="panel__input panel__input_degradations">
-            <input type="checkbox" name="degradations" id="degradations" disabled>
-            <label for="degradations"><h5 class="left-nav__headers">Degradations</h5></label>
-        </div>
-
-        <span class="sexy_line"></span>
-
-        <div class="panel__graphs_type">
-            <h4 class="left-nav__headers">Types of Degradations</h4>
-            <div class="panel__input panel__input_not_linear">
-                <input type="checkbox" name="not_linear" id="not_linear" disabled>
-                <label for="not_linear"><h5 class="left-nav__headers">Worse than linear</h5></label>
+        <div>
+            <div class="active-cyan-4 mb-4">
+                <input class="form-control panel__input-search_text" type="text" placeholder="Search" aria-label="Search">
             </div>
-            <div class="panel__input panel__input_linear">
-                <input type="checkbox" name="linear" id="linear" disabled>
-                <label for="linear"><h5 class="left-nav__headers">Linear</h5></label>
+            <h4 class="left-nav__headers">Show Only</h4>
+            <div class="panel__input panel__input_selected">
+                <input type="checkbox" name="selected" id="selected" disabled>
+                <label for="selected"><h5 class="left-nav__headers disabled">Selected</h5></label>
             </div>
-            <div class="panel__input panel__input_volatility">
-                <input type="checkbox" name="volatility" id="volatility" disabled>
-                <label for="volatility"><h5 class="left-nav__headers">High Volatility</h5></label>
+            <div class="panel__input panel__input_erros">
+                <input type="checkbox" name="error" id="errors" disabled>
+                <label for="erros"><h5 class="left-nav__headers disabled">Errors</h5></label>
             </div>
-            <div class="panel__input panel__input_anomalies">
-                <input type="checkbox" name="anomalies" id="anomalies" disabled>
-                <label for="anomalies"><h5 class="left-nav__headers">Anomalies</h5></label>
+            <div class="panel__input panel__input_degradations">
+                <input type="checkbox" name="degradations" id="degradations" disabled>
+                <label for="degradations"><h5 class="left-nav__headers disabled">Degradations</h5></label>
             </div>
-            <div class="panel__input panel__input_outliers">
-                <input type="checkbox" name="outliers" id="outliers" disabled>
-                <label for="outliers"><h5 class="left-nav__headers">Outliers</h5></label>
-            </div>
-        </div>
 
-        <span class="sexy_line"></span>
+            <span class="sexy_line"></span>
 
-        <h4 class="left-nav__headers">Tables</h4>
-        <h5 class="left-nav__headers" onclick="show_all_tables()">Show</h5>
-        <h5 class="left-nav__headers" onclick="hide_all_tables()">Hide</h5>
-
-        <span class="sexy_line"></span>
-
-        <h4 class="left-nav__headers">Selection</h4>
-        <h5 class="left-nav__headers">Select Visible</h5>
-        <h5 class="left-nav__headers">Unselect Visible</h5>
-        <h5 class="left-nav__headers">Select All</h5>
-        <h5 class="left-nav__headers">Unselect All</h5>
-
-        <span class="sexy_line"></span>
-
-        <div class="left-nav__go-to">
-            <h4 class="left-nav__headers">Groups</h4>
-            <div>
-                <h5 class="left-nav__headers">Group...</h5>
-                <div class="dropleft_content">
-                    {% for g_tag, g in cmp_view.groups.items %}
-                        <h5 class="left-nav__headers"><a href="#g_{{ g.id }}">{{ g.group_obj.title|default:"undefined" }}</a></h5>
-                    {% endfor %}
+            <div class="panel__graphs_type">
+                <h4 class="left-nav__headers">Types of Degradations</h4>
+                <div class="panel__input panel__input_not_linear">
+                    <input type="checkbox" name="not_linear" id="not_linear" disabled>
+                    <label for="not_linear"><h5 class="left-nav__headers disabled">Worse than linear</h5></label>
+                </div>
+                <div class="panel__input panel__input_linear">
+                    <input type="checkbox" name="linear" id="linear" disabled>
+                    <label for="linear"><h5 class="left-nav__headers disabled">Linear</h5></label>
+                </div>
+                <div class="panel__input panel__input_volatility">
+                    <input type="checkbox" name="volatility" id="volatility" disabled>
+                    <label for="volatility"><h5 class="left-nav__headers disabled">High Volatility</h5></label>
+                </div>
+                <div class="panel__input panel__input_anomalies">
+                    <input type="checkbox" name="anomalies" id="anomalies" disabled>
+                    <label for="anomalies"><h5 class="left-nav__headers disabled">Anomalies</h5></label>
+                </div>
+                <div class="panel__input panel__input_outliers">
+                    <input type="checkbox" name="outliers" id="outliers" disabled>
+                    <label for="outliers"><h5 class="left-nav__headers disabled">Outliers</h5></label>
                 </div>
             </div>
-            <h5 class="left-nav__headers">Collapse All</h5>
-            <h5 class="left-nav__headers">Expand All</h5>
+
+            <span class="sexy_line"></span>
+
+            <h4 class="left-nav__headers">Tables</h4>
+            <h5 class="left-nav__headers left-nav__show_button" onclick="show_all_tables()">Show</h5>
+            <h5 class="left-nav__headers left-nav__hide_button" onclick="hide_all_tables()">Hide</h5>
+
+            <span class="sexy_line"></span>
+
+            <h4 class="left-nav__headers">Selection</h4>
+            <h5 class="left-nav__headers disabled">Select Visible</h5>
+            <h5 class="left-nav__headers disabled">Unselect Visible</h5>
+            <h5 class="left-nav__headers disabled">Select All</h5>
+            <h5 class="left-nav__headers disabled">Unselect All</h5>
+
+            <span class="sexy_line"></span>
+
+            <div class="left-nav__go-to">
+                <h4 class="left-nav__headers">Groups</h4>
+                <div>
+                    <h5 class="left-nav__headers">Group...</h5>
+                    <div class="dropleft_content">
+                        {% for g_tag, g in cmp_view.groups.items %}
+                            <h5 class="left-nav__headers"><a href="#g_{{ g.id }}">{{ g.group_obj.title|default:"undefined" }}</a></h5>
+                        {% endfor %}
+                    </div>
+                </div>
+                <h5 class="left-nav__headers disabled">Collapse All</h5>
+                <h5 class="left-nav__headers disabled">Expand All</h5>
+            </div>
+
+            <span class="sexy_line"></span>
+
+            <h4 class="left-nav__headers disabled">Misc</h4>
+            <h5 class="left-nav__headers disabled">Reset all filtering</h5>
+            <h5 class="left-nav__headers disabled">Thumbnail charts</h5>
+            <h5 class="left-nav__headers disabled">Compare Selected</h5>
+            <h5 class="left-nav__headers disabled">Share View</h5>
+            <h5 class="left-nav__headers disabled" onclick="pt_charts_analyze()">Analyze</h5>
         </div>
-
-        <span class="sexy_line"></span>
-
-        <h4 class="left-nav__headers">Misc</h4>
-        <h5 class="left-nav__headers">Reset all filtering</h5>
-        <h5 class="left-nav__headers">Thumbnail charts</h5>
-        <h5 class="left-nav__headers">Compare Selected</h5>
-        <h5 class="left-nav__headers">Share View</h5>
-        <h5 class="left-nav__headers" onclick="pt_charts_analyze()">Analyze</h5>
 	</div>
 </div>
 
@@ -159,6 +161,8 @@ const NOTABLE = {{ PTCmpTableType.HIDE }};
 const DEV_MODE = {{ DEV_MODE|tojson }};
 var labeled_data = {};
 var ENTER_KEY = 13;
+var TILDA_KEY = 192;
+var ESC_KEY = 27;
 
 function hide_all_tables() {
     Object.keys(sect_data).forEach(hide_table);
@@ -419,8 +423,8 @@ var sect_data = {
 };
 
 $(document).ready(function() {
-
     var main = $('#main_content_container');
+    var searchField = $('.panel__input-search_text');
     var navbar = $('.navbar-inner');
 
     Object.keys(group_data).map(g_id => {
@@ -470,11 +474,10 @@ $(document).ready(function() {
     var keyUpFlag = 0;
     var plotsTitles = {};
     Object.values(sect_data).forEach(function(element) {
-        plotsTitles[element['s_id']] = element['title'].replace(/\s/g, '').toLowerCase();
+        plotsTitles[element['s_id']] = element['title'].replace(/\s\s+/g, ' ').trim().toLowerCase();
     });
-    console.log(plotsTitles);
 
-    $(".panel__input-search_text").keyup(function(e) {
+    searchField.on('input', function(e) {
         keyUpFlag += 1;
         $('h4.plot__title').unmark();
 
@@ -482,37 +485,20 @@ $(document).ready(function() {
             keyUpFlag -= 1;
 
             if(keyUpFlag === 0) {
-                var buf = this.value.replace(/\s/g, '').toLowerCase();
+                var buf = this.value.trim().replace(/\s\s+/g, ' ').toLowerCase();
 
-                /**
-                 * Constructing two arrays hiddenList and plotsToShow to detect
-                 * which plots we want to hide during our search
-                 */
-                var plotsToHide = {};
-                var plotsToShow = {};
                 Object.keys(plotsTitles).forEach(function(key) {
-                    if(!plotsTitles[key].includes(buf)) {
-                        plotsToHide[key] = plotsTitles[key];
+                    if (!plotsTitles[key].includes(buf) && (searchField.val().length >= 3 || e.keyCode === ENTER_KEY)) {
+                        if (!sect_data[key].section_hidden) {
+                            sect_data[key].section_hidden = true;
+                            $('.section__container_' + key).hide();
+                        }
                     } else {
-                        plotsToShow[key] = plotsTitles[key];
+                        if (sect_data[key].section_hidden) {
+                            sect_data[key].section_hidden = false;
+                            $('.section__container_' + key).show();
+                        }
                     }
-                });
-
-                /**
-                 * If the value in search window has length more than 2
-                 * or the ENTER button was pressed, search operation applies
-                 * for plots in hiddenList and plotsToShow
-                 */
-                if(this.value.length >= 3 || e.keyCode === ENTER_KEY) {
-                    Object.keys(plotsToHide).forEach(function(key) {
-                        sect_data[key].section_hidden = true;
-                        $('.section__container_' + key).hide();
-                    });
-                }
-
-                Object.keys(plotsToShow).forEach(function(key) {
-                    sect_data[key].section_hidden = false;
-                    $('.section__container_' + key).show();
                 });
 
                 $('h4.plot__title').mark(buf, {
@@ -538,7 +524,27 @@ $(document).ready(function() {
     });
 
     navbar.mouseleave(function() {
-        $(this).css('display', 'none');
+        if (!navbar.hasClass('pinned')) {
+            navbar.css('display', 'none');
+        }
+    });
+
+    $(window).keydown(function(e) {
+        if (e.keyCode === TILDA_KEY) {
+            if (navbar.hasClass("pinned") && navbar.is(":visible")) {
+                navbar.css('display', 'none');
+                navbar.removeClass("pinned");
+                e.preventDefault();
+            } else if ((!navbar.hasClass("pinned") && navbar.is(":visible")) || navbar.is(":hidden")) {
+                navbar.css('display', 'block');
+                navbar.addClass("pinned");
+                searchField.focus();
+                e.preventDefault();
+            }
+        } else if (e.keyCode === ESC_KEY) {
+            searchField.val('');
+            searchField.trigger('input');
+        }
     });
 });
 </script>
