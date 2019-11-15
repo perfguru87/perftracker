@@ -2,6 +2,12 @@
 
 {% load tojson %}
 
+{% load static %}
+
+{% block extra_links %}
+    <script type="text/javascript" charset="utf8" src="{% static 'markjs/jquery.mark.js' %}"></script>
+{% endblock %}
+
 {% block title %}Comparison: #{{ obj.id }} / {{ obj.title }}{% endblock %}
 
 {% block content %}
@@ -27,12 +33,99 @@
     </div>
   </div>
 </div>
+
 <span style="float: right">
-  <a onclick="show_all_tables()">Show tables</a>
-  <a onclick="hide_all_tables()">Hide tables</a>
-  <a id="analyze_button" onclick="pt_charts_analyze()">Analyze</a>
   <a onclick="pt_label_data()">Label data</a>
 </span>
+
+<div class="menu-icon"></div>
+<div class="navbar_left">
+    <div class="navbar-inner">
+        <div>
+            <div class="active-cyan-4 mb-4">
+                <input class="form-control panel__input-search_text" type="text" placeholder="Search" aria-label="Search">
+            </div>
+            <h4 class="left-nav__headers">Show Only</h4>
+            <div class="panel__input panel__input_selected">
+                <input type="checkbox" name="selected" id="selected" disabled>
+                <label for="selected"><h5 class="left-nav__headers disabled">Selected</h5></label>
+            </div>
+            <div class="panel__input panel__input_erros">
+                <input type="checkbox" name="error" id="errors" disabled>
+                <label for="erros"><h5 class="left-nav__headers disabled">Errors</h5></label>
+            </div>
+            <div class="panel__input panel__input_degradations">
+                <input type="checkbox" name="degradations" id="degradations" disabled>
+                <label for="degradations"><h5 class="left-nav__headers disabled">Degradations</h5></label>
+            </div>
+
+            <span class="sexy_line"></span>
+
+            <div class="panel__graphs_type">
+                <h4 class="left-nav__headers">Types of Degradations</h4>
+                <div class="panel__input panel__input_not_linear">
+                    <input type="checkbox" name="not_linear" id="not_linear" disabled>
+                    <label for="not_linear"><h5 class="left-nav__headers disabled">Worse than linear</h5></label>
+                </div>
+                <div class="panel__input panel__input_linear">
+                    <input type="checkbox" name="linear" id="linear" disabled>
+                    <label for="linear"><h5 class="left-nav__headers disabled">Linear</h5></label>
+                </div>
+                <div class="panel__input panel__input_volatility">
+                    <input type="checkbox" name="volatility" id="volatility" disabled>
+                    <label for="volatility"><h5 class="left-nav__headers disabled">High Volatility</h5></label>
+                </div>
+                <div class="panel__input panel__input_anomalies">
+                    <input type="checkbox" name="anomalies" id="anomalies" disabled>
+                    <label for="anomalies"><h5 class="left-nav__headers disabled">Anomalies</h5></label>
+                </div>
+                <div class="panel__input panel__input_outliers">
+                    <input type="checkbox" name="outliers" id="outliers" disabled>
+                    <label for="outliers"><h5 class="left-nav__headers disabled">Outliers</h5></label>
+                </div>
+            </div>
+
+            <span class="sexy_line"></span>
+
+            <h4 class="left-nav__headers">Tables</h4>
+            <h5 class="left-nav__headers left-nav__show_button" onclick="show_all_tables()">Show</h5>
+            <h5 class="left-nav__headers left-nav__hide_button" onclick="hide_all_tables()">Hide</h5>
+
+            <span class="sexy_line"></span>
+
+            <h4 class="left-nav__headers">Selection</h4>
+            <h5 class="left-nav__headers disabled">Select Visible</h5>
+            <h5 class="left-nav__headers disabled">Unselect Visible</h5>
+            <h5 class="left-nav__headers disabled">Select All</h5>
+            <h5 class="left-nav__headers disabled">Unselect All</h5>
+
+            <span class="sexy_line"></span>
+
+            <div class="left-nav__go-to">
+                <h4 class="left-nav__headers">Groups</h4>
+                <div>
+                    <h5 class="left-nav__headers">Group...</h5>
+                    <div class="dropleft_content">
+                        {% for g_tag, g in cmp_view.groups.items %}
+                            <h5 class="left-nav__headers"><a href="#g_{{ g.id }}">{{ g.group_obj.title|default:"undefined" }}</a></h5>
+                        {% endfor %}
+                    </div>
+                </div>
+                <h5 class="left-nav__headers disabled">Collapse All</h5>
+                <h5 class="left-nav__headers disabled">Expand All</h5>
+            </div>
+
+            <span class="sexy_line"></span>
+
+            <h4 class="left-nav__headers disabled">Misc</h4>
+            <h5 class="left-nav__headers disabled">Reset all filtering</h5>
+            <h5 class="left-nav__headers disabled">Thumbnail charts</h5>
+            <h5 class="left-nav__headers disabled">Compare Selected</h5>
+            <h5 class="left-nav__headers disabled">Share View</h5>
+            <h5 class="left-nav__headers disabled" onclick="pt_charts_analyze()">Analyze</h5>
+        </div>
+	</div>
+</div>
 
 <div id="main_content_container"></div>
 
@@ -67,6 +160,9 @@ const NOCHART = {{ PTCmpChartType.NOCHART }};
 const NOTABLE = {{ PTCmpTableType.HIDE }};
 const DEV_MODE = {{ DEV_MODE|tojson }};
 var labeled_data = {};
+var ENTER_KEY = 13;
+var TILDA_KEY = 192;
+var ESC_KEY = 27;
 
 function hide_all_tables() {
     Object.keys(sect_data).forEach(hide_table);
@@ -164,9 +260,8 @@ function delayed_render() {
         var s = sect_data[s_id];
         if (group_data[s.g_id].collapsed)
             return; // we have to avoid rendering collapsed charts - the rendering is wrong
-        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($(`#chart_${s_id}`)[0])) {
+        if (!s.chart_rendered && s.chart_type !== NOCHART && pt_isInViewport($(`#chart_${s_id}`)[0]) && !s.section_hidden) {
             show_chart(s_id);
-            // console.log(s_id);
         }
         if (!s.table_rendered && s.table_type !== NOTABLE && !s.table_hidden && pt_isInViewport($(`#results_${s_id}`)[0])) {
             show_table(s_id);
@@ -300,6 +395,14 @@ const serie_properties = {
     chart_is_ok: [{% for _, text in CHART_IS_OK %} '{{ text }}', {% endfor %}],
 };
 
+function showSelectedGraphs() {
+    alert('Not implemented, sorry');
+}
+
+function unselectGraphs() {
+    alert('Not implemented, sorry');
+}
+
 var group_data = {
 {% for g_tag, g in cmp_view.groups.items %}
  '{{ g.id }}' : { title: '{{ g.group_obj.title }}', sections: {{ g.num_sections }} },
@@ -320,8 +423,9 @@ var sect_data = {
 };
 
 $(document).ready(function() {
-
     var main = $('#main_content_container');
+    var searchField = $('.panel__input-search_text');
+    var navbar = $('.navbar-inner');
 
     Object.keys(group_data).map(g_id => {
         var g = group_data[g_id];
@@ -340,6 +444,7 @@ $(document).ready(function() {
         s.chart_rendered = false;
         s.table_rendered = false;
         s.table_hidden = false;
+        s.section_hidden = false;
 
         var chart_div = (s.chart_type !== NOCHART) ?
             `<div id="chart_${s_id}" class='pt_chart'>Loading chart...</div>` : "";
@@ -348,11 +453,12 @@ $(document).ready(function() {
             `<a id="survey_label_${s_id}" onclick="pt_charts_label_data(${s.s_id})" title="Label data"><span class="glyphicon glyphicon-tag"/></a>` : "";
 
         $(`#data_${s.g_id}`).append(
-           `<span><h4 style="display: inline">${s.title}</h4>
+           `<div class="section__container_${s_id}">
+            <span><h4 class="plot__title" style="display: inline">${s.title}</h4>
             <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
-            ${label_div}</span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div>`
+            ${label_div}</span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div></div>`
         );
         $(`#survey_label_${s_id}`).hide();
     });
@@ -364,7 +470,82 @@ $(document).ready(function() {
     $(window).on('DOMContentLoaded load resize scroll', delayed_render);
     $('.collapse').on("shown.bs.collapse hidden.bs.collapse", delayed_render);
     delayed_render();
+
+    var keyUpFlag = 0;
+    var plotsTitles = {};
+    Object.values(sect_data).forEach(function(element) {
+        plotsTitles[element['s_id']] = element['title'].replace(/\s\s+/g, ' ').trim().toLowerCase();
+    });
+
+    searchField.on('input', function(e) {
+        keyUpFlag += 1;
+        $('h4.plot__title').unmark();
+
+        setTimeout(function() {
+            keyUpFlag -= 1;
+
+            if(keyUpFlag === 0) {
+                var buf = this.value.trim().replace(/\s\s+/g, ' ').toLowerCase();
+
+                Object.keys(plotsTitles).forEach(function(key) {
+                    if (!plotsTitles[key].includes(buf) && (searchField.val().length >= 3 || e.keyCode === ENTER_KEY)) {
+                        if (!sect_data[key].section_hidden) {
+                            sect_data[key].section_hidden = true;
+                            $('.section__container_' + key).hide();
+                        }
+                    } else {
+                        if (sect_data[key].section_hidden) {
+                            sect_data[key].section_hidden = false;
+                            $('.section__container_' + key).show();
+                        }
+                    }
+                });
+
+                $('h4.plot__title').mark(buf, {
+                    "accuracy": "partially",
+                    "separateWordSearch": false,
+                });
+                delayed_render();
+            }
+        }.bind(this), 300);
+    });
+
+    $('.panel__input_degradations input').on('change', function () {
+        var inputs = $('.panel__graphs_type input');
+        if (inputs.is(':disabled')) {
+            inputs.removeAttr('disabled');
+        } else {
+            inputs.attr('disabled', true);
+        }
+    });
+
+    $('.menu-icon').mouseover(function() {
+        navbar.css('display', 'block');
+    });
+
+    navbar.mouseleave(function() {
+        if (!navbar.hasClass('pinned')) {
+            navbar.css('display', 'none');
+        }
+    });
+
+    $(window).keydown(function(e) {
+        if (e.keyCode === TILDA_KEY) {
+            if (navbar.hasClass("pinned") && navbar.is(":visible")) {
+                navbar.css('display', 'none');
+                navbar.removeClass("pinned");
+                e.preventDefault();
+            } else if ((!navbar.hasClass("pinned") && navbar.is(":visible")) || navbar.is(":hidden")) {
+                navbar.css('display', 'block');
+                navbar.addClass("pinned");
+                searchField.focus();
+                e.preventDefault();
+            }
+        } else if (e.keyCode === ESC_KEY) {
+            searchField.val('');
+            searchField.trigger('input');
+        }
+    });
 });
 </script>
-
 {% endblock %}

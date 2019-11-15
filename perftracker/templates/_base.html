@@ -20,6 +20,8 @@
   <script type="text/javascript" charset="utf8" src="{% static 'jquery-ui/jquery-ui.min.js' %}"></script>
   <script type="text/javascript" charset="utf8" src="{% static 'ecstat/ecstat.min.js' %}"></script>
 
+  {% block extra_links %}{% endblock %}
+
   <link rel="stylesheet" type="text/css" href="{% static 'css/bs3-custom.css' %}"/>
   <link rel="stylesheet" type="text/css" href="{% static 'css/datatable.css' %}"/>
   <link rel="stylesheet" type="text/css" href="{% static 'css/perftracker.css' %}"/>
@@ -122,5 +124,4 @@
 
         {% block content %}(no content){% endblock %}
   </div>
-
 {% endblock %}
