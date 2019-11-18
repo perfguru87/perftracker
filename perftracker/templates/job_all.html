@@ -17,15 +17,17 @@
       <th class='colID'>ID</th>
       <th class='colEndDate'>Test run end</th>
       <th class='colProject'>Project</th>
-      <th class='colHw'>Hw</th>
+      <th class='colHw'>Env</th>
       <th class='colProdName'>Product name</th>
       <th class='colProdVer'>Product ver</th>
       <th class='colRunTitle'>Test run title</th>
       <th class='colTestVer'>Test ver</th>
-      <th class='colDuration'>Dur (sec)</th>
+      <th class='colDuration'>Duration</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
-      <th class='colErrors'>Errors</th>
+      <th class='colErrors'>Tests with errors</th>
+      <th class='colTestcases'>Test cases</th>
+      <th class='colTestcasesErrors'>TC with errors</th>
       <th class='colCompare'></th>
     </tr>
   </thead>
@@ -35,15 +37,17 @@
       <th class='colID'>ID</th>
       <th class='colEndDate'>Test run end</th>
       <th class='colProject'>Project</th>
-      <th class='colHw'>Hw</th>
+      <th class='colHw'>Env</th>
       <th class='colProdName'>Product name</th>
       <th class='colProdVer'>Product ver</th>
       <th class='colRunTitle'>Test run title</th>
       <th class='colTestVer'>Test ver</th>
-      <th class='colDuration'>Dur (sec)</th>
+      <th class='colDuration'>Duration</th>
       <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
-      <th class='colErrors'>Errors</th>
+      <th class='colErrors'>Tests with errors</th>
+      <th class='colTestcases'>Test cases</th>
+      <th class='colTestcasesErrors'>TC with errors</th>
       <th class='colCompare'></th>
     </tr>
   </tfoot>
@@ -194,6 +198,10 @@ $(document).ready(function() {
     /*
      * 1. Jobs list table
      */
+    var project_visible = true;
+    {% if project.id != 0 %}
+    project_visible = false;
+    {% endif %}
 
     var table = $('#jobs').DataTable( {
         "processing": true,
@@ -219,7 +227,9 @@ $(document).ready(function() {
             { "data": "duration" },
             { "data": "tests_total" },
             { "data": "tests_completed" },
-            { "data": "tests_failed" },
+            { "data": "tests_errors" },
+            { "data": "testcases_total" },
+            { "data": "testcases_errors" },
             {
                 "className": 'pt_row_compare_toggle',
                 "orderable": false,
@@ -249,11 +259,16 @@ $(document).ready(function() {
                 },
             },
             {
+                "targets": "colDuration",
+                "type": "date",
+                "render": function ( data, type, row ) {
+                    return pt_dur2str(data);
+                },
+            },
+            {
                 "targets": "colProject",
                 "type": "string",
-                {% if project.id != 0 %}
-                   "visible": false,
-                {% endif %}
+                "visible": project_visible,
                 "render": function ( data, type, row ) {
                     return data.name;
                 },
@@ -262,17 +277,7 @@ $(document).ready(function() {
                 "targets": "colHw",
                 "type": "string",
                 "render": function ( data, type, row ) {
-                    var str = '';
-                    if (!data)
-                        return '';
-                    for (var i = 0; i < data.length; i++) {
-                        if (typeof data[i].name == 'undefined')
-                            continue;
-                        if (str)
-                            str += ", ";
-                        str += data[i].name;
-                    }
-                    return str;
+                    return data.map(env => env.display_name || '').join(", ");
                 },
             },
             {
@@ -294,12 +299,12 @@ $(document).ready(function() {
                 "render": function ( data, type, row ) {
                     if (data == row.tests_total)
                         return data;
-                    return data +' (of '+ row.tests_total+')';
+                    return data +' (of ' + row.tests_total + ')';
                 },
             },
             {
-                "targets": "colErrors",
-                "type": "string",
+                "targets": ["colErrors", "colTestcasesErrors"],
+                "type": "integer",
                 "createdCell": function (td, cellData, rowData, row, col) {
                     if ( cellData > 0 ) {
                         $(td).addClass('pt_test_errors');
@@ -322,7 +327,7 @@ $(document).ready(function() {
     });
 
     /*
-     * 2. Job deails opening / closing
+     * 2. Job details opening / closing
      */
 
     $('#jobs').on('click', 'td.pt_row_details_toggle', function () {

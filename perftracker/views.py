@@ -1,47 +1,45 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import datetime
-import json
-import http.client
 import base64
+import http.client
+import json
+import logging
 
-from django.views.generic.base import TemplateView
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import SuspiciousOperation, ValidationError
+from django.db.models import Count
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import JsonResponse, Http404
 from django.template import RequestContext
 from django.template.response import TemplateResponse
-from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
-from django.http import JsonResponse, Http404
-from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
-from django.core.serializers import serialize
-from django.core.exceptions import SuspiciousOperation, ObjectDoesNotExist, ValidationError
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
 from django_datatables_view.base_datatable_view import BaseDatatableView
-from django.db.models import Q
-from django.db.models import Count
-from django.db.models.query import QuerySet
 
 from perftracker import __pt_version__
-from perftracker.models.project import ProjectModel
-from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, PTComparisonServSideView
-from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, PTRegressionServSideView
-from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
-from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
-from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
-from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, HwFarmNodesLocksTimeline
-from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
-from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
-from perftracker.models.env_node import EnvNodeModel
-from perftracker.models.artifact import ArtifactMetaModel, ArtifactLinkModel, ArtifactMetaSerializer
-
 from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUploadForm
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
-from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed
+from perftracker.models.artifact import ArtifactMetaModel, ArtifactMetaSerializer
+from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, \
+    PTComparisonServSideView
+from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
+from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
+from perftracker.models.hw_farm_node_lock import HwFarmNodeLockSimpleSerializer, HwFarmNodeLockNestedSerializer, \
+    HwFarmNodesLocksTimeline
+from perftracker.models.job import JobModel, JobSimpleSerializer, JobNestedSerializer, JobDetailedSerializer
+from perftracker.models.project import ProjectModel
+from perftracker.models.regression import RegressionModel, RegressionSimpleSerializer, RegressionNestedSerializer, \
+    PTRegressionServSideView
+from perftracker.models.test import TestModel, TestSimpleSerializer, TestDetailedSerializer
+from perftracker.models.test_group import TestGroupModel, TestGroupSerializer
+from perftracker.models.train_data import TrainDataModel, CHART_FUNCTION_TYPE, \
+    CHART_OUTLIERS, CHART_DEVIATION, CHART_ANOMALY, CHART_IS_OK
+from perftracker.rest import pt_rest_ok, pt_rest_err, pt_rest_not_found, pt_rest_method_not_allowed, pt_rest_bad_req
+from perftracker_django.settings import DEV_MODE
 
-import logging
 logger = logging.getLogger(__name__)
 
 API_VER = '1.0'
@@ -158,6 +156,79 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
     return JsonResponse(ret, safe=False)
 
 
+@csrf_exempt
+def pt_comparison_section_properties(request, api_ver, project_id, cmp_id, group_id, section_id):
+    try:
+        job_id = ComparisonModel.objects.get(pk=cmp_id).pt_get_jobs()[0].id
+    except ComparisonModel.DoesNotExist:
+        return HttpResponseBadRequest()
+
+    if request.method == 'GET':
+        try:
+            records = TrainDataModel.objects.filter(job_id=job_id)
+        except TrainDataModel.DoesNotExist:
+            records = None
+
+        data = {}
+        if records is not None:
+            for record in records:
+                data[str(record.section_id)] = {
+                    'function_type': record.function_type,
+                    'outliers': record.outliers,
+                    'deviation': record.deviation,
+                    'anomaly': record.anomaly,
+                    'chart_is_ok': record.chart_is_ok,
+                }
+        return JsonResponse(data, safe=False)
+
+    elif request.method == 'PUT':
+        try:
+            record = TrainDataModel.objects.get(section_id=section_id)
+        except TrainDataModel.DoesNotExist:
+            record = None
+
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest("Wrong json")
+
+        data = data[str(section_id)]
+        TrainDataModel.pt_validate_json(data)
+        formatted_data, fails, less_better = TrainDataModel.pt_format_data(data)
+
+        if record is not None:
+            record.delete()
+
+        def get_type_or_none(types, json_data, type_name):
+            return ComparisonModel._pt_get_type(types, json_data, type_name, not_found_rv=None)
+
+        record = TrainDataModel(
+            data=formatted_data,
+            section_id=section_id,
+            job_id=job_id,
+            fails=fails,
+            less_better=less_better,
+            function_type=get_type_or_none(CHART_FUNCTION_TYPE, data, 'function_type'),
+            outliers=get_type_or_none(CHART_OUTLIERS, data, 'outliers'),
+            deviation=get_type_or_none(CHART_DEVIATION, data, 'deviation'),
+            anomaly=get_type_or_none(CHART_ANOMALY, data, 'anomaly'),
+            chart_is_ok=get_type_or_none(CHART_IS_OK, data, 'chart_is_ok'),
+        )
+        record.save()
+        return JsonResponse({}, safe=False)
+
+
+@csrf_exempt
+def pt_comparison_analyze_json(request, api_ver, project_id, cmp_id):
+    from perftracker.series_analysis import pt_comparison_series_analyze
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Wrong json")
+
+    return JsonResponse(pt_comparison_series_analyze(data), safe=False)
+
+
 def pt_comparison_id_html(request, project_id, cmp_id):
     try:
         obj = ComparisonModel.objects.get(pk=cmp_id)
@@ -170,7 +241,13 @@ def pt_comparison_id_html(request, project_id, cmp_id):
                       params={'jobs': cmp_view.job_objs,
                               'cmp_view': cmp_view,
                               'PTCmpChartType': PTCmpChartType,
-                              'PTCmpTableType': PTCmpTableType
+                              'PTCmpTableType': PTCmpTableType,
+                              'CHART_FUNCTION_TYPE': CHART_FUNCTION_TYPE,
+                              'CHART_OUTLIERS': CHART_OUTLIERS,
+                              'CHART_DEVIATION': CHART_DEVIATION,
+                              'CHART_ANOMALY': CHART_ANOMALY,
+                              'CHART_IS_OK': CHART_IS_OK,
+                              'DEV_MODE': DEV_MODE,
                               },
                       obj=obj)
 
@@ -275,7 +352,6 @@ def pt_job_id_html(request, project_id, job_id):
         raise Http404
 
     if request.GET.get('as_json', False):
-        j = JobDetailedSerializer(job).data
         resp = JsonResponse(JobDetailedSerializer(job, allow_null=False).data, safe=False, json_dumps_params={'indent': 2})
         resp['Content-Disposition'] = 'attachment; filename=%s.json' % job.pt_gen_filename()
         return resp
@@ -324,25 +400,20 @@ def pt_job_all_json(request, api_ver, project_id):
 
         # define the columns that will be returned
         columns = ['', 'id', 'end', 'project', 'env_node', 'product_name', 'product_ver', 'title',
-                   'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_failed']
+                   'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_errors',
+                   'testcases_total', 'testcases_errors']
 
         # define column names that will be used in sorting
         # order is important and should be same as order of columns
         # displayed by datatables. For non sortable columns use empty
         # value like ''
         order_columns = ['', 'id', 'end', 'project', 'env_node', 'product_name', 'product_ver', 'title',
-                         'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_failed']
+                         'suite_ver', 'duration', 'tests_total', 'tests_completed', 'tests_errors',
+                         'testcases_total', 'testcases_errors']
 
         # set max limit of records returned, this is used to protect our site if someone tries to attack our site
         # and make it return huge amount of data
         max_display_length = 5000
-
-        def render_column(self, row, column):
-            # We want to render user as a custom column
-            if column == 'tests_total':
-                return '{0} {1}'.format(row.tests_total, row.tests_completed)
-            else:
-                return super(JobJson, self).render_column(row, column)
 
         def filter_queryset(self, qs):
             # use parameters passed in GET request to filter queryset

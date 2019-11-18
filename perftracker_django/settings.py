@@ -26,6 +26,9 @@ SECRET_KEY = '!5)es5!)c48g^1z-d#f5s=^d^x&i0ec-ec*k4fa&8z!&ly5)pp'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# show several developer features (e.g. series analysis)
+DEV_MODE = False
+
 ALLOWED_HOSTS = ['*']
 
 
@@ -191,6 +194,8 @@ LOGGING = {
 
 REQUEST_LOGGING_ENABLE_COLORIZE = False
 REQUEST_LOGGING_MAX_BODY_LENGTH = 1024
+
+ENV_NODE_DISPLAY_NAME_RE = ('', '')  # passed to re.sub() to replace parts of HW names
 
 curr_dir = os.path.abspath(os.path.dirname(__file__))
 if os.path.exists(os.path.join(curr_dir, "settings_local.py")):

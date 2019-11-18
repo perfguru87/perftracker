@@ -10,16 +10,17 @@
   <link rel="stylesheet" type="text/css" href="{% static 'datatables/datatables.min.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'jquery-treetable/jquery.treetable.theme.default.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'jquery-treetable/jquery.treetable.css' %}">
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.css">
   <link rel="stylesheet" type="text/css" href="{% static 'datatables/datatables.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.dataTables.min.css' %}"/>
 
   <script type="text/javascript" charset="utf8" src="{% static 'datatables/datatables.min.js' %}"></script>
-  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.js"></script>
-  <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0/echarts-en.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="{% static 'echarts/echarts-en.min.js' %}"></script>
   <script type="text/javascript" charset="utf8" src="{% static 'js/perftracker.js' %}"></script>
   <script type="text/javascript" charset="utf8" src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
   <script type="text/javascript" charset="utf8" src="{% static 'jquery-ui/jquery-ui.min.js' %}"></script>
   <script type="text/javascript" charset="utf8" src="{% static 'ecstat/ecstat.min.js' %}"></script>
+
+  {% block extra_links %}{% endblock %}
 
   <link rel="stylesheet" type="text/css" href="{% static 'css/bs3-custom.css' %}"/>
   <link rel="stylesheet" type="text/css" href="{% static 'css/datatable.css' %}"/>
@@ -123,5 +124,4 @@
 
         {% block content %}(no content){% endblock %}
   </div>
-
 {% endblock %}

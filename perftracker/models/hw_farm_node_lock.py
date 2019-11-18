@@ -1,16 +1,16 @@
-import pytz
 import datetime
 from collections import OrderedDict
 
+import pytz
+from django.core.exceptions import SuspiciousOperation
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-from django.core.exceptions import SuspiciousOperation
-
+from perftrackerlib.helpers.timeline import ptTimeline, ptDoc, ptSection, ptTask
 from rest_framework import serializers
 
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeNestedSerializer
-from perftrackerlib.helpers.timeline import ptTimeline, ptDoc, ptSection, ptTask
+
 
 class HwFarmNodeLockTypeModel(models.Model):
     name     = models.CharField(max_length=128, help_text="Lock type name", blank=False)

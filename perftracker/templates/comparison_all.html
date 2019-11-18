@@ -12,12 +12,13 @@
       <th class='colUpdated'>Updated</th>
       <th class='colProject'>Project</th>
       <th class='colEnv'>Env</th>
-      <th class='colVersion'>Version</th>
+      <th class='colHidden'>Version</th>
       <th class='colTitle'>Comparison title</th>
       <th class='colJobs'>Jobs</th>
-      <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
-      <th class='colErrors'>Errors</th>
+      <th class='colErrors'>Tests<br>with errors</th>
+      <th class='colTestCasess'>Test<br>cases</th>
+      <th class='colTCErrors'>Test cases<br>with errors</th>
     </tr>
   </thead>
   <tfoot>
@@ -27,12 +28,13 @@
       <th class='colUpdated'>Updated</th>
       <th class='colProject'>Project</th>
       <th class='colEnv'>Env</th>
-      <th class='colVersion'>Version</th>
+      <th class='colHidden'>Version</th>
       <th class='colTitle'>Comparison title</th>
       <th class='colJobs'>Jobs</th>
-      <th class='colHidden'></th>
       <th class='colTests'>Tests</th>
-      <th class='colErrors'>Errors</th>
+      <th class='colErrors'>Tests<br>with errors</th>
+      <th class='colTestCasess'>Test<br>cases</th>
+      <th class='colTCErrors'>Test cases<br>with errors</th>
     </tr>
   </tfoot>
 </table>
@@ -69,9 +71,34 @@ $(document).ready(function() {
             { "data": "suite_ver" },
             { "data": "title" },
             { "data": "jobs" },
-            { "data": "tests_total" },
-            { "data": "tests_completed" },
-            { "data": "tests_failed" },
+            { "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.tests_total);
+                    }
+                    return row.tests_total.join("<br>");
+                }
+            },
+            { "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.tests_errors);
+                    }
+                    return row.tests_errors.join("<br>");
+                },
+            },
+            { "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.testcases_total);
+                    }
+                    return row.testcases_total.join("<br>");
+                }
+            },
+            { "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.testcases_errors);
+                    }
+                    return row.testcases_errors.join("<br>");
+                },
+            },
         ],
         "columnDefs": [
             {
@@ -103,17 +130,7 @@ $(document).ready(function() {
                 "type": "string",
                 "orderData": [ 4, 1 ],
                 "render": function ( data, type, row ) {
-                    var str = '';
-                    if (!data)
-                        return '';
-                    for (var i = 0; i < data.length; i++) {
-                        if (typeof data[i].name === 'undefined')
-                            continue;
-                        if (str)
-                            str += ", ";
-                        str += data[i].name;
-                    }
-                    return str;
+                    return data.map(env => env.display_name || '').join("<br>");
                 },
             },
             {
@@ -125,31 +142,37 @@ $(document).ready(function() {
                 "targets": "colTitle",
                 "type": "string",
                 "orderData": [ 6, 1 ],
-                "render": function ( data, type, row ) {
-                    return data;
-                },
             },
             {
                 "targets": "colJobs",
                 "type": "integer",
                 "orderData": [ 7, 1 ],
                 "render": function ( data, type, row ) {
-                    if (!data)
-                        return '';
-                    return data.length;
+                    return data.length || '';
                 },
             },
             {
                 "targets": "colTests",
-                "type": "integer",
-                "orderData": [ 9, 1 ],
+                "orderData": [ 8, 1 ],
             },
             {
                 "targets": "colErrors",
-                "type": "integer",
-                "orderData": [ 10, 1 ],
+                "orderData": [ 9, 1 ],
                 "createdCell": function (td, cellData, rowData, row, col) {
-                    if ( cellData > 0 ) {
+                    if (Math.max(...rowData.tests_errors) > 0) {
+                        $(td).addClass('pt_test_errors');
+                    }
+                },
+            },
+            {
+                "targets": "colTestCases",
+                "orderData": [ 10, 1 ],
+            },
+            {
+                "targets": "colTCErrors",
+                "orderData": [ 11, 1 ],
+                "createdCell": function (td, cellData, rowData, row, col) {
+                    if (Math.max(...rowData.testcases_errors) > 0) {
                         $(td).addClass('pt_test_errors');
                     }
                 },
