@@ -65,6 +65,24 @@ function pt_dur2str(duration) {
     return rv + z(min) + ":" + z(sec);
 }
 
+function pt_date2ISOstr(date) {
+    const dateCopy = new Date(date);
+    dateCopy.setSeconds(0, 0);
+    dateCopy.setTime(dateCopy.getTime() - dateCopy.getTimezoneOffset() * (60 * 1000));
+    return dateCopy.toISOString().replace('Z', '');
+}
+
+function pt_getHoursBeforeDate(date) {
+    const now = new Date();
+    return Math.round(Math.abs(date - now) / (60 * 60 * 1000));
+}
+
+function pt_getDeadlineByDuration(dateFrom, duration) {
+    const deadline = new Date(dateFrom);
+    deadline.setHours(deadline.getHours() + duration);
+    return deadline;
+}
+
 function pt_env_node_draw(j, parent_id)
 {
     var s = '';

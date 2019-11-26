@@ -67,12 +67,11 @@
 
           <div class="form-group" id="lockBeginGroup">
             <label for="inputBegin">Locked since</label>
-            <input type="begin" class="form-control" id="lockBegin" placeholder="inputBegin" disabled="disabled" value=''>
+            <input type="datetime-local" class="form-control" id="lockBegin" placeholder="inputBegin" disabled="disabled" value=''>
           </div>
-
-          <div class="form-group">
-            <label for="inputDur">Planned lock duration (hours)</label>
-            <input type="number" class="form-control" id="lockDur" data-bind="value:replyNumber" placeholder="inputDur" value=''>
+          <div class="form-group" id="lockEndGroup">
+            <label for="inputEnd">Deadline</label>
+            <input type="datetime-local" class="form-control" id="lockEnd" placeholder="inputEnd" disabled="disabled" value=''>
           </div>
           <div class="form-group">
             <label for="inputNodes">Locked nodes</label>
@@ -92,21 +91,21 @@
 
 <script>
 
-function pt_hw_lock_update_data_cb(data)
-{
-    data.planned_dur_hrs = parseInt($("#lockDur").val());
+function pt_hw_lock_update_data_cb(data) {
+    const deadline = new Date($('#lockEnd').val());
+    data.planned_dur_hrs = pt_getHoursBeforeDate(deadline);
     data.title = $("#lockTitle").val();
-    data.planned_dur_hrs = parseInt($(".modal-body #lockDur").val());
     data.hw_nodes = [];
     $("#lockNodes").find('option:selected').each(function() {
         data.hw_nodes.push($(this).val());
     });
-    data.lock_type = {}
-    data.lock_type.name = $(".selected-lock-type").text();
-    data.lock_type.bg_color = $(".selected-lock-type").css('.background-color');
-    data.lock_type.fg_color = $(".selected-lock-type").css('.color');
+    data.lock_type = {
+        name: $('.selected-lock-type').text(),
+        bg_color: $('.selected-lock-type').css('.background-color'),
+        fg_color: $('.selected-lock-type').css('.color'),
+    };
     return data;
-};
+}
 
 function pt_hw_lock_edit_cb(lock_id) {
     var api_ver = '{{ api_ver }}';
@@ -120,20 +119,22 @@ function pt_hw_lock_edit_cb(lock_id) {
 
     $('#lockAction').attr("disabled", false);
     $('#lockUnlock').attr("disabled", true);
-    $("#lockDur").attr("disabled", true);
+    $('#lockEnd').attr("disabled", true);
     $("#lockNodes").attr("disabled", true);
 
     $("#lockLabel").html("Hardware lock <a href='/admin/perftracker/hwfarmnodelockmodel/{0}/change/'>#{1}</a>".ptFormat(lock_id, lock_id));
     $.getJSON("/api/v{0}/{1}/hw_lock/{2}".ptFormat(api_ver, project_id, lock_id), function( data ) {
         $("#lockId").val(lock_id);
         $("#lockTitle").val(data.title);
-        $("#lockBegin").val(pt_date2str(data.begin));
-        $("#lockDur").val(data.planned_dur_hrs);
+        $('#lockBegin').val(pt_date2ISOstr(new Date(data.begin)));
+        $('#lockEnd').val(pt_date2ISOstr(new Date(
+            pt_getDeadlineByDuration(new Date(data.begin), data.planned_dur_hrs))
+        ));
         $(".selected-lock-type").text(data.lock_type.name);
         $(".selected-lock-type").css('background-color', data.lock_type.bg_color);
         $(".selected-lock-type").css('color', data.lock_type.fg_color);
 
-        $("#lockDur").attr("disabled", !data.active);
+        $('#lockEnd').attr("disabled", !data.active);
         $("#lockNodes").attr("disabled", !data.active);
 
         var hw_nodes = $("#lockNodes").empty();
@@ -187,12 +188,12 @@ function pt_hw_lock_create_cb(host_id)
 
     $('#lockAction').attr("disabled", true);
     $('#lockUnlock').attr("disabled", false);
-    $("#lockDur").attr("disabled", false);
+    $('#lockEnd').attr('disabled', false);
     $("#lockNodes").attr("disabled", false);
 
     $("#lockLabel").html("New hardware lock");
     $("#lockTitle").val("");
-    $("#lockDur").val("24");
+    $('#lockEnd').val(pt_date2ISOstr(pt_getDeadlineByDuration(new Date(), 24)));
 
     $('#btn_show_hw_lock_dialog').click();
 
