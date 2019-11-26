@@ -111,7 +111,7 @@ function pt_hw_lock_edit_cb(lock_id) {
     var api_ver = '{{ api_ver }}';
     var project_id = {{ project.id }};
 
-    $('#lockUnlock').hide();
+    $('#lockUnlock').show();
     $('#lockAction').html('Save');
     $('#lockBeginGroup').show();
 
@@ -148,7 +148,8 @@ function pt_hw_lock_edit_cb(lock_id) {
         $('#lockUnlock').off('click');
         $('#lockAction').off('click');
 
-        if (data.active) {
+        const userInfo = pt_getCurrentUserInfo(api_ver);
+        if (data.active && userInfo.isAuthenticated) {
             $('#lockUnlock').show();
             $('#lockUnlock').attr("disabled", false);
             $('#lockUnlock').on('click', function () {
