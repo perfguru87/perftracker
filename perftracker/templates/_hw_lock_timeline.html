@@ -44,7 +44,7 @@
             <label for="inputDur">Lock type</label>
             <div class="dropdown lock-type-picker">
               <button class="btn btn-default btn-block dropdown-toggle" type="button" data-toggle="dropdown"
-                      aria-haspopup="true" aria-expanded="true">
+                      aria-haspopup="true" aria-expanded="true" id="lockTypePickerButton">
                 <span class="selected-lock-type" style="
                     background-color: {{ hw_lock_types.0.bg_color }};
                     color: {{ hw_lock_types.0.fg_color }};">{{ hw_lock_types.0.name }}</span>
@@ -110,6 +110,7 @@ function pt_hw_lock_update_data_cb(data) {
 function pt_hw_lock_edit_cb(lock_id) {
     var api_ver = '{{ api_ver }}';
     var project_id = {{ project.id }};
+    const userInfo = pt_getCurrentUserInfo(api_ver);
 
     $('#lockUnlock').show();
     $('#lockAction').html('Save');
@@ -117,10 +118,12 @@ function pt_hw_lock_edit_cb(lock_id) {
 
     $('#btn_show_hw_lock_dialog').click();
 
-    $('#lockAction').attr("disabled", false);
-    $('#lockUnlock').attr("disabled", true);
-    $('#lockEnd').attr("disabled", true);
-    $("#lockNodes").attr("disabled", true);
+    $('#lockAction').attr('disabled', !userInfo.isAuthenticated);
+    $('#lockUnlock').attr('disabled', true);
+    $('#lockEnd').attr('disabled', true);
+    $('#lockNodes').attr('disabled', true);
+    $('#lockTitle').attr('disabled', !userInfo.isAuthenticated);
+    $('#lockTypePickerButton').attr('disabled', !userInfo.isAuthenticated);
 
     $("#lockLabel").html("Hardware lock <a href='/admin/perftracker/hwfarmnodelockmodel/{0}/change/'>#{1}</a>".ptFormat(lock_id, lock_id));
     $.getJSON("/api/v{0}/{1}/hw_lock/{2}".ptFormat(api_ver, project_id, lock_id), function( data ) {
@@ -134,8 +137,9 @@ function pt_hw_lock_edit_cb(lock_id) {
         $(".selected-lock-type").css('background-color', data.lock_type.bg_color);
         $(".selected-lock-type").css('color', data.lock_type.fg_color);
 
-        $('#lockEnd').attr("disabled", !data.active);
-        $("#lockNodes").attr("disabled", !data.active);
+        $('#lockEnd').attr('disabled', !(data.active && userInfo.isAuthenticated));
+        $('#lockNodes').attr('disabled', !(data.active && userInfo.isAuthenticated));
+        $('#lockUnlock').attr('disabled', !(data.active && userInfo.isAuthenticated));
 
         var hw_nodes = $("#lockNodes").empty();
         $.each(data.hw_nodes, function() {
@@ -145,52 +149,53 @@ function pt_hw_lock_edit_cb(lock_id) {
             hw_nodes.append(o);
         });
 
-        $('#lockUnlock').off('click');
-        $('#lockAction').off('click');
-
-        const userInfo = pt_getCurrentUserInfo(api_ver);
-        if (data.active && userInfo.isAuthenticated) {
-            $('#lockUnlock').show();
-            $('#lockUnlock').attr("disabled", false);
-            $('#lockUnlock').on('click', function () {
-                $.ajax({
-                    url: '/api/v{0}/{1}/hw_lock/{2}'.ptFormat(api_ver, project_id, lock_id),
-                    type: 'DELETE',
-                    success: function(xhr) { location.reload(); },
-                    error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
-                });
-                return false;
+        $('#lockUnlock').off('click').on('click', function () {
+            $.ajax({
+                url: '/api/v{0}/{1}/hw_lock/{2}'.ptFormat(api_ver, project_id, lock_id),
+                type: 'DELETE',
+                success: function (xhr) {
+                    location.reload();
+                },
+                error: function (xhr) {
+                    alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                }
             });
-        }
+            return false;
+        });
 
-        $('#lockAction').on('click', function () {
+        $('#lockAction').off('click').on('click', function () {
             data = pt_hw_lock_update_data_cb(data);
             $.ajax({
                 url: '/api/v{0}/{1}/hw_lock/{2}'.ptFormat(api_ver, project_id, lock_id),
                 type: 'PUT',
                 contentType: "application/json",
                 data: JSON.stringify(data),
-                success: function(xhr) { location.reload(); },
-                error: function(xhr) { alert('Error: ' + xhr.status + ' ' + xhr.responseText); }
+                success: function (xhr) {
+                    location.reload();
+                },
+                error: function (xhr) {
+                    alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                }
             });
             return false;
         });
     });
 }
 
-function pt_hw_lock_create_cb(host_id)
-{
+function pt_hw_lock_create_cb(host_id) {
     var api_ver = '{{ api_ver }}';
     var project_id = {{ project.id }};
+    const userInfo = pt_getCurrentUserInfo(api_ver);
 
     $('#lockAction').html('Lock');
     $('#lockUnlock').hide();
     $('#lockBeginGroup').hide();
 
     $('#lockAction').attr("disabled", true);
-    $('#lockUnlock').attr("disabled", false);
-    $('#lockEnd').attr('disabled', false);
-    $("#lockNodes").attr("disabled", false);
+    $('#lockEnd').attr('disabled', !userInfo.isAuthenticated);
+    $('#lockNodes').attr('disabled', !userInfo.isAuthenticated);
+    $('#lockTitle').attr('disabled', !userInfo.isAuthenticated);
+    $('#lockTypePickerButton').attr('disabled', !userInfo.isAuthenticated);
 
     $("#lockLabel").html("New hardware lock");
     $("#lockTitle").val("");
@@ -199,10 +204,12 @@ function pt_hw_lock_create_cb(host_id)
     $('#btn_show_hw_lock_dialog').click();
 
     $("#lockTitle").on("change paste keyup", function() {
-        $('#lockAction').attr("disabled", $("#lockTitle").val().trim() == "" || !$("#lockNodes :selected").length);
+        $('#lockAction').attr('disabled',
+            $('#lockTitle').val().trim() == '' || !$('#lockNodes :selected').length || !userInfo.isAuthenticated);
     });
     $("#lockNodes").change(function() {
-        $('#lockAction').attr("disabled", $("#lockTitle").val().trim() == "" || !$("#lockNodes :selected").length);
+        $('#lockAction').attr('disabled',
+            $('#lockTitle').val().trim() == '' || !$('#lockNodes :selected').length || !userInfo.isAuthenticated);
     });
 
     $.getJSON("/api/v{0}/{1}/hw_farm/?start=0&length=1000".ptFormat(api_ver, project_id) +
