@@ -905,6 +905,26 @@ function pt_auth_request(api_ver, data) {
     });
 }
 
+function pt_getCurrentUserInfo(api_ver) {
+    var userInfo = {
+        isAuthenticated: false,
+        username: 'AnonymousUser',
+    };
+    $.ajax({
+        url: '/api/v{0}/auth'.ptFormat(api_ver),
+        type: 'GET',
+        async: false,
+        success: function (data) {
+            userInfo.isAuthenticated = data.is_authenticated;
+            userInfo.username = data.username;
+        },
+        error: function (xhr) {
+            alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+        }
+    });
+    return userInfo;
+}
+
 function update_nav_bar(auth_response) {
     document.getElementById("pt_username").style.display = auth_response.is_authenticated ? "list-item" : "none";
     document.getElementById("pt_btn_sign_in").style.display = auth_response.is_authenticated ? "none" : "list-item";
