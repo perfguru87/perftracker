@@ -203,14 +203,13 @@ function pt_hw_lock_create_cb(host_id) {
 
     $('#btn_show_hw_lock_dialog').click();
 
-    $("#lockTitle").on("change paste keyup", function() {
+    function lockActionHandler() {
         $('#lockAction').attr('disabled',
             $('#lockTitle').val().trim() == '' || !$('#lockNodes :selected').length || !userInfo.isAuthenticated);
-    });
-    $("#lockNodes").change(function() {
-        $('#lockAction').attr('disabled',
-            $('#lockTitle').val().trim() == '' || !$('#lockNodes :selected').length || !userInfo.isAuthenticated);
-    });
+    }
+
+    $("#lockTitle").bind("change paste keyup", lockActionHandler);
+    $("#lockNodes").change(lockActionHandler);
 
     $.getJSON("/api/v{0}/{1}/hw_farm/?start=0&length=1000".ptFormat(api_ver, project_id) +
               "&filter[0][column]=locked_by&filter[0][value]=" +

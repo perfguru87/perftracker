@@ -906,7 +906,7 @@ function pt_auth_request(api_ver, data) {
 }
 
 function pt_getCurrentUserInfo(api_ver) {
-    const userInfo = {
+    var userInfo = {
         isAuthenticated: false,
         username: 'AnonymousUser',
     };
