@@ -65,6 +65,24 @@ function pt_dur2str(duration) {
     return rv + z(min) + ":" + z(sec);
 }
 
+function pt_date2ISOstr(date) {
+    const dateCopy = new Date(date);
+    dateCopy.setSeconds(0, 0);
+    dateCopy.setTime(dateCopy.getTime() - dateCopy.getTimezoneOffset() * (60 * 1000));
+    return dateCopy.toISOString().replace('Z', '');
+}
+
+function pt_getHoursBeforeDate(date) {
+    const now = new Date();
+    return Math.round(Math.abs(date - now) / (60 * 60 * 1000));
+}
+
+function pt_getDeadlineByDuration(dateFrom, duration) {
+    const deadline = new Date(dateFrom);
+    deadline.setHours(deadline.getHours() + duration);
+    return deadline;
+}
+
 function pt_env_node_draw(j, parent_id)
 {
     var s = '';
@@ -885,6 +903,26 @@ function pt_auth_request(api_ver, data) {
             console.log('Authentication error: ' + xhr.status + ' ' + xhr.responseText);
         }
     });
+}
+
+function pt_getCurrentUserInfo(api_ver) {
+    var userInfo = {
+        isAuthenticated: false,
+        username: 'AnonymousUser',
+    };
+    $.ajax({
+        url: '/api/v{0}/auth'.ptFormat(api_ver),
+        type: 'GET',
+        async: false,
+        success: function (data) {
+            userInfo.isAuthenticated = data.is_authenticated;
+            userInfo.username = data.username;
+        },
+        error: function (xhr) {
+            alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+        }
+    });
+    return userInfo;
 }
 
 function update_nav_bar(auth_response) {
