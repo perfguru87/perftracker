@@ -5,7 +5,7 @@ from django.contrib import admin
 from perftracker.models.project import ProjectModel
 from perftracker.models.job import JobModel
 from perftracker.models.regression import RegressionModel
-from perftracker.models.comparison import ComparisonModel
+from perftracker.models.comparison import ComparisonModel, ComparisonLink
 from perftracker.models.test_group import TestGroupModel
 from perftracker.models.env_node import EnvNodeModel, EnvNodeTypeModel
 from perftracker.models.hw_farm_node import HwFarmNodeModel
@@ -83,6 +83,7 @@ admin.site.register(ProjectModel)
 admin.site.register(JobModel)
 admin.site.register(RegressionModel)
 admin.site.register(ComparisonModel)
+admin.site.register(ComparisonLink)
 admin.site.register(TestGroupModel)
 admin.site.register(EnvNodeModel)
 admin.site.register(EnvNodeTypeModel)

@@ -5,6 +5,7 @@ import base64
 import http.client
 import json
 import logging
+import uuid
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -23,7 +24,7 @@ from perftracker.forms import PTCmpDialogForm, PTHwFarmNodeLockForm, PTJobUpload
 from perftracker.helpers import pt_dur2str, pt_is_valid_uuid
 from perftracker.models.artifact import ArtifactMetaModel, ArtifactMetaSerializer
 from perftracker.models.comparison import ComparisonModel, ComparisonSimpleSerializer, ComparisonNestedSerializer, \
-    PTComparisonServSideView
+    PTComparisonServSideView, ComparisonLink
 from perftracker.models.comparison import PTCmpTableType, PTCmpChartType
 from perftracker.models.hw_farm_node import HwFarmNodeModel, HwFarmNodeSimpleSerializer, HwFarmNodeNestedSerializer
 from perftracker.models.hw_farm_node_lock import HwFarmNodeLockModel, HwFarmNodeLockTypeModel
@@ -157,6 +158,23 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
 
 
 @csrf_exempt
+def pt_comparison_permanent_link(request, api_ver, project_id, cmp_id):
+    if request.method == 'POST':
+        data = json.loads(request.body.decode("utf-8"))
+        print(data)
+        identifiers_string = ','.join([elem for elem in data['id_list']])
+        print(identifiers_string)
+
+        if identifiers_string or data['search_pattern']:
+            charts_id = ComparisonLink(project_id=project_id, comparison_id=cmp_id, plots_identifiers=identifiers_string, search_pattern=data['search_pattern'])
+            charts_id.save()
+
+            return JsonResponse({'uuid': charts_id.uuid})
+        else:
+            return JsonResponse("Charts not selected!", safe=False)
+
+
+@csrf_exempt
 def pt_comparison_section_properties(request, api_ver, project_id, cmp_id, group_id, section_id):
     try:
         job_id = ComparisonModel.objects.get(pk=cmp_id).pt_get_jobs()[0].id
@@ -235,10 +253,23 @@ def pt_comparison_id_html(request, project_id, cmp_id):
     except ComparisonModel.DoesNotExist:
         raise Http404
 
+    uuid = request.GET.get('link', '')
+    data = {
+        'identifiers_list': [],
+        'search_pattern': '',
+    }
+
+    if uuid:
+        perm_link_obj = ComparisonLink.objects.get(uuid=uuid, project_id=project_id, comparison_id=cmp_id)
+        identifiers_list = perm_link_obj.plots_identifiers.split(",") if perm_link_obj.plots_identifiers != "" else []
+        data['identifiers_list'] = identifiers_list
+        data['search_pattern'] = perm_link_obj.search_pattern
+
     # register 'range' template tag
     cmp_view = PTComparisonServSideView(obj)
     return pt_base_html(request, project_id, 'comparison_id.html',
                       params={'jobs': cmp_view.job_objs,
+                              'perm_link_info': data,
                               'cmp_view': cmp_view,
                               'PTCmpChartType': PTCmpChartType,
                               'PTCmpTableType': PTCmpTableType,
