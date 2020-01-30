@@ -161,9 +161,7 @@ def pt_comparison_tables_info_json(request, api_ver, project_id, cmp_id, group_i
 def pt_comparison_permanent_link(request, api_ver, project_id, cmp_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode("utf-8"))
-        print(data)
         identifiers_string = ','.join([elem for elem in data['id_list']])
-        print(identifiers_string)
 
         if identifiers_string or data['search_pattern']:
             charts_id = ComparisonLink(project_id=project_id, comparison_id=cmp_id, plots_identifiers=identifiers_string, search_pattern=data['search_pattern'])
