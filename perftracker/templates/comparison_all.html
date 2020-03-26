@@ -64,87 +64,45 @@ $(document).ready(function() {
                 "data":      null,
                 "defaultContent": "<span class='glyphicon glyphicon-triangle-right' aria-hidden='true'></span>",
             },
-            { "data": "id" },
-            { "data": "updated" },
-            { "data": "project" },
-            { "data": "env_node" },
-            { "data": "suite_ver" },
-            { "data": "title" },
-            { "data": "jobs" },
-            { "data": function ( row, type, val, meta ) {
+            {
+                "data": function ( row, type, val, meta ) {
                     if (type === "sort") {
-                        return Math.max(...row.tests_total);
+                        return row.id;
                     }
-                    return row.tests_total.join("<br>");
+                    return "<a href='/{0}/comparison/{1}'>{2}</a>".ptFormat(row.project.id, row.id, row.id);
                 }
             },
-            { "data": function ( row, type, val, meta ) {
-                    if (type === "sort") {
-                        return Math.max(...row.tests_errors);
-                    }
-                    return row.tests_errors.join("<br>");
-                },
-            },
-            { "data": function ( row, type, val, meta ) {
-                    if (type === "sort") {
-                        return Math.max(...row.testcases_total);
-                    }
-                    return row.testcases_total.join("<br>");
-                }
-            },
-            { "data": function ( row, type, val, meta ) {
-                    if (type === "sort") {
-                        return Math.max(...row.testcases_errors);
-                    }
-                    return row.testcases_errors.join("<br>");
-                },
-            },
-        ],
-        "columnDefs": [
             {
-                "targets": "colID",
-                "type": "integer",
-                "render": function ( data, type, row ) {
-                    return "<a href='/{0}/comparison/{1}'>{2}</a>".ptFormat(row.project.id, row.id, data);
+                "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return row.updated;
+                    }
+                    return pt_date2str(row.updated);
                 },
-            },
-            {
-                "targets": "colUpdated",
+                "orderData": [ 2, 1 ],
                 "type": "date",
-                "orderData": [ 3, 1 ],
-                "render": function ( data, type, row ) {
-                    return pt_date2str(data);
-                },
             },
             {
-                "targets": "colProject",
-                "type": "string",
+                "data": "project.name",
                 "orderData": [ 3, 1 ],
                 "visible": project_visible,
-                "render": function ( data, type, row ) {
-                    return data.name;
-                },
             },
             {
-                "targets": "colEnv",
-                "type": "string",
-                "orderData": [ 4, 1 ],
-                "render": function ( data, type, row ) {
-                    return data.map(env => env.display_name || '').join("<br>");
+                "data": function ( row, type, val, meta ) {
+                    return row.env_node.map(env => env.display_name || '').join("<br>");
                 },
+                "orderData": [4, 1],
             },
             {
-                "targets": "colVersion",
-                "type": "string",
+                "data": "suite_ver",
                 "orderData": [ 5, 1 ],
             },
             {
-                "targets": "colTitle",
-                "type": "string",
+                "data": "title",
                 "orderData": [ 6, 1 ],
             },
             {
-                "targets": "colJobs",
+                "data": "jobs",
                 "type": "integer",
                 "orderData": [ 7, 1 ],
                 "render": function ( data, type, row ) {
@@ -152,11 +110,21 @@ $(document).ready(function() {
                 },
             },
             {
-                "targets": "colTests",
+                "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.tests_total);
+                    }
+                    return row.tests_total.join("<br>");
+                },
                 "orderData": [ 8, 1 ],
             },
             {
-                "targets": "colErrors",
+                "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.tests_errors);
+                    }
+                    return row.tests_errors.join("<br>");
+                },
                 "orderData": [ 9, 1 ],
                 "createdCell": function (td, cellData, rowData, row, col) {
                     if (Math.max(...rowData.tests_errors) > 0) {
@@ -165,11 +133,21 @@ $(document).ready(function() {
                 },
             },
             {
-                "targets": "colTestCases",
+                "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.testcases_total);
+                    }
+                    return row.testcases_total.join("<br>");
+                },
                 "orderData": [ 10, 1 ],
             },
             {
-                "targets": "colTCErrors",
+                "data": function ( row, type, val, meta ) {
+                    if (type === "sort") {
+                        return Math.max(...row.testcases_errors);
+                    }
+                    return row.testcases_errors.join("<br>");
+                },
                 "orderData": [ 11, 1 ],
                 "createdCell": function (td, cellData, rowData, row, col) {
                     if (Math.max(...rowData.testcases_errors) > 0) {
@@ -177,9 +155,10 @@ $(document).ready(function() {
                     }
                 },
             },
+        ],
+        "columnDefs": [
             {
                 "targets": [ "colHidden" ],
-                "type": "string",
                 "visible": false,
             }
         ],
