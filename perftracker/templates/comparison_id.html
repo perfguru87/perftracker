@@ -47,8 +47,8 @@
             </div>
             <h4 class="left-nav__headers">Show Only</h4>
             <div class="panel__input panel__input_selected">
-                <input type="checkbox" name="selected" id="selected" disabled>
-                <label for="selected"><h5 class="left-nav__headers disabled">Selected</h5></label>
+                <input type="checkbox" name="selected" id="selected" onchange="selected_charts()">
+                <label for="selected"><h5 class="left-nav__headers">Selected</h5></label>
             </div>
             <div class="panel__input panel__input_erros">
                 <input type="checkbox" name="error" id="errors" disabled>
@@ -121,7 +121,7 @@
             <h5 class="left-nav__headers disabled">Reset all filtering</h5>
             <h5 class="left-nav__headers disabled">Thumbnail charts</h5>
             <h5 class="left-nav__headers disabled">Compare Selected</h5>
-            <h5 class="left-nav__headers disabled">Share View</h5>
+            <h5 class="left-nav__headers" id="share_view" onclick="permanent_link()">Share View</h5>
             <h5 class="left-nav__headers disabled" onclick="pt_charts_analyze()">Analyze</h5>
         </div>
 	</div>
@@ -159,10 +159,81 @@ var all_jobs = [{% for job in jobs %}"{{ job.calculated_legend|default:job.title
 const NOCHART = {{ PTCmpChartType.NOCHART }};
 const NOTABLE = {{ PTCmpTableType.HIDE }};
 const DEV_MODE = {{ DEV_MODE|tojson }};
+var perm_link_info = {{ perm_link_info|safe}};
 var labeled_data = {};
 var ENTER_KEY = 13;
 var TILDA_KEY = 192;
 var ESC_KEY = 27;
+
+function permanent_link() {
+    var url = $(location).attr('href');
+    var data = {
+        id_list: [],
+        search_pattern: '',
+    };
+    var atr_start_point = url.indexOf( '?' );
+    if (atr_start_point !== -1) {
+        url = url.slice(0, atr_start_point);
+    }
+
+    Object.keys(sect_data).map(s_id => {
+        if ($(`#check_${s_id}`).is(":checked")) {
+            data.id_list.push(s_id)
+        }
+    });
+
+    data.search_pattern = $('.panel__input-search_text').val();
+
+    $.ajax({
+            url: api_root + "/link",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            type: 'POST',
+            timeout: 10000,
+            success: function (response) {
+                if(response !== "Charts not selected!") {
+                    url += `?link=${response.uuid}`;
+
+                }
+                navigator.clipboard.writeText(url)
+                    .catch(err => {
+                        console.error('Could not copy text: ', err);
+                    });
+            }
+        });
+
+    $("#share_view").animate({
+       opacity: 0.5
+    }, 200, function() {
+       $(this).animate({
+            opacity: 1
+       }, 200)
+    });
+}
+
+function selected_charts() {
+    var search_elem = $('.panel__input-search_text');
+    var input = search_elem.val();
+    var selected = $("#selected");
+    var selected_flag = true;
+    var curr_chart='';
+    Object.keys(sect_data).map(s_id => {
+        curr_chart =  $(`.section__container_${s_id}`);
+        if (selected.is(":checked")){
+            if ((!$(`#check_${s_id}`).is(":checked")) && (curr_chart.is(":visible"))){
+                curr_chart.hide();
+                sect_data[s_id].section_hidden = true;
+            }
+        } else {
+            selected_flag = false;
+            curr_chart.show();
+            sect_data[s_id].section_hidden = false;
+        }
+    });
+    if(!selected_flag){
+        search_elem.val(input).trigger("input");
+    }
+}
 
 function hide_all_tables() {
     Object.keys(sect_data).forEach(hide_table);
@@ -454,13 +525,17 @@ $(document).ready(function() {
 
         $(`#data_${s.g_id}`).append(
            `<div class="section__container_${s_id}">
-            <span><h4 class="plot__title" style="display: inline">${s.title}</h4>
+            <input type='checkbox' class='checkbox_chart' id='check_${s_id}'/><span><h4 class="plot__title" style="display: inline">${s.title}</h4>
             <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
             ${label_div}</span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div></div>`
         );
         $(`#survey_label_${s_id}`).hide();
+
+        if(perm_link_info['identifiers_list'].includes(s_id)){
+            $(`#check_${s_id}`).prop("checked", true);
+        }
     });
 
 {% for job in jobs %}
@@ -483,6 +558,7 @@ $(document).ready(function() {
 
         setTimeout(function() {
             keyUpFlag -= 1;
+            var selected = $("#selected");
 
             if(keyUpFlag === 0) {
                 var buf = this.value.trim().replace(/\s\s+/g, ' ').toLowerCase();
@@ -495,8 +571,10 @@ $(document).ready(function() {
                         }
                     } else {
                         if (sect_data[key].section_hidden) {
-                            sect_data[key].section_hidden = false;
-                            $('.section__container_' + key).show();
+                            if ((selected.is(":checked") && $(`#check_${key}`).is(":checked")) || (!selected.is(":checked"))) {
+                                sect_data[key].section_hidden = false;
+                                $('.section__container_' + key).show();
+                            }
                         }
                     }
                 });
@@ -546,6 +624,14 @@ $(document).ready(function() {
             searchField.trigger('input');
         }
     });
+
+    if(perm_link_info['identifiers_list'].length){
+        $("#selected").prop("checked", true);
+        selected_charts();
+    }
+    if(perm_link_info['search_pattern']){
+        $('.panel__input-search_text').val(perm_link_info['search_pattern']).trigger("input");
+    }
 });
 </script>
 {% endblock %}

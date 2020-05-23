@@ -7,6 +7,7 @@ from django.db import models
 from django.utils import timezone
 from rest_framework import serializers
 from scipy import stats
+import uuid
 
 from perftracker.helpers import pt_float2human, pt_cut_common_sfx
 from perftracker.models.env_node import EnvNodeSimpleSerializer
@@ -572,3 +573,18 @@ class PTComparisonServSideView:
 
         for g in self.groups.values():
             g.pt_init_chart_and_table()
+
+
+class ComparisonLink(models.Model):
+    uuid = models.UUIDField(help_text="unique link number", primary_key=False, default=uuid.uuid4, editable=False)
+    comparison = models.ForeignKey(ComparisonModel, help_text="Comparison id", on_delete=models.CASCADE)
+    project = models.ForeignKey(ProjectModel, help_text="Comparison project", on_delete=models.CASCADE)
+    plots_identifiers = models.CharField(max_length=10000, help_text="Charts ID")
+    search_pattern = models.CharField(max_length=100, help_text="search info in navigation bar", blank=True)
+
+    def __str__(self):
+        return 'uuid: {0}, project: {1}, comparison: {2}'.format(self.id, self.project_id, self.comparison_id)
+
+    class Meta:
+        verbose_name = "Array of Identifiers for Link "
+
