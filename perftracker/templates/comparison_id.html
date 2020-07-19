@@ -11,6 +11,9 @@
 {% block title %}Comparison: #{{ obj.id }} / {{ obj.title }}{% endblock %}
 
 {% block content %}
+
+{% include 'job_id_edit.html' %}
+
 <div class='pt_section'>
   <h3 class='pt_collapse expanded' data-toggle="collapse" data-target="#summary">Summary</h3>
   <div class='collapse in' id='summary'>
