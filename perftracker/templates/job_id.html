@@ -3,6 +3,9 @@
 {% block title %}Job: #{{ obj.id }} / {{ obj.title }}{% endblock %}
 
 {% block content %}
+
+{% include 'job_id_edit.html' %}
+
 <div class='pt_section'>
 <h3 class='pt_collapse collapsed' data-toggle="collapse" data-target="#details">Details</h3>
 <div class='container collapse container' id='details'>
