@@ -8,9 +8,12 @@
     <script type="text/javascript" charset="utf8" src="{% static 'markjs/jquery.mark.min.js' %}"></script>
 {% endblock %}
 
-{% block title %}Comparison: #{{ obj.id }} / {{ obj.title }}{% endblock %}
+{% block title %}Comparison: #{{ obj.id }} / {{ obj.title }}<div class='pt_object_menu' id='pt_object_menu'></div>{% endblock %}
 
 {% block content %}
+
+{% include 'job_id_edit.html' %}
+
 <div class='pt_section'>
   <h3 class='pt_collapse expanded' data-toggle="collapse" data-target="#summary">Summary</h3>
   <div class='collapse in' id='summary'>
@@ -23,10 +26,8 @@
       <a class='pt_collapse collapsed' data-toggle="collapse" data-target="#details" href='#'>more details</a>
 
       <div class='collapse container' id='details'>
-        <h4>Comparison: {{ obj }}</h4>
-        <div id='comparison_details'>...<br><br></div>
         {% for job in jobs %}
-            <h4>Job: {{ job }}</h4>
+            <h4>Job: {{ job }}<div class='pt_object_menu' id='pt_object_menu_{{ job.id }}'></div></h4>
             <div class='container'><div id='job_details_{{ job.id }}'></div></div>
         {% endfor %}
       </div>
@@ -430,7 +431,7 @@ $(document).ready(function() {
     Object.keys(group_data).map(g_id => {
         var g = group_data[g_id];
         g.collapsed = false;
-        var group = `<h3 class='pt_collapse expanded' id='gh_${g_id}' data-toggle='collapse' data-target='#data_${g_id}' aria-expanded='true'>` +
+        var group = `<h2 class='pt_collapse expanded' id='gh_${g_id}' data-toggle='collapse' data-target='#data_${g_id}' aria-expanded='true'>` +
             `<a id='g_${g_id}'>${g.title}</a><span class='pt_smaller'>  [${pt_pluralize(g.sections, "test case")}]</span><span class="glyphicon glyphicon-triangle-bottom"/></h3>` +
             `<div class='collapse in' id='data_${g_id}'>`;
         main.append(group);
@@ -454,17 +455,20 @@ $(document).ready(function() {
 
         $(`#data_${s.g_id}`).append(
            `<div class="section__container_${s_id}">
-            <span><h4 class="plot__title" style="display: inline">${s.title}</h4>
-            <span style="float: right"><a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
+            <h4 class="plot__title">${s.title}
+            <span style="float: right; font-size: 12px;">
+            <a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
-            ${label_div}</span></span>${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div></div>`
+            ${label_div}</span></h4>
+            ${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div></div>`
         );
         $(`#survey_label_${s_id}`).hide();
     });
 
 {% for job in jobs %}
-    pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }});
+    pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, {{ job.id }}, false);
+    $("#pt_object_menu_{{ job.id }}").html(pt_draw_job_menu({{ job.id }}));
 {% endfor %}
 
     $(window).on('DOMContentLoaded load resize scroll', delayed_render);
@@ -546,6 +550,8 @@ $(document).ready(function() {
             searchField.trigger('input');
         }
     });
+
+    $("#pt_object_menu").html(pt_draw_comparison_menu({{ project.id}}, {{ obj.id }}));
 });
 </script>
 {% endblock %}
