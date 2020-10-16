@@ -123,6 +123,8 @@ class JobModel(models.Model):
         links = json_data.get('links', None)
         if links == None or links == "":
             self.links = json.dumps({})
+        elif isinstance(links, dict):
+            self.links = json.dumps(links)
         elif not links.startswith("{"):
             self.links = json.dumps({links: links})
         else:
