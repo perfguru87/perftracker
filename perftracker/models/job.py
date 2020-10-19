@@ -118,8 +118,15 @@ class JobModel(models.Model):
         self.author     = j.get_str('author')
         self.product_name = j.get_str('product_name')
         self.product_ver  = j.get_str('product_ver')
-        self.links = json.dumps(j.get_dict('links'))
         regression_tag = json_data.get('regression_tag', '')
+
+        links = json_data.get('links', None)
+        if links == None or links == "":
+            self.links = json.dumps({})
+        elif not links.startswith("{"):
+            self.links = json.dumps({links: links})
+        else:
+            self.links = json.dumps(j.get_dict('links'))
 
         self.upload = now
 

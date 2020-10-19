@@ -175,7 +175,15 @@ function pt_draw_links(links)
     return ret;
 }
 
-function pt_draw_job_details(d, err_msg)
+function pt_draw_job_menu(id)
+{
+    return "<a href='#' onclick=\"return pt_job_edit_cb({0})\">Edit</a><span>|</span>".ptFormat(id) +
+           "<a href='#' onclick=\"return pt_ajax_job_delete({0})\">Delete</a><span>|</span>".ptFormat(id) +
+           "<a href='/0/job/{0}?as_json=1'>Download JSON</a><span>|</span>".ptFormat(id) +
+           "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a>";
+}
+
+function pt_draw_job_details(d, err_msg, show_menu = true)
 {
     var s = '';
     var env_node = d.env_node;
@@ -192,13 +200,8 @@ function pt_draw_job_details(d, err_msg)
     }
 
     s += "<div class='row'>";
-
-    s += "<div class='pt_obj_management'>" +
-         "<a href='#' onclick=\"return pt_job_edit_cb({0})\">Edit</a><span>|</span>".ptFormat(d.id) +
-         "<a href='#' onclick=\"return pt_ajax_job_delete({0})\">Delete</a><span>|</span>".ptFormat(d.id) +
-         "<a href='/0/job/{0}?as_json=1'>Download JSON</a><span>|</span>".ptFormat(d.id) +
-         "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
-
+    if (show_menu)
+        s += "<div class='pt_obj_management'>" + pt_draw_job_menu(d.id) + "</div>";
     s += "<div class='col-md-12'><h4>Test suite</h4>";
     s += "<table class='pt_obj_details'>";
     s += "<thead><th>Parameter</th><th>Value</th></thead>";
@@ -248,7 +251,7 @@ function pt_draw_job_details(d, err_msg)
     return s;
 }
 
-function pt_ajax_job_details(api_ver, project_id, job_id)
+function pt_ajax_job_details(api_ver, project_id, job_id, show_menu = true)
 {
     $.ajax({
         url: '/api/v' + api_ver + '/' + project_id + '/job/{0}'.ptFormat(job_id),
@@ -257,7 +260,7 @@ function pt_ajax_job_details(api_ver, project_id, job_id)
         type: 'GET',
         timeout: 2000,
         success: function(data, status) {
-            $('#job_details_{0}'.ptFormat(job_id)).html(pt_draw_job_details(data, null));
+            $('#job_details_{0}'.ptFormat(job_id)).html(pt_draw_job_details(data, null, show_menu));
             $('#env_nodes_{0}'.ptFormat(job_id)).treetable({expandable: true});
             $('#job_details_slider_{0}'.ptFormat(job_id)).slideDown();
         },
@@ -289,6 +292,13 @@ function pt_ajax_job_delete(job_id)
     return false;
 }
 
+function pt_draw_comparison_menu(project_id, id)
+{
+    return "<a onclick=\"window.location.replace('/{0}/job/?edit={1}');return false;\" >Edit</a><span>|</span>".ptFormat(project_id, id) +
+           "<a href='#' onclick=\"return pt_ajax_comparison_delete({0})\">Delete</a><span>|</span>".ptFormat(id) +
+           "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a>";
+}
+
 function pt_draw_comparison_details(d, err_msg)
 {
     var s = '';
@@ -306,12 +316,7 @@ function pt_draw_comparison_details(d, err_msg)
     }
 
     s += "<div class='row'>";
-
-    s += "<div class='pt_obj_management'>" +
-         "<a onclick=\"window.location.replace('/{0}/job/?edit={1}');return false;\" >Edit</a><span>|</span>".ptFormat(d.project.id, d.id) +
-         "<a href='#' onclick=\"return pt_ajax_comparison_delete({0})\">Delete</a><span>|</span>".ptFormat(d.id) +
-         "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
-
+    s += "<div class='pt_obj_management'>" + pt_draw_comparison_menu(d.project.id, d.id) + "</div>";
     s += "<div class='col-md-12'><h4>Jobs</h4>";
     s += "<table class='pt_obj_details'>";
     s += "<thead><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th>" +
@@ -364,6 +369,12 @@ function pt_ajax_comparison_delete(comparison_id)
     return false;
 }
 
+function pt_draw_regression_menu(d)
+{
+    return "<a href='/admin/perftracker/regressionmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
+           "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a>";
+}
+
 function pt_draw_regression_details(d, err_msg)
 {
     var s = '';
@@ -378,11 +389,7 @@ function pt_draw_regression_details(d, err_msg)
     }
 
     s += "<div class='row'>";
-
-    s += "<div class='pt_obj_management'>" +
-         "<a href='/admin/perftracker/regressionmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
-         "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a></div>";
-
+    s += "<div class='pt_obj_management'>" + pt_draw_regression_menu(d) + "</div>";
     s += "<div class='col-md-12'><h4>Jobs</h4>";
     s += "<table class='pt_obj_details'>";
     s += "<thead><th>#</th><th>Job end</th><th>Hw</th><th>Version</th><th>Title</th><th>Duration</th><th>Tests</th><th>Errors</th><th>Linked</th></thead>";
