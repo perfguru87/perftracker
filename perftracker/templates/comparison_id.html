@@ -210,6 +210,17 @@ function toggle_table(s_id) {
     }
 }
 
+function toggle_chart(s_id) {
+    var s = sect_data[s_id];
+    if (s.chart_rendered) {
+        $(`#chart_${s_id}`).hide();
+        s.chart_rendered = false;
+    } else {
+        $(`#chart_${s_id}`).show();
+        show_chart(s_id);
+    }
+}
+
 function table_loading_error_handler(s_id, error) {
     if ($(`#table_error_${s_id}`).length) {
         return;
@@ -460,6 +471,7 @@ $(document).ready(function() {
             <a href='#g_${s.g_id}' title="Section Top"><span class="glyphicon glyphicon-menu-up"/></a>
             <a href='#s_${s_id}' id='s_${s_id}' title="Permanent Link"><span class="glyphicon glyphicon-link"/></a>
             <a onclick="toggle_table(${s.s_id})" title="Toggle table"><span class="glyphicon glyphicon-list"/></a>
+            <a onclick="toggle_chart(${s.s_id})" title="Toggle chart"><span class="glyphicon glyphicon-stats"/></a>
             ${label_div}</span></h4>
             ${chart_div}<div id='results_${s_id}' class='pt_table' ><div id='survey_${s_id}'></div></div></div>`
         );
