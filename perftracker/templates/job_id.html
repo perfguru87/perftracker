@@ -1,6 +1,6 @@
 {% extends '_base.html' %}
 
-{% block title %}Job: #{{ obj.id }} / {{ obj.title }}{% endblock %}
+{% block title %}Job: #{{ obj.id }} / {{ obj.title }}<div class='pt_object_menu' id='pt_object_menu'></div>{% endblock %}
 
 {% block content %}
 
@@ -65,7 +65,7 @@ function pt_tests_repopulate(table, group_id)
 $(document).ready(function() {
     var id = {{ obj.id }};
 
-    pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, id);
+    pt_ajax_job_details('{{ api_ver }}', {{ project.id }}, id, false);
 
     var table = $('#tests').DataTable( {
         "processing": true,
@@ -196,6 +196,8 @@ $(document).ready(function() {
             $('#tests_group_selector').html(pt_draw_ajax_error(error));
         }
     });
+
+    $('#pt_object_menu').html(pt_draw_job_menu({{ obj.id }}));
 });
 </script>
 

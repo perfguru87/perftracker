@@ -746,7 +746,7 @@ def pt_regression_all_json(request, api_ver, project_id):
             # simple example:
             search = self.request.GET.get(u'search[value]', None)
             if search:
-                qs = qs.filter(Q(title__icontains=search) | Q(suite_ver__icontains=search))
+                qs = qs.filter(Q(title__icontains=search))
 
             if int(project_id) != 0:
                 qs = qs.filter(Q(project_id=project_id))

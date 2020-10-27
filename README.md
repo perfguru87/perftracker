@@ -207,3 +207,11 @@ Tune the max allowed upload file size in the settings_local.py:
 
  DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
  MAX_UPLOAD_SIZE = 104857600
+
+If you want to run Perftracker in production mode (behind apache or nginx), then configure static files routes
+and disable debug mode:
+
+ DEBUG = False
+
+Note: if you set 'DEBUG = False' Django won't handle static files for you any more, your production web server
+(Apache or something) should take care of that

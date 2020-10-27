@@ -418,7 +418,7 @@ class PTComparisonServSideSectView:
             if len(jobs) == 1:
                 s = job.title  # nothing to compare with, so no need for uniqueness
             else:
-                s = "#%s: " % (jobs.index(job) + 1)
+                s = "#%s: " % (list(jobs).index(job) + 1)
                 if add_title or (not add_title and not add_ver):
                     s += job.title
                 if add_ver and (job.product_name or job.product_ver):
