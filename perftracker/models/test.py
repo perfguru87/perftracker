@@ -86,11 +86,16 @@ class TestModel(models.Model):
         self.cmdline = j.get_str('cmdline')
         self.description = j.get_str('description')
 
-        score = j.get_float('score', defval=None)
-        if score is None:
-            scores = j.get_list('scores', require=True)
+        self.status = j.get_str('status', "SUCCESS")
+
+        if self.pt_status_is_failed():
+            scores = j.get_list('scores', defval=[])
         else:
-            scores = [score]
+            score = j.get_float('score', defval=None)
+            if score is None:
+                scores = j.get_list('scores', require=True)
+            else:
+                scores = [score]
         deviations = j.get_list('deviations')
 
         self.scores = str(scores)
@@ -104,7 +109,6 @@ class TestModel(models.Model):
         self.begin = j.get_datetime('begin')
         self.end = j.get_datetime('end')
         self.loops = j.get_int('loops')
-        self.status = j.get_str('status', "SUCCESS")
         if self.status not in TEST_STATUSES:
             raise SuspiciousOperation("invalid 'status' value '%s', must be one of: %s" % (self.status, str(TEST_STATUSES)))
 
@@ -133,11 +137,13 @@ class TestModel(models.Model):
 
         self.samples = j.get_int('samples', len(scores))
 
-        self.avg_score = numpy.mean(scores)
-        self.min_score = min(scores)
-        self.max_score = max(scores)
+        self.avg_score = numpy.mean(scores) if scores else 0
+        self.min_score = min(scores) if scores else 0
+        self.max_score = max(scores) if scores else 0
 
-        self.avg_dev = numpy.mean(deviations) if deviations else numpy.std(scores)
+        self.avg_dev = 0
+        if deviations or scores:
+            self.avg_dev = numpy.mean(deviations) if deviations else numpy.std(scores)
         self.min_dev = min(deviations) if deviations else self.avg_dev
         self.max_dev = max(deviations) if deviations else self.avg_dev
 
