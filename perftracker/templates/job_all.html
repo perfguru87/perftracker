@@ -121,9 +121,9 @@ $(function() {
               <ul class="dropdown-menu" aria-labelledby="pt_charts_type">
                 {% for value, text in cmp_form.charts_type.field.choices %}
                     <li><a href='#' class="chart-type" >{{ text }}</a></li>
-                    {% ifequal value 0 %}
+                    {% if value == 0 %}
                         <li role="separator" class="divider"></li>
-                    {% endifequal %}
+                    {% endif %}
                 {% endfor %}
               </ul>
             </div>
@@ -140,9 +140,9 @@ $(function() {
               <ul class="dropdown-menu" aria-labelledby="pt_tables_type">
                 {% for value, text in cmp_form.tables_type.field.choices %}
                     <li><a href='#' class="tables-type" >{{ text }}</a></li>
-                    {% ifequal value 0 %}
+                    {% if value == 0 %}
                         <li role="separator" class="divider"></li>
-                    {% endifequal %}
+                    {% endif %}
                 {% endfor %}
               </ul>
             </div>
@@ -159,9 +159,9 @@ $(function() {
               <ul class="dropdown-menu" aria-labelledby="pt_tests_type">
                 {% for value, text in cmp_form.tests_type.field.choices %}
                     <li><a href='#' class="tests-type" >{{ text }}</a></li>
-                    {% ifequal value 0 %}
+                    {% if value == 0 %}
                         <li role="separator" class="divider"></li>
-                    {% endifequal %}
+                    {% endif %}
                 {% endfor %}
               </ul>
             </div>
@@ -178,9 +178,9 @@ $(function() {
               <ul class="dropdown-menu" aria-labelledby="pt_values_type">
                 {% for value, text in cmp_form.values_type.field.choices %}
                     <li><a href='#' class="values-type" >{{ text }}</a></li>
-                    {% ifequal value 0 %}
+                    {% if value == 0 %}
                         <li role="separator" class="divider"></li>
-                    {% endifequal %}
+                    {% endif %}
                 {% endfor %}
               </ul>
             </div>

@@ -14,8 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from django.conf.urls import url
+from django.urls import path, re_path
 from django.views.generic import RedirectView
 
 from perftracker import views
@@ -23,42 +22,42 @@ from perftracker import test_endpoint_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico'), name='favicon'),
+    re_path(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico'), name='favicon'),
 
-    url(r'^api/v(?P<api_ver>\d+.\d+)/auth$', views.pt_auth),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/project/$', views.pt_project_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/home/$', views.pt_home_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/regression/(?P<regression_id>\d+)$', views.pt_regression_id_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/regression/$', views.pt_regression_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/test/(?P<test_id>\d+)$',
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/auth$', views.pt_auth),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/project/$', views.pt_project_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/home/$', views.pt_home_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/regression/(?P<regression_id>\d+)$', views.pt_regression_id_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/regression/$', views.pt_regression_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/test/(?P<test_id>\d+)$',
         views.pt_comparison_test_id_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/test/$',
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/test/$',
         views.pt_comparison_test_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/section/(?P<section_id>\d+)$',
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/section/(?P<section_id>\d+)$',
         views.pt_comparison_tables_info_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/tables$',
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/tables$',
         views.pt_comparison_tables_info_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/analyze$',
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/analyze$',
         views.pt_comparison_analyze_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/section/(?P<section_id>\d+)/properties$',
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/(?P<group_id>\d+)/section/(?P<section_id>\d+)/properties$',
         views.pt_comparison_section_properties),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/$', views.pt_comparison_group_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)$', views.pt_comparison_id_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/$', views.pt_comparison_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/(?P<group_id>\d+)/test/(?P<test_id>\d+)$',
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)/group/$', views.pt_comparison_group_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/(?P<cmp_id>\d+)$', views.pt_comparison_id_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/comparison/$', views.pt_comparison_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/(?P<group_id>\d+)/test/(?P<test_id>\d+)$',
         views.pt_job_test_id_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/(?P<group_id>\d+)/test/$', views.pt_job_test_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/$', views.pt_job_group_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)$', views.pt_job_id_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/$', views.pt_job_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/(?P<hw_id>\d+)$', views.pt_hwfarm_node_id_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/$', views.pt_hwfarm_node_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/(?P<id>\d+)$', views.pt_hwfarm_node_lock_id_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/$', views.pt_hwfarm_node_lock_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/(?P<group_id>\d+)/test/$', views.pt_job_test_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)/group/$', views.pt_job_group_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/(?P<job_id>\d+)$', views.pt_job_id_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/job/$', views.pt_job_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/(?P<hw_id>\d+)$', views.pt_hwfarm_node_id_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_farm/$', views.pt_hwfarm_node_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/(?P<id>\d+)$', views.pt_hwfarm_node_lock_id_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/hw_lock/$', views.pt_hwfarm_node_lock_all_json),
 
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/artifact/$', views.pt_artifact_meta_all_json),
-    url(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/artifact/(?P<uuid>[0-9a-fA-F-]+)$', views.pt_artifact_meta_id_json),
-    url(r'^api/v\d+.\d+/(?P<project_id>\d+)/artifact_content/(?P<uuid>[0-9a-fA-F-]+)$', views.pt_artifact_content_id),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/artifact/$', views.pt_artifact_meta_all_json),
+    re_path(r'^api/v(?P<api_ver>\d+.\d+)/(?P<project_id>\d+)/artifact/(?P<uuid>[0-9a-fA-F-]+)$', views.pt_artifact_meta_id_json),
+    re_path(r'^api/v\d+.\d+/(?P<project_id>\d+)/artifact_content/(?P<uuid>[0-9a-fA-F-]+)$', views.pt_artifact_content_id),
 
     path('<int:project_id>/home/', views.pt_home_html, name='Home'),
     path('<int:project_id>/regression/<int:regression_id>', views.pt_regression_id_html, name='Regressions'),
