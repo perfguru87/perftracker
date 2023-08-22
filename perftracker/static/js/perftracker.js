@@ -369,6 +369,11 @@ function pt_ajax_comparison_delete(comparison_id)
     return false;
 }
 
+function pt_draw_comparisons_menu(project_id)
+{
+    return "<a window=_blank onclick=\"window.location.replace('/{0}/job/?edit=');return false;\" >New comparison</a>".ptFormat(project_id);
+}
+
 function pt_draw_regression_menu(d)
 {
     return "<a href='/admin/perftracker/regressionmodel/{0}/change/'>Edit</a><span>|</span>".ptFormat(d.id) +
@@ -1073,4 +1078,14 @@ function pt_isInViewport(elem) {
 
 function pt_pluralize(count, noun, suffix = 's') {
     return `${count} ${noun}${count !== 1 ? suffix : ''}`;
+}
+
+function pt_comparison_enable_disable_buttons(enable) {
+    if (enable) {
+        $("#pt_btn_save").prop("disabled", false);
+        $("#pt_btn_preview").prop("disabled", false);
+    } else {
+        $("#pt_btn_save").prop("disabled", true);
+        $("#pt_btn_preview").prop("disabled", true);
+    }
 }

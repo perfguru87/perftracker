@@ -1,6 +1,6 @@
 {% extends '_base.html' %}
 
-{% block title %}Jobs{% endblock %}
+{% block title %}Jobs<div class='pt_object_menu' id='pt_object_menu'></div>{% endblock %}
 
 {% block content %}
 
@@ -195,6 +195,9 @@ $(function() {
 <script>
 $(document).ready(function() {
 
+    var cmp_edited_id = -1;
+    var jobs_in_comparison = {};
+
     /*
      * 1. Jobs list table
      */
@@ -237,9 +240,9 @@ $(document).ready(function() {
                 "defaultContent": "<span class='glyphicon glyphicon-plus' aria-hidden='true'></span>",
                 "render": function (data) {
                     if (data['id'] in jobs_in_comparison)
-                        return "<span class='glyphicon glyphicon-check' id='glyphicon-check-{0}' aria-hidden='true'></span>".ptFormat(data['id']);
+                        return "<span class='glyphicon glyphicon-check' id='pt_cmp_toggle_{0}' aria-hidden='true'></span>".ptFormat(data['id']);
                     else
-                        return "<span class='glyphicon glyphicon-plus' id='glyphicon-plus-{0}' aria-hidden='true'></span>".ptFormat(data['id']);
+                        return "<span class='glyphicon glyphicon-plus' id='pt_cmp_toggle_{0}' aria-hidden='true'></span>".ptFormat(data['id']);
                 },
             },
         ],
@@ -319,9 +322,13 @@ $(document).ready(function() {
         ],
         "initComplete": function () {
             for (const [key, value] of Object.entries(jobs_in_comparison)) {
-                var elem = document.getElementById('glyphicon-check-{0}'.ptFormat(key));
+                var elem = document.getElementById('pt_cmp_toggle_{0}'.ptFormat(key));
                 var tr = $(elem).closest('tr');
                 tr.addClass('selected');
+            }
+
+            if (cmp_edited_id == undefined || cmp_edited_id == "") {
+                $("#jobs td.pt_row_compare_toggle").first().click()
             }
         }
     });
@@ -371,10 +378,6 @@ $(document).ready(function() {
     /*
      * 3. Add to comparison
      */
-
-    var cmp_edited_id = -1;
-    var jobs_in_comparison = {};
-
     $("#pt_jobs_to_compare" ).sortable();
 
     $('#jobs').on('click', 'td.pt_row_compare_toggle', function() {
@@ -389,28 +392,35 @@ $(document).ready(function() {
 
         if (id in jobs_in_comparison) {
             /* Remove from comparison */
-            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-plus' aria-hidden='true'></span>";
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-plus' id='pt_cmp_toggle_{0}' aria-hidden='true'></span>".ptFormat(id);
             $(tr).removeClass('selected');
             if (Object.keys(jobs_in_comparison).length == 1) {
-                $(".pt_job_comparison_dialog").slideToggle("slow");
+                $(".pt_job_comparison_dialog").slideUp("slow");
                 $("body").css('margin-bottom: 10px;');
             }
-            $("#pt_job_{0}".ptFormat(id)).remove();
+            $("#pt_job_selector_{0}".ptFormat(id)).remove();
             delete jobs_in_comparison[id];
         } else {
             /* Add to comparison */
-            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-check' aria-hidden='true'></span>";
+            $(this)[0].innerHTML = "<span class='glyphicon glyphicon-check' id='pt_cmp_toggle_{0}' aria-hidden='true'></span>".ptFormat(id);
             if (!$(tr).hasClass('selected'))
                 $(tr).addClass('selected');
             if (Object.keys(jobs_in_comparison).length == 0)
-                $(".pt_job_comparison_dialog").slideToggle("slow", adjust_body_margin());
+                $(".pt_job_comparison_dialog").slideDown("slow", adjust_body_margin());
             else
                 adjust_body_margin();
             $("#pt_jobs_to_compare").append(
-                "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(id, title) +
-                "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
+                "<li id='pt_job_selector_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(id, title) +
+                "<span data-for-id='pt_cmp_toggle_{0}' style='float: right;' class='glyphicon glyphicon-remove'></span></li>".ptFormat(id));
+
+            $("#pt_job_selector_{0} span".ptFormat(id)).on('click', function() {
+                $("#" + $(this).data("for-id")).click()
+            })
+
             jobs_in_comparison[id] = title;
         }
+
+        pt_comparison_enable_disable_buttons(Object.keys(jobs_in_comparison).length > 0);
 
         var job_ids = [];
         var job_titles = [];
@@ -496,50 +506,8 @@ $(document).ready(function() {
     });
 
     /*
-     * 6. Editing comparison
+     * 6. Other settings
      */
-
-    if (window.location.search.indexOf('edit=') > -1) {
-        var url_params = new URLSearchParams(window.location.search);
-        cmp_edited_id = url_params.get('edit');
-        pt_cmp_edit_cb();
-    }
-
-    function pt_cmp_edit_cb() {
-        var api_ver = '{{ api_ver }}';
-        var project_id = {{ project.id }};
-
-        var adjust_body_margin = function () {
-            $("body").css('margin-bottom', '{0}px'.ptFormat($(".pt_job_comparison_dialog").outerHeight() + 20));
-        }
-        $(".pt_job_comparison_dialog").slideToggle("slow", adjust_body_margin());
-
-        $.ajax({
-            url: "/api/v{0}/{1}/comparison/{2}".ptFormat(api_ver, project_id, cmp_edited_id),
-            cache: true,
-            data: null,
-            type: 'GET',
-            async: false,
-            timeout: 2000,
-            success: function (data) {
-                $('#pt_comparison_title').val(data.title);
-                $('#pt_charts_type').text(document.getElementsByClassName("chart-type")[data.charts_type].text);
-                $('#pt_tables_type').text(document.getElementsByClassName("tables-type")[data.tables_type].text);
-                $('#pt_tests_type').text(document.getElementsByClassName("tests-type")[data.tests_type].text);
-                $('#pt_values_type').text(document.getElementsByClassName("values-type")[data.values_type].text);
-
-                $.each(data.jobs, function () {
-                    jobs_in_comparison[this['id']] = this['title'];
-                    $("#pt_jobs_to_compare").append(
-                        "<li id='pt_job_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(this['id'], this['title']) +
-                        "<span style='float: right;' class='glyphicon glyphicon-remove'></span></li>");
-                });
-            },
-            error: function (xhr) {
-                alert('Error: ' + xhr.status + ' ' + xhr.responseText);
-            }
-        });
-    }
 
     $('.chart-type').click(function () {
         $('#pt_charts_type').text($(this).text());
@@ -558,6 +526,62 @@ $(document).ready(function() {
         window.location.replace((cmp_edited_id > 0) ? "/{{ project.id }}/comparison/" : "/{{ project.id }}/job/");
         return false;
     });
+
+    $("#pt_object_menu").html(pt_draw_comparisons_menu({{ project.id}}));
+
+    /*
+     * 7. Editing comparison
+     */
+
+    if (window.location.search.indexOf('edit=') > -1) {
+        var url_params = new URLSearchParams(window.location.search);
+        cmp_edited_id = url_params.get('edit');
+        pt_cmp_edit_cb();
+    }
+
+    function pt_cmp_edit_cb() {
+        var api_ver = '{{ api_ver }}';
+        var project_id = {{ project.id }};
+
+        var adjust_body_margin = function () {
+            $("body").css('margin-bottom', '{0}px'.ptFormat($(".pt_job_comparison_dialog").outerHeight() + 20));
+        }
+        $(".pt_job_comparison_dialog").slideDown("slow", adjust_body_margin());
+        pt_comparison_enable_disable_buttons(Object.keys(jobs_in_comparison).length > 0);
+
+        $.ajax({
+            url: "/api/v{0}/{1}/comparison/{2}".ptFormat(api_ver, project_id, cmp_edited_id),
+            cache: true,
+            data: null,
+            type: 'GET',
+            async: false,
+            timeout: 2000,
+            success: function (data) {
+                $('#pt_comparison_title').val(data.title);
+                $('#pt_charts_type').text(document.getElementsByClassName("chart-type")[data.charts_type].text);
+                $('#pt_tables_type').text(document.getElementsByClassName("tables-type")[data.tables_type].text);
+                $('#pt_tests_type').text(document.getElementsByClassName("tests-type")[data.tests_type].text);
+                $('#pt_values_type').text(document.getElementsByClassName("values-type")[data.values_type].text);
+
+                $.each(data.jobs, function () {
+                    id = this['id']
+                    jobs_in_comparison[id] = this['title'];
+                    $("#pt_jobs_to_compare").append(
+                        "<li id='pt_job_selector_{0}'>#{0}, {1}<input type='hidden' name='job_{0}' value='{0}'>".ptFormat(id, this['title']) +
+                        "<span data-for-id='pt_cmp_toggle_{0}' style='float: right;' class='glyphicon glyphicon-remove'></span></li>".ptFormat(id));
+
+                    $("#pt_job_selector_{0} span".ptFormat(id)).on('click', function() {
+                        $("#" + $(this).data("for-id")).click()
+                    })
+                });
+
+                pt_comparison_enable_disable_buttons(Object.keys(jobs_in_comparison).length > 0);
+            },
+            error: function (xhr) {
+                alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+            }
+        });
+    }
 });
 </script>
 
