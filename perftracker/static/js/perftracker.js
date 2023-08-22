@@ -371,7 +371,7 @@ function pt_ajax_comparison_delete(comparison_id)
 
 function pt_draw_comparisons_menu(project_id)
 {
-    return "<a window=_blank onclick=\"window.location.replace('/{0}/job/?edit=');return false;\" >New comparison</a>".ptFormat(project_id);
+    return "<a window=_blank onclick=\"window.location.replace('/{0}/job/?edit=-1');return false;\" >New comparison</a>".ptFormat(project_id);
 }
 
 function pt_draw_regression_menu(d)

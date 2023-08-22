@@ -327,7 +327,7 @@ $(document).ready(function() {
                 tr.addClass('selected');
             }
 
-            if (cmp_edited_id == undefined || cmp_edited_id == "") {
+            if (cmp_edited_id == 0) {
                 $("#jobs td.pt_row_compare_toggle").first().click()
             }
         }
@@ -385,6 +385,9 @@ $(document).ready(function() {
         var row = table.row( tr );
         var id = row.data().id;
         var title = row.data().title;
+
+        if (cmp_edited_id < 0)
+            cmp_edited_id = 0; // new comparison
 
         var adjust_body_margin = function() {
             $("body").css('margin-bottom', '{0}px'.ptFormat($(".pt_job_comparison_dialog").outerHeight() + 20));
@@ -486,7 +489,7 @@ $(document).ready(function() {
             });
         }
 
-        else if (cmp_edited_id == -1) {
+        else if (cmp_edited_id == 0) {
             $.ajax({
                 url: '/api/v{{ api_ver }}/{{ project.id }}/comparison/',
                 type: "POST",
@@ -536,7 +539,8 @@ $(document).ready(function() {
     if (window.location.search.indexOf('edit=') > -1) {
         var url_params = new URLSearchParams(window.location.search);
         cmp_edited_id = url_params.get('edit');
-        pt_cmp_edit_cb();
+        if (cmp_edited_id > 0)
+            pt_cmp_edit_cb();
     }
 
     function pt_cmp_edit_cb() {
