@@ -22,13 +22,13 @@
         <li>Job #{{ forloop.counter }}: <a href='/{{ project.id }}/job/{{ job.id }}'>{{ job }}</a></li>
       {% endfor %}
     </ul>
-    <div class='container'>
-      <a class='pt_collapse collapsed' data-toggle="collapse" data-target="#details" href='#'>more details</a>
+    <div class='container noleftpad'>
+      <a class='pt_collapse collapsed noleftpad' id='more-details' data-toggle="collapse" data-target="#details" href='#'>more details</a>
 
-      <div class='collapse container' id='details'>
+      <div class='collapse container noleftpad' id='details'>
         {% for job in jobs %}
             <h4>Job: {{ job }}<div class='pt_object_menu' id='pt_object_menu_{{ job.id }}'></div></h4>
-            <div class='container'><div id='job_details_{{ job.id }}'></div></div>
+            <div class='container noleftpad'><div id='job_details_{{ job.id }}'></div></div>
         {% endfor %}
       </div>
     </div>

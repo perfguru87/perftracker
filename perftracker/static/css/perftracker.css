@@ -8,7 +8,9 @@ h2 { font-size: 18px; margin-bottom: 18px; text-align: left; }
 h3 { font-size: 15px; margin-bottom: 15px; text-align: left; }
 h4 { font-size: 15px; margin-bottom: 8px; text-align: left; }
 
+/* Common */
 a { cursor: pointer; }
+.noleftpad { padding-left: 0px; }
 
 /* Grids */
 tr.odd td.pt_test_errors {
@@ -26,12 +28,14 @@ td.pt_row_details_toggle {
 td.pt_row_compare_toggle {
   cursor: pointer;
 }
+table tbody td.pt_row_details,
 td.pt_row_details {
   background-color: #fff;
   border-top: 1px solid #ccc !important;
   border-bottom: 1px solid #fff !important;
   line-height: 1;
   font-size: 0.9em;
+  padding: 0px;
 }
 td.pt_lborder, th.pt_lborder {
   border-left: 1px solid #ccc !important;
@@ -485,3 +489,8 @@ input[type=file] {
 h1 div.pt_object_menu { font-size: 14px; line-height: 31px; font-weight: normal; float: right; }
 h4 div.pt_object_menu { font-size: 12px; line-height: 15px; font-weight: normal; float: right; }
 div.pt_object_menu span { margin: 0px 10px 0px 10px; color: #777; }
+
+/* Comparison summary */
+#summary ul { padding: 0px; margin-right: 12px; }
+#summary ul li { margin-left: 12px; text-indent: 0px; }
+#summary #more-details { padding-bottom: 10px; display: table-cell; }
