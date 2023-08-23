@@ -537,3 +537,7 @@ div.pt_object_menu span { margin: 0px 10px 0px 10px; color: #777; }
     float: left;
     padding-right: 10px;
 }
+
+table.dataTable.display tr th {
+    line-height: 1.2;
+}
