@@ -13,6 +13,18 @@ a { cursor: pointer; }
 .noleftpad { padding-left: 0px; }
 .container { padding-left: 0px; padding-right: 0px; }
 
+@media (min-width: 1600px) {
+    div.container {
+        width: 1550px;
+    }
+}
+
+@media (min-width: 1400px) {
+    div.container {
+        width: 1360px;
+    }
+}
+
 /* Grids */
 tr.odd td.pt_test_errors {
   background-color: #f5cdc7 !important;

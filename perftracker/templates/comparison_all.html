@@ -89,7 +89,7 @@ $(document).ready(function() {
             },
             {
                 "data": function ( row, type, val, meta ) {
-                    return row.env_node.map(env => env.display_name || '').join("<br>");
+                    return row.env_node.map(env => env.display_name || '').join(", ");
                 },
                 "orderData": [4, 1],
             },
@@ -114,7 +114,7 @@ $(document).ready(function() {
                     if (type === "sort") {
                         return Math.max(...row.tests_total);
                     }
-                    return row.tests_total.join("<br>");
+                    return row.tests_total.join(", ");
                 },
                 "orderData": [ 8, 1 ],
             },
@@ -123,7 +123,7 @@ $(document).ready(function() {
                     if (type === "sort") {
                         return Math.max(...row.tests_errors);
                     }
-                    return row.tests_errors.join("<br>");
+                    return row.tests_errors.join(", ");
                 },
                 "orderData": [ 9, 1 ],
                 "createdCell": function (td, cellData, rowData, row, col) {
@@ -137,7 +137,7 @@ $(document).ready(function() {
                     if (type === "sort") {
                         return Math.max(...row.testcases_total);
                     }
-                    return row.testcases_total.join("<br>");
+                    return row.testcases_total.join(", ");
                 },
                 "orderData": [ 10, 1 ],
             },
@@ -146,7 +146,7 @@ $(document).ready(function() {
                     if (type === "sort") {
                         return Math.max(...row.testcases_errors);
                     }
-                    return row.testcases_errors.join("<br>");
+                    return row.testcases_errors.join(", ");
                 },
                 "orderData": [ 11, 1 ],
                 "createdCell": function (td, cellData, rowData, row, col) {
