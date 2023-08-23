@@ -1,1 +1,1 @@
-__pt_version__ = '0.4.5'
+__pt_version__ = '0.4.6'
