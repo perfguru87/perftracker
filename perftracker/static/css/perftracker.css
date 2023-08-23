@@ -13,16 +13,14 @@ a { cursor: pointer; }
 .noleftpad { padding-left: 0px; }
 .container { padding-left: 0px; padding-right: 0px; }
 
-@media (min-width: 1600px) {
-    div.container {
-        width: 1550px;
-    }
-}
-
 @media (min-width: 1400px) {
-    div.container {
-        width: 1360px;
-    }
+    div.container { width: 1360px; }
+}
+@media (min-width: 1500px) {
+    div.container { width: 1450px; }
+}
+@media (min-width: 1600px) {
+    div.container { width: 1540px; }
 }
 
 /* Grids */
