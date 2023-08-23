@@ -56,6 +56,8 @@
 
 <!-- File upload -->
 
+<footer class="navbar-default navbar-fixed-bottom pt_file_upload_dialog">
+<div class="container">
 <h4>Manual job json upload</h4>
 <div class='row'>
   <form class='navbar-form' id='pt_job_upload_form' method='POST' enctype="multipart/form-data">
@@ -65,14 +67,20 @@
         <input type="file" id="job_file" name="job_file">
       </span>
     </div>
-    <div class='col-md-5'>
+    <div class='col-md-4'>
       <input type="text" class="form-control" id="job_title" name="job_title" aria-describedby="textHelp" placeholder="Override job title">
     </div>
     <div class='col-md-1'>
       <button type="submit" class="btn btn-primary pt_right" id='pt_btn_upload' disabled="disabled">Upload</button>
     </div>
+    <div class='col-md-1'>
+      <button type="cancel" class="btn btn-default pt_right" id='pt_btn_upload_cancel'>Cancel</button>
+    </div>
   </form>
 </div>
+<div class="container">&nbsp;</div>
+</div>
+</footer>
 
 <script>
 $(function() {
@@ -86,6 +94,8 @@ $(function() {
 </script>
 
 <!-- /File upload -->
+
+<!-- Comparison -->
 
 <footer class="navbar-default navbar-fixed-bottom pt_job_comparison_dialog">
   <div class="container">
@@ -191,6 +201,8 @@ $(function() {
     </form>
   </div>
 </footer>
+
+<!-- /Comparison -->
 
 <script>
 $(document).ready(function() {
@@ -526,14 +538,34 @@ $(document).ready(function() {
     });
 
     $('#pt_btn_cancel').click(function () {
-        window.location.replace((cmp_edited_id > 0) ? "/{{ project.id }}/comparison/" : "/{{ project.id }}/job/");
+        $("#pt_jobs_to_compare span").each(function() {
+            $(this).click();
+        });
+        $(".pt_job_comparison_dialog").slideUp("slow");
         return false;
     });
 
-    $("#pt_object_menu").html(pt_draw_comparisons_menu({{ project.id}}));
+    /*
+     * 7. Job results upload
+     */
+
+    var el = $('<a>Manual Job results upload</a>')
+    el.appendTo("#pt_object_menu")
+    el.on('click', function() {
+        $("#pt_btn_cancel").click();
+        $(".pt_file_upload_dialog").slideDown("slow");
+    });
+
+    $("<span>|</span>").appendTo("#pt_object_menu")
+    $("<a window=_blank onclick=\"window.location.replace('/{0}/job/?edit=-1');return false;\" >New comparison</a>".ptFormat({{ project.id }})).appendTo("#pt_object_menu")
+
+    $("#pt_btn_upload_cancel").on('click', function() {
+        $(".pt_file_upload_dialog").slideUp("slow");
+        return false;
+    });
 
     /*
-     * 7. Editing comparison
+     * 8. Editing comparison
      */
 
     if (window.location.search.indexOf('edit=') > -1) {

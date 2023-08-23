@@ -43,6 +43,8 @@
 <script>
 $(document).ready(function() {
 
+    $("<a window=_blank onclick=\"window.location.replace('/{0}/job/?edit=-1');return false;\" >New comparison</a>".ptFormat({{ project.id }})).appendTo("#pt_object_menu")
+
     /*
      * 1. Comparisons list table
      */
