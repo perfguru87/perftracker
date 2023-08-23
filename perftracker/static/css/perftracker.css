@@ -11,6 +11,7 @@ h4 { font-size: 15px; margin-bottom: 8px; text-align: left; }
 /* Common */
 a { cursor: pointer; }
 .noleftpad { padding-left: 0px; }
+.container { padding-left: 0px; padding-right: 0px; }
 
 /* Grids */
 tr.odd td.pt_test_errors {
@@ -494,3 +495,33 @@ div.pt_object_menu span { margin: 0px 10px 0px 10px; color: #777; }
 #summary ul { padding: 0px; margin-right: 12px; }
 #summary ul li { margin-left: 12px; text-indent: 0px; }
 #summary #more-details { padding-bottom: 10px; display: table-cell; }
+
+/* Main content */
+#main_content_container h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    background-image: -webkit-linear-gradient(top, #f0f0f0 0, #dfdfdf 100%);
+    padding: 6px 10px 6px 10px;
+    color: #444;
+    border-bottom: 1px solid #aaa;
+    color: #333;
+    text-align: left;
+}
+#main_content_container h2 a {
+    color: #333;
+}
+
+#main_content_container .pt_collapse span {
+    font-size: 0.7em;
+    margin-left: 5px;
+    color: #777;
+    line-height: 16px;
+    font-weight: normal;
+    padding-right: 6px;
+    float: right;
+}
+
+#main_content_container h2 .glyphicon {
+    float: left;
+    padding-right: 10px;
+}
