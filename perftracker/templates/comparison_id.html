@@ -8,7 +8,13 @@
     <script type="text/javascript" charset="utf8" src="{% static 'markjs/jquery.mark.min.js' %}"></script>
 {% endblock %}
 
-{% block title %}Comparison: #{{ obj.id }} / {{ obj.title }}<div class='pt_object_menu' id='pt_object_menu'></div>{% endblock %}
+{% block title %}
+{% if obj.deleted == True %}
+    Comparison: #{{ obj.id }} / {{ obj.title }}<div class='pt_deleted'>DELETED</div><div class='pt_object_menu' id='pt_object_menu'></div>
+{% else %}
+    Comparison: #{{ obj.id }} / {{ obj.title }}<div class='pt_object_menu' id='pt_object_menu'></div>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 
@@ -560,7 +566,7 @@ $(document).ready(function() {
         }
     });
 
-    $("#pt_object_menu").html(pt_draw_comparison_menu({{ project.id}}, {{ obj.id }}));
+    $("#pt_object_menu").html(pt_draw_comparison_menu({{ project.id }}, {{ obj.id }}, '{{ obj.deleted }}'));
 });
 </script>
 {% endblock %}

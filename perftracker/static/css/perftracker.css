@@ -513,6 +513,17 @@ input[type=file] {
 h1 div.pt_object_menu { font-size: 14px; line-height: 31px; font-weight: normal; float: right; }
 h4 div.pt_object_menu { font-size: 12px; line-height: 15px; font-weight: normal; float: right; }
 div.pt_object_menu span { margin: 0px 10px 0px 10px; color: #777; }
+h1 div.pt_deleted {
+    background-color: #e4a1b7;
+    border-radius: 3px;
+    display: inline-block;
+    font-size: 16px;
+    line-height: 28px;
+    padding: 0px 10px 0px 10px;
+    margin: 0px 0px 0px 8px;
+    bottom: 2px;
+    position: relative;
+}
 
 /* Comparison summary */
 #summary ul { padding: 0px; margin-right: 12px; }

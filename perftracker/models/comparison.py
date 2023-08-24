@@ -116,6 +116,7 @@ class ComparisonModel(models.Model):
 
     def pt_update(self, json_data):
         self.title = json_data['title']
+        self.deleted = False
         self.charts_type = self._pt_get_type(CMP_CHARTS, json_data, 'charts_type')
         self.tables_type = self._pt_get_type(CMP_TABLES, json_data, 'tables_type')
         self.tests_type = self._pt_get_type(CMP_TESTS, json_data, 'tests_type')
@@ -239,7 +240,7 @@ class ComparisonNestedSerializer(ComparisonBaseSerializer):
         model = ComparisonModel
         fields = ('id', 'title', 'suite_name', 'suite_ver', 'env_node', 'updated', 'tests_total',
                   'tests_errors', 'testcases_total', 'testcases_errors', 'project', 'jobs', 'charts_type',
-                  'tables_type', 'tests_type', 'values_type')
+                  'tables_type', 'tests_type', 'values_type', 'deleted')
 
 
 ######################################################################

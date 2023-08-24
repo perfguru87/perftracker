@@ -292,12 +292,16 @@ function pt_ajax_job_delete(job_id)
     return false;
 }
 
-function pt_draw_comparison_menu(project_id, id)
+function pt_draw_comparison_menu(project_id, id, deleted)
 {
-    return "<a onclick=\"window.location.replace('/{0}/job/?edit={1}');return false;\" >Edit</a><span>|</span>".ptFormat(project_id, id) +
-           "<a href='#' onclick=\"return pt_ajax_comparison_delete({0})\">Delete</a><span>|</span>".ptFormat(id) +
-           "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a><span>|</span>" +
-           "<a onclick=\"pt_label_data()\">Label data</a>";
+    var ret = "<a onclick=\"window.location.replace('/{0}/job/?edit={1}');return false;\" >Edit</a><span>|</span>".ptFormat(project_id, id);
+    if (deleted == 'True') {
+       return ret + "<a onclick=\"window.location.replace('/{0}/job/?edit={1}');return false;\" >Undelete</a>".ptFormat(project_id, id);
+    }
+    ret += "<a href='#' onclick=\"return pt_ajax_comparison_delete({0})\">Delete</a><span>|</span>".ptFormat(id);
+    ret += "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a><span>|</span>";
+    ret += "<a onclick=\"pt_label_data()\">Label data</a>";
+    return ret;
 }
 
 function pt_draw_comparison_details(d, err_msg)
