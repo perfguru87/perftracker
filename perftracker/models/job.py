@@ -71,7 +71,8 @@ class JobModel(models.Model):
         self.cmdline = j.get_str('cmdline')
         self.project = ProjectModel.pt_get_by_name(j.get_str('project_name'))
 
-        append = False if self.deleted else j.get_bool('append')
+        # append = False if self.deleted else j.get_bool('append')
+        append = j.get_bool('append')
 
         now = timezone.now()
 

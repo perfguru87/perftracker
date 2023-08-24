@@ -65,6 +65,31 @@
 </div>
 
 <script>
+    function pt_job_undelete_cb(job_id) {
+        var api_ver = '{{ api_ver }}';
+        var project_id = {{ project.id }};
+
+        $.getJSON("/api/v{0}/{1}/job/{2}".ptFormat(api_ver, project_id, job_id), function (data) {
+            data.is_edited = true;
+            data.append = true;
+            data.deleted = 'False'
+            data.project_name = data.project.name;
+            $.ajax({
+                url: '/api/v{0}/{1}/job/{2}'.ptFormat(api_ver, project_id, job_id),
+                type: 'PUT',
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (xhr) {
+                    location.reload();
+                },
+                error: function (xhr) {
+                    alert('Error: ' + xhr.status + ' ' + xhr.responseText);
+                }
+            });
+            return false;
+        });
+    }
+
     function pt_job_edit_cb(job_id) {
         var api_ver = '{{ api_ver }}';
         var project_id = {{ project.id }};

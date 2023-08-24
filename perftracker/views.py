@@ -490,7 +490,7 @@ def pt_job_id_json(request, api_ver, project_id, job_id):
                 return HttpResponseBadRequest("unable to parse JSON data. Error : {0}".format(ve))
 
             job.pt_update(body)
-            messages.success(request, "job #%s was successfully edited" % str(job_id))
+            messages.success(request, "job #%s was successfully updated" % str(job_id))
             return HttpResponse("OK")
 
         elif request.method == 'GET':
@@ -654,7 +654,7 @@ def pt_comparison_id_json(request, api_ver, project_id, cmp_id):
             return HttpResponseBadRequest(e)
 
         comparison.pt_update(body)
-        messages.success(request, "comparison #%s was successfully edited" % str(cmp_id))
+        messages.success(request, "comparison #%s was successfully updated" % str(cmp_id))
         return HttpResponse("OK")
 
     elif request.method == 'GET':

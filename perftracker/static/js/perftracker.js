@@ -175,12 +175,16 @@ function pt_draw_links(links)
     return ret;
 }
 
-function pt_draw_job_menu(id)
+function pt_draw_job_menu(id, deleted)
 {
-    return "<a href='#' onclick=\"return pt_job_edit_cb({0})\">Edit</a><span>|</span>".ptFormat(id) +
-           "<a href='#' onclick=\"return pt_ajax_job_delete({0})\">Delete</a><span>|</span>".ptFormat(id) +
-           "<a href='/0/job/{0}?as_json=1'>Download JSON</a><span>|</span>".ptFormat(id) +
-           "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a>";
+    var ret = "<a href='#' onclick=\"return pt_job_edit_cb({0})\">Edit</a><span>|</span>".ptFormat(id);
+    if (deleted == 'True') {
+        return ret + "<a href='#' onclick=\"return pt_job_undelete_cb({0})\">Undelete</a>".ptFormat(id); 
+    }
+    ret += "<a href='#' onclick=\"return pt_ajax_job_delete({0})\">Delete</a><span>|</span>".ptFormat(id);
+    ret += "<a href='/0/job/{0}?as_json=1'>Download JSON</a><span>|</span>".ptFormat(id);
+    ret += "<a onclick=\"alert('Sorry, not implemented');return false;\" >Download XLS</a>";
+    return ret;
 }
 
 function pt_draw_job_details(d, err_msg, show_menu = true)
