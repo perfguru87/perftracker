@@ -251,10 +251,10 @@ div.pt_tests_group_selector select {
 /* Charts */
 .pt_chart {
   width: 100%;
-  height: 250px;
+  height: 300px;
   text-align: center;
   color: #777;
-  line-height: 250px;
+  line-height: 300px;
   vertical-align: middle;
   border: 1px solid #ccc;
   background-color: #f8f8f8;
@@ -551,4 +551,63 @@ div.pt_object_menu span { margin: 0px 10px 0px 10px; color: #777; }
 
 table.dataTable.display tr th {
     line-height: 1.2;
+}
+
+/* Modal window */
+.pt_modal_chart {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1;
+}
+
+.pt_modal_chart h3 {
+    font-size: 18px;
+    padding-left: 10px;
+    margin-bottom: 0px;
+    text-align: center;
+}
+
+.pt_modal_container {
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    width: 90%;
+    height: 90%;
+    padding: 15px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+    background-color: white;
+    z-index: 2;
+}
+
+#pt_modal_content {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    padding: 0px 0px 20px 0px;
+    margin: 0px 0px 20px 0px;
+}
+
+.pt_modal_close_btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    line-height: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 3;
+    right: -10px;
+    top: -20px;
+    position: relative;
+}
+
+.pt_modal_close_btn:hover,
+.pt_modal_close_btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
 }

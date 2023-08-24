@@ -630,10 +630,21 @@ function pt_configure_chart(element, chart_type, has_failures, x_categories, x_n
                 dataZoom: {
                     yAxisIndex: 'none'
                 },
-                dataView: {readOnly: false},
                 magicType: {type: ['line', 'bar']},
-                restore: {},
-                saveAsImage: {}
+                saveAsImage: {},
+                myFullScreen: {
+                    show: true,
+                    title: 'Toggle Fullscreen',
+                    icon: 'M0 0v20h23V0L0 0zM19 13 19 17M15 17 19 17M15 13 19 17zM19 7 19 3 15 3 19 3 15 7 19 3zM4 13 4 17 8 17 4 17 8 13M8 3 4 3 4 7 4 3 8 7',
+                    onclick: function() {
+                        $('.pt_modal_chart').fadeIn();
+                        $('.pt_modal_close_btn').on('click', function() { $('.pt_modal_chart').fadeOut(); });
+                        $('#pt_modal_content').empty();
+                        $(".pt_modal_chart_title").html($("#" + element).prev("h4:first").text());
+                        $('#pt_modal_content').append("<div id='pt_modal_content_chart' style='min-height: 100%; height: 100%;'></div>");
+                        pt_configure_chart("pt_modal_content_chart", chart_type, has_failures, x_categories, x_name, x_type, x_rotate, y_name, series);
+                    }
+                },
             }
         },
         series: []
