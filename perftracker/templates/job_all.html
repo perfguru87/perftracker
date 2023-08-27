@@ -557,7 +557,7 @@ $(document).ready(function() {
     });
 
     $("<span>|</span>").appendTo("#pt_object_menu")
-    $("<a window=_blank onclick=\"window.location.replace('/{0}/job/?edit=-1');return false;\" >New comparison</a>".ptFormat({{ project.id }})).appendTo("#pt_object_menu")
+    $("<a window=_blank onclick=\"window.location.replace('/{0}/job/?edit=0');return false;\" >New comparison</a>".ptFormat({{ project.id }})).appendTo("#pt_object_menu")
 
     $("#pt_btn_upload_cancel").on('click', function() {
         $(".pt_file_upload_dialog").slideUp("slow");
