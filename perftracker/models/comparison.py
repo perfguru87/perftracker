@@ -379,6 +379,8 @@ class PTComparisonServSideSerieView:
                     ret.append(self._scores[n])
         else:
             for n in range(0, len(self._scores)):
+                if self._scores[n] is None:
+                    continue
                 if self._errors[n]:
                     pt = { "value": [self.sect.x_axis_categories[n], self._scores[n]],
                            "symbol": "diamond",
