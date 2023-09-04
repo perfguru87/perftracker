@@ -1,7 +1,7 @@
 {% extends '_base.html' %}
 
-{% block title %}
-Job: #{{ obj.id }} / {{ obj.title }}
+{% block title %}Job: #{{ obj.id }} / {{ obj.title }}{% endblock %}
+{% block title_tail %}
 {% if obj.deleted == True %}
   <div class='pt_deleted'>DELETED</div>
 {% endif %}

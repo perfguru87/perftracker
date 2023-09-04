@@ -117,7 +117,7 @@
   </script>
 
   <div class="container">
-    <h1>{% block title %}(no title){% endblock %}</h1>
+    <h1>{% block title %}(no title){% endblock %}{% block title_tail %}{% endblock %}</h1>
 
         {% autoescape off %}{% bootstrap_messages %}{% endautoescape %}
 
