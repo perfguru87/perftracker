@@ -1,0 +1,58 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    container_name: perftracker_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: perftracker_user
+      POSTGRES_PASSWORD: perftracker_password
+      POSTGRES_DB: perftracker_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx
+    container_name: perftracker_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./compose/nginx:/etc/nginx/conf.d:ro
+      - web-static:/usr/src/app/static
+    depends_on:
+      - web
+
+  web:
+    build: .
+    container_name: perftracker_backend
+    volumes:
+      - ./compose/perftracker/settings_local.py:/usr/src/app/perftracker_django/settings_local.py:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+
+  init:
+    build: .
+    container_name: perftracker_init
+    command: /usr/src/app/compose/perftracker_init/init.sh
+    volumes:
+      - ./compose/perftracker/settings_local.py:/usr/src/app/perftracker_django/settings_local.py:rw
+      - web-static:/usr/src/app/static
+    environment:
+      DJANGO_SUPERUSER_PASSWORD: qwe123QWE
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_EMAIL: admin@perftracker.org
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  web-static:
+  pgdata:
